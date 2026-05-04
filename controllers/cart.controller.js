@@ -2,8 +2,6 @@ const Cart    = require("../models/Cart.model");
 const Product = require("../models/Product.model");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 
-// ─── POST /api/cart/add ───────────────────────────────────────────────────────
-// Patient only. Add item or increment quantity. One cart doc per user.
 const addToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
@@ -46,8 +44,6 @@ const addToCart = async (req, res) => {
   }
 };
 
-// ─── GET /api/cart ────────────────────────────────────────────────────────────
-// Patient only. Fetch cart with populated product details.
 const getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.user.id })
@@ -56,7 +52,6 @@ const getCart = async (req, res) => {
 
     if (!cart) return sendSuccess(res, { cart: { items: [], total: 0 } });
 
-    // Compute totals
     const total = cart.items.reduce((sum, i) => sum + i.totalPrice, 0);
     return sendSuccess(res, { cart: { ...cart, total } });
   } catch (err) {
@@ -65,8 +60,6 @@ const getCart = async (req, res) => {
   }
 };
 
-// ─── DELETE /api/cart/item/:productId ─────────────────────────────────────────
-// Patient only. Remove a specific item from cart.
 const removeFromCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.user.id });

@@ -1,8 +1,6 @@
 const Product = require("../models/Product.model");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 
-// ─── GET /api/products ────────────────────────────────────────────────────────
-// Public. Supports filters: category, minPrice, maxPrice, brand, q, sort, page, limit
 const getProducts = async (req, res) => {
   try {
     const { category, minPrice, maxPrice, brand, q, sort, page = 1, limit = 12 } = req.query;
@@ -45,8 +43,6 @@ const getProducts = async (req, res) => {
   }
 };
 
-// ─── GET /api/products/:idOrSlug ──────────────────────────────────────────────
-// Public. Accepts MongoDB ObjectId OR slug string.
 const getProductByIdOrSlug = async (req, res) => {
   try {
     const { idOrSlug } = req.params;
@@ -64,14 +60,11 @@ const getProductByIdOrSlug = async (req, res) => {
   }
 };
 
-// ─── POST /api/products ───────────────────────────────────────────────────────
-// Admin only. Create a new product.
 const createProduct = async (req, res) => {
   try {
     const { name, description, brand, category, images, baseCost, discountFactor,
             inventory, estimatedDeliveryDays } = req.body;
 
-    // Auto-generate slug from name
     const slug = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -93,8 +86,6 @@ const createProduct = async (req, res) => {
   }
 };
 
-// ─── PUT /api/products/:id ────────────────────────────────────────────────────
-// Admin only. Full product update.
 const updateProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(
@@ -110,8 +101,6 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// ─── PATCH /api/products/:id/deactivate ───────────────────────────────────────
-// Admin only. Soft-deactivate a product.
 const deactivateProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(

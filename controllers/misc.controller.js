@@ -2,10 +2,9 @@ const Category     = require("../models/Category.model");
 const Notification = require("../models/Notification.model");
 const { sendSuccess, sendError } = require("../utils/response.util");
 
-// ─── GET /api/categories ──────────────────────────────────────────────────────
 const getCategories = async (req, res) => {
   try {
-    const { type } = req.query; // "product" | "specialty"
+    const { type } = req.query; 
     const filter = { isActive: true };
     if (type) filter.type = type;
 
@@ -16,7 +15,6 @@ const getCategories = async (req, res) => {
   }
 };
 
-// ─── GET /api/notifications ───────────────────────────────────────────────────
 const getNotifications = async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
@@ -39,7 +37,6 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// ─── PATCH /api/notifications/:id/read ───────────────────────────────────────
 const markNotificationRead = async (req, res) => {
   try {
     const notification = await Notification.findOneAndUpdate(
@@ -54,7 +51,6 @@ const markNotificationRead = async (req, res) => {
   }
 };
 
-// ─── PATCH /api/notifications/read-all ───────────────────────────────────────
 const markAllNotificationsRead = async (req, res) => {
   try {
     await Notification.updateMany({ userId: req.user.id, isRead: false }, { isRead: true });

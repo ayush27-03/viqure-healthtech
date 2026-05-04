@@ -7,8 +7,6 @@ const Doctor      = require("../models/Doctor.model");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 const { createNotification } = require("../utils/notification.util");
 
-// ─── POST /api/appointments ───────────────────────────────────────────────────
-// Patient only. Books an appointment by reserving a slot.
 const createAppointment = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -16,7 +14,6 @@ const createAppointment = async (req, res) => {
     const { doctorId, slotId } = req.body;
     const patientId = req.user.id;
 
-    // 1. Find & lock the slot
     const slot = await Slot.findById(slotId).session(session);
     if (!slot || slot.isBooked) {
       await session.abortTransaction();
@@ -27,18 +24,15 @@ const createAppointment = async (req, res) => {
       return sendError(res, "Slot does not belong to the specified doctor", 400);
     }
 
-    // 2. Fetch doctor for fee snapshot
     const doctor = await Doctor.findById(doctorId).session(session);
     if (!doctor || doctor.status !== "approved") {
       await session.abortTransaction();
       return sendError(res, "Doctor not found or not approved", 404);
     }
 
-    // 3. Mark slot as booked
     slot.isBooked = true;
     await slot.save({ session });
 
-    // 4. Create appointment
     const appointment = await Appointment.create(
       [
         {
@@ -58,7 +52,6 @@ const createAppointment = async (req, res) => {
 
     await session.commitTransaction();
 
-    // Non-blocking notification
     createNotification({
       userId: doctorId, userModel: "Doctor",
       title: "New Appointment Booked",
@@ -76,8 +69,6 @@ const createAppointment = async (req, res) => {
   }
 };
 
-// ─── GET /api/appointments/patient ───────────────────────────────────────────
-// Patient only. Get their own appointments.
 const getPatientAppointments = async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
@@ -106,8 +97,6 @@ const getPatientAppointments = async (req, res) => {
   }
 };
 
-// ─── GET /api/appointments/doctor ────────────────────────────────────────────
-// Doctor only. Get their own appointments.
 const getDoctorAppointments = async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
@@ -137,8 +126,6 @@ const getDoctorAppointments = async (req, res) => {
   }
 };
 
-// ─── GET /api/appointments/:id ────────────────────────────────────────────────
-// Patient or Doctor (must be owner of this appointment).
 const getAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
@@ -148,7 +135,6 @@ const getAppointmentById = async (req, res) => {
 
     if (!appointment) return sendError(res, "Appointment not found", 404);
 
-    // Auth check
     const userId = req.user.id;
     const role   = req.user.role;
     if (
@@ -165,8 +151,6 @@ const getAppointmentById = async (req, res) => {
   }
 };
 
-// ─── PATCH /api/appointments/:id/status ───────────────────────────────────────
-// Doctor can CONFIRM / REJECT / COMPLETE. Patient can CANCEL.
 const updateAppointmentStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -175,7 +159,6 @@ const updateAppointmentStatus = async (req, res) => {
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment) return sendError(res, "Appointment not found", 404);
 
-    // Authorization per role
     if (role === "doctor") {
       if (appointment.doctorId.toString() !== req.user.id) return sendError(res, "Not authorized", 403);
       const allowed = ["CONFIRMED", "REJECTED", "COMPLETED"];
@@ -184,13 +167,11 @@ const updateAppointmentStatus = async (req, res) => {
       if (appointment.patientId.toString() !== req.user.id) return sendError(res, "Not authorized", 403);
       if (status !== "CANCELLED") return sendError(res, "Patient can only cancel", 400);
     } else if (role === "admin") {
-      // Admin can set any status
     }
 
     appointment.appointmentStatus = status;
     await appointment.save();
 
-    // Notify the other party
     const notifyId    = role === "doctor" ? appointment.patientId : appointment.doctorId;
     const notifyModel = role === "doctor" ? "User" : "Doctor";
     createNotification({
@@ -207,8 +188,6 @@ const updateAppointmentStatus = async (req, res) => {
   }
 };
 
-// ─── PATCH /api/appointments/:id/remarks ──────────────────────────────────────
-// Doctor only. Add post-consultation remarks.
 const addDoctorRemarks = async (req, res) => {
   try {
     const { remarks, remarksMode } = req.body;
@@ -231,8 +210,6 @@ const addDoctorRemarks = async (req, res) => {
   }
 };
 
-// ─── GET /api/doctor/earnings ─────────────────────────────────────────────────
-// Doctor only. Earnings summary.
 const getDoctorEarnings = async (req, res) => {
   try {
     const doctorId = req.user.id;
@@ -255,7 +232,6 @@ const getDoctorEarnings = async (req, res) => {
       },
     ]);
 
-    // Monthly breakdown
     const monthly = await Appointment.aggregate([
       {
         $match: {

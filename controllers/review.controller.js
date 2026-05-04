@@ -5,8 +5,6 @@ const Product     = require("../models/Product.model");
 const Appointment = require("../models/Appointment.model");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 
-// ─── POST /api/reviews ────────────────────────────────────────────────────────
-// Patient only. Polymorphic — targetEntity: "doctor" | "product"
 const createReview = async (req, res) => {
   try {
     const { targetEntity, targetId, rating, comment, appointmentId } = req.body;
@@ -19,11 +17,9 @@ const createReview = async (req, res) => {
       return sendError(res, "Rating must be between 1 and 5", 400);
     }
 
-    // Prevent duplicate review
     const exists = await Review.findOne({ patientId, targetEntity, targetId });
     if (exists) return sendError(res, "You have already reviewed this", 409);
 
-    // For doctor reviews: verify completed appointment
     if (targetEntity === "doctor" && appointmentId) {
       const appt = await Appointment.findOne({
         _id: appointmentId,
@@ -36,7 +32,6 @@ const createReview = async (req, res) => {
 
     const review = await Review.create({ patientId, targetEntity, targetId, rating, comment, appointmentId });
 
-    // Update denormalized stats atomically
     if (targetEntity === "doctor") {
       await updateDoctorStats(targetId);
     } else {
@@ -50,8 +45,6 @@ const createReview = async (req, res) => {
   }
 };
 
-// ─── GET /api/reviews/:targetEntity/:targetId ─────────────────────────────────
-// Public.
 const getReviews = async (req, res) => {
   try {
     const { targetEntity, targetId } = req.params;
@@ -80,7 +73,6 @@ const getReviews = async (req, res) => {
   }
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const updateDoctorStats = async (doctorId) => {
   const result = await Review.aggregate([
     { $match: { targetEntity: "doctor", targetId: new mongoose.Types.ObjectId(doctorId) } },

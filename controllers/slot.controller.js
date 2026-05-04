@@ -1,12 +1,10 @@
 const Slot = require("../models/Slot.model");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 
-// ─── POST /api/slots ──────────────────────────────────────────────────────────
-// Doctor only. Create one or multiple availability slots.
 const createSlot = async (req, res) => {
   try {
     const doctorId = req.user.id;
-    const { slots } = req.body; // Array of { startTime, endTime, date }
+    const { slots } = req.body; 
 
     if (!Array.isArray(slots) || slots.length === 0) {
       return sendError(res, "slots array is required", 400);
@@ -26,7 +24,6 @@ const createSlot = async (req, res) => {
     const created = await Slot.insertMany(toInsert, { ordered: false });
     return sendCreated(res, { slots: created }, `${created.length} slot(s) created`);
   } catch (err) {
-    // Duplicate key — some slots already exist
     if (err.code === 11000) {
       return sendError(res, "One or more slots already exist for that time", 409);
     }
@@ -35,12 +32,10 @@ const createSlot = async (req, res) => {
   }
 };
 
-// ─── GET /api/slots/:doctorId ─────────────────────────────────────────────────
-// Public. Returns available (unbooked) future slots for a doctor.
 const getSlotsByDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
-    const { date } = req.query; // optional YYYY-MM-DD filter
+    const { date } = req.query; 
 
     const filter = { doctorId, isBooked: false, date: { $gte: new Date().toISOString().split("T")[0] } };
     if (date) filter.date = date;
@@ -53,8 +48,6 @@ const getSlotsByDoctor = async (req, res) => {
   }
 };
 
-// ─── DELETE /api/slots/:id ────────────────────────────────────────────────────
-// Doctor only. Can only delete their own unbooked slots.
 const deleteSlot = async (req, res) => {
   try {
     const slot = await Slot.findById(req.params.id);

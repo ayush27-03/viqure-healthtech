@@ -5,8 +5,6 @@ const Product = require("../models/Product.model");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 const { createNotification } = require("../utils/notification.util");
 
-// ─── POST /api/orders ─────────────────────────────────────────────────────────
-// Patient only. Converts active cart into an order.
 const createOrder = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -20,7 +18,6 @@ const createOrder = async (req, res) => {
       return sendError(res, "Cart is empty", 400);
     }
 
-    // Build order items with productSnapshot and decrement stock
     const orderItems = [];
     let subtotal = 0;
 
@@ -56,7 +53,6 @@ const createOrder = async (req, res) => {
         discount:   (product.discountFactor || 0) * 100,
       });
 
-      // Decrement stock atomically
       await Product.updateOne(
         { _id: product._id },
         { $inc: { "inventory.stockQty": -item.quantity } },
@@ -80,7 +76,6 @@ const createOrder = async (req, res) => {
       { session }
     );
 
-    // Clear cart
     await Cart.deleteOne({ userId }, { session });
 
     await session.commitTransaction();
@@ -102,13 +97,11 @@ const createOrder = async (req, res) => {
   }
 };
 
-// ─── GET /api/orders/:id ──────────────────────────────────────────────────────
 const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).lean();
     if (!order) return sendError(res, "Order not found", 404);
 
-    // Auth: patient must own the order
     if (req.user.role === "patient" && order.userId.toString() !== req.user.id) {
       return sendError(res, "Not authorized", 403);
     }
@@ -120,8 +113,6 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// ─── PATCH /api/orders/:id/status ─────────────────────────────────────────────
-// Admin only. Update order status.
 const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;

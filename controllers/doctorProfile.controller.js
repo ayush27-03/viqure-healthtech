@@ -2,7 +2,6 @@ const Doctor = require("../models/Doctor.model");
 const { uploadToCloudinary } = require("../middlewares/upload.middleware");
 const { sendSuccess, sendError } = require("../utils/response.util");
 
-// ─── GET /api/doctor/profile ──────────────────────────────────────────────────
 const getDoctorProfile = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.user.id).select("-password").lean();
@@ -13,7 +12,6 @@ const getDoctorProfile = async (req, res) => {
   }
 };
 
-// ─── PUT /api/doctor/profile ──────────────────────────────────────────────────
 const updateDoctorProfile = async (req, res) => {
   try {
     const allowed = [
