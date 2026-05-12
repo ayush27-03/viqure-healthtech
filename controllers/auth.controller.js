@@ -2,9 +2,7 @@ const bcrypt = require("bcryptjs");
 const { signToken } = require("../server/utils/jwt.util");
 const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
 
-const User  = require("../server/models/User.model");
-const Doctor = require("../server/models/Doctor.model");
-const Admin  = require("../server/models/Admin.model");j
+const { User, Doctor, Admin } = require("../server/models");
 
 const registerPatient = async (req, res) => {
   try {
@@ -18,7 +16,7 @@ const registerPatient = async (req, res) => {
     const user = await User.create({
       name,
       email: email.toLowerCase(),
-      password: hashed,
+      passwordHash: hashed,
       phone,
       gender,
       dob,
@@ -62,7 +60,7 @@ const registerDoctor = async (req, res) => {
     const doctor = await Doctor.create({
       doctorName,
       email: email.toLowerCase(),
-      password: hashed,
+      passwordHash: hashed,
       mobileNumber,
       dob,
       gender,
@@ -100,18 +98,18 @@ const login = async (req, res) => {
     let tokenRole = role;
 
     if (role === "patient") {
-      account = await User.findOne({ email: email.toLowerCase() }).select("+password");
+      account = await User.findOne({ email: email.toLowerCase() }).select("+passwordHash");
     } else if (role === "doctor") {
-      account = await Doctor.findOne({ email: email.toLowerCase() }).select("+password");
+      account = await Doctor.findOne({ email: email.toLowerCase() }).select("+passwordHash");
     } else if (role === "admin") {
-      account = await Admin.findOne({ email: email.toLowerCase() }).select("+password");
+      account = await Admin.findOne({ email: email.toLowerCase() }).select("+passwordHash");
     } else {
       return sendError(res, "Invalid role. Must be patient, doctor, or admin", 400);
     }
 
     if (!account) return sendError(res, "Invalid email or password", 401);
 
-    const isMatch = await bcrypt.compare(password, account.password);
+    const isMatch = await bcrypt.compare(password, account.passwordHash);
     if (!isMatch) return sendError(res, "Invalid email or password", 401);
 
     if (role === "doctor" && account.status !== "approved") {
@@ -144,11 +142,11 @@ const getMe = async (req, res) => {
     let account;
 
     if (role === "patient") {
-      account = await User.findById(id).select("-password");
+      account = await User.findById(id).select("-passwordHash");
     } else if (role === "doctor") {
-      account = await Doctor.findById(id).select("-password");
+      account = await Doctor.findById(id).select("-passwordHash");
     } else if (role === "admin") {
-      account = await Admin.findById(id).select("-password");
+      account = await Admin.findById(id).select("-passwordHash");
     }
 
     if (!account) return sendError(res, "User not found", 404);

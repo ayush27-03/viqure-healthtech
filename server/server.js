@@ -24,6 +24,17 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(limiter);
 
+// Mount API route modules (implemented under server/routes)
+app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/admin', require('./routes/admin.routes'));
+app.use('/api/doctors', require('./routes/doctors.routes'));
+app.use('/api/slots', require('./routes/slots.routes'));
+app.use('/api/appointments', require('./routes/appointments.routes'));
+app.use('/api/products', require('./routes/products.routes'));
+app.use('/api/cart', require('./routes/cart.routes'));
+app.use('/api/orders', require('./routes/orders.routes'));
+app.use('/api/reviews', require('./routes/reviews.routes'));
+
 async function connectToDatabase() {
   try {
     // `mongoose.connect()` returns a promise.
@@ -71,7 +82,7 @@ app.get("/api/doctors/:id", async (req, res) => {
     // Optional guard:
     // if the id format is invalid, MongoDB should not even be queried.
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid doctor id" , type: json});
+      return res.status(400).json({ message: "Invalid doctor id" });
     }
 
     // `findById(id)` is the clearest way to fetch one document by MongoDB `_id`.

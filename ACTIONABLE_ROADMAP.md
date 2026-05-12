@@ -75,6 +75,9 @@ In `server/server.js`, add route mounting for:
 
 Do not start with frontend pages. Finish backend routes first.
 
+Status: routes mounted and controllers wired for core APIs (auth, admin, doctors, slots, appointments, products, cart, orders, reviews).
+Notes: auth helpers (`server/utils/jwt.util.js`, `server/utils/response.util.js`, `server/utils/auth.middleware.js`, `server/utils/role.middleware.js`) implemented minimally to allow local testing. Some controllers still require model/schema alignment (see 2.x tasks).
+
 ## 2. Normalize your data model
 
 This is the most important design decision.
