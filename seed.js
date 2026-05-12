@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const { User, Doctor } = require('./models');
+const { User, Doctor } = require('./server/models');
 
 async function seed() {
   await mongoose.connect(process.env.MONGODB_URI);

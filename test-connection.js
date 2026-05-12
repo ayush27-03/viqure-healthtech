@@ -13,4 +13,11 @@ async function testConnection() {
   }
 }
 
-testConnection();
+// testConnection();
+
+try {
+  mongoose.connect(process.env.MONGODB_URI);
+  console.log('✅ Atlas connected:', mongoose.connection.host);
+} catch (err) {
+  console.error('❌ Connection failed:', err.message);
+}

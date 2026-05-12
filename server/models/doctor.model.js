@@ -33,8 +33,8 @@ const doctorSchema = new Schema(
     availableSlots: [
       {
         day:       { type: String, enum: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] },
-        startTime: { type: String }, // "09:00"
-        endTime:   { type: String }, // "17:00"
+        startTime: { type: String }, 
+        endTime:   { type: String }, 
       },
     ],
     stats: {

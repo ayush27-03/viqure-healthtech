@@ -1,5 +1,5 @@
-const Product = require("../models/Product.model");
-const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
+const Product = require("../server/models/Product.model");
+const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
 
 const getProducts = async (req, res) => {
   try {

@@ -1,7 +1,7 @@
-const User                = require("../models/User.model");
-const PatientMedicalRecord = require("../models/PatientMedicalRecord.model");
-const { uploadToCloudinary } = require("../middlewares/upload.middleware");
-const { sendSuccess, sendError } = require("../utils/response.util");
+const User                = require("../server/models/User.model");
+const PatientMedicalRecord = require("../server/models/PatientMedicalRecord.model");
+const { uploadToCloudinary } = require("../server/middlewares/upload.middleware");
+const { sendSuccess, sendError } = require("../server/utils/response.util");
 
 const getPatientProfile = async (req, res) => {
   try {

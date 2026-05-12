@@ -1,10 +1,10 @@
 const bcrypt = require("bcryptjs");
-const { signToken } = require("../utils/jwt.util");
-const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
+const { signToken } = require("../server/utils/jwt.util");
+const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
 
-const User  = require("../models/User.model");
-const Doctor = require("../models/Doctor.model");
-const Admin  = require("../models/Admin.model");j
+const User  = require("../server/models/User.model");
+const Doctor = require("../server/models/Doctor.model");
+const Admin  = require("../server/models/Admin.model");j
 
 const registerPatient = async (req, res) => {
   try {

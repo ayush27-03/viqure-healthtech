@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
 
-const Appointment = require("../models/Appointment.model");
-const Slot        = require("../models/Slot.model");
-const Doctor      = require("../models/Doctor.model");
-const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
-const { createNotification } = require("../utils/notification.util");
+const Appointment = require("../server/models/Appointment.model");
+const Slot        = require("../server/models/Slot.model");
+const Doctor      = require("../server/models/Doctor.model");
+const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
+const { createNotification } = require("../server/utils/notification.util");
 
 const createAppointment = async (req, res) => {
   const session = await mongoose.startSession();

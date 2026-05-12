@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
-const Order   = require("../models/Order.model");
-const Cart    = require("../models/Cart.model");
-const Product = require("../models/Product.model");
-const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
-const { createNotification } = require("../utils/notification.util");
+const Order   = require("../server/models/Order.model");
+const Cart    = require("../server/models/Cart.model");
+const Product = require("../server/models/Product.model");
+const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
+const { createNotification } = require("../server/utils/notification.util");
 
 const createOrder = async (req, res) => {
   const session = await mongoose.startSession();

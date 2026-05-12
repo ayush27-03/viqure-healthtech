@@ -1,6 +1,6 @@
-const Doctor = require("../models/Doctor.model");
-const { uploadToCloudinary } = require("../middlewares/upload.middleware");
-const { sendSuccess, sendError } = require("../utils/response.util");
+const Doctor = require("../server/models/Doctor.model");
+const { uploadToCloudinary } = require("../server/middlewares/upload.middleware");
+const { sendSuccess, sendError } = require("../server/utils/response.util");
 
 const getDoctorProfile = async (req, res) => {
   try {

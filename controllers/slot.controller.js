@@ -1,5 +1,5 @@
-const Slot = require("../models/Slot.model");
-const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
+const Slot = require("../server/models/Slot.model");
+const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
 
 const createSlot = async (req, res) => {
   try {
