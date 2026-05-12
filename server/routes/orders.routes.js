@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const orderCtrl = require('../../controllers/order.controller');
-const auth = require('../utils/auth.middleware');
-const role = require('../utils/role.middleware');
+const orderCtrl = require('../controllers/order.controller');
+const auth = require('../middlewares/auth.middleware');
+const role = require('../middlewares/role.middleware');
 
 router.post('/', auth, orderCtrl.createOrder);
 router.get('/:id', auth, orderCtrl.getOrderById);

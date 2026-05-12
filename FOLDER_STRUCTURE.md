@@ -1,97 +1,246 @@
-# MERN-STACK-FILE-STRUCTURE
-The MERN stack (MongoDB, Express.js, React.js, Node.js) is a popular full-stack development framework for building scalable and high-performance web applications. Below is the structure of an industry-level MERN stack project, including both the front-end and back-end aspects:
+# VIQURE PROJECT STRUCTURE
 
-### **Project Structure:**
-This structure assumes the application uses React for the front-end, Express.js for the back-end, Node.js as the runtime, and MongoDB as the database.
+This file documents the current recommended folder structure for this repository after backend cleanup.
 
+## Goals
+
+- keep all backend runtime code under `server/`
+- keep all frontend code under `client/`
+- keep root-level files limited to workspace-level scripts and documentation
+- avoid mixing controllers, middleware, and routes across multiple top-level folders
+
+## Current canonical structure
+
+```text
+/viqure
+├── client/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── contexts/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── App.jsx
+│   │   ├── App.css
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+├── server/
+│   ├── controllers/
+│   │   ├── admin.controller.js
+│   │   ├── appointment.controller.js
+│   │   ├── auth.controller.js
+│   │   ├── cart.controller.js
+│   │   ├── doctor.controller.js
+│   │   ├── doctorProfile.controller.js
+│   │   ├── misc.controller.js
+│   │   ├── order.controller.js
+│   │   ├── patient.controller.js
+│   │   ├── product.controller.js
+│   │   ├── review.controller.js
+│   │   └── slot.controller.js
+│   ├── middlewares/
+│   │   ├── auth.middleware.js
+│   │   └── role.middleware.js
+│   ├── models/
+│   │   ├── index.js
+│   │   ├── user.model.js
+│   │   ├── doctor.model.js
+│   │   ├── admins.model.js
+│   │   ├── appointments.model.js
+│   │   ├── slot.model.js
+│   │   ├── cart.model.js
+│   │   ├── categories.model.js
+│   │   ├── consultations.model.js
+│   │   ├── deliveries.model.js
+│   │   ├── medicalRecords.model.js
+│   │   ├── notifications.model.js
+│   │   ├── orders.model.js
+│   │   ├── payments.model.js
+│   │   ├── products.model.js
+│   │   └── reviews.model.js
+│   ├── routes/
+│   │   ├── admin.routes.js
+│   │   ├── appointments.routes.js
+│   │   ├── auth.routes.js
+│   │   ├── cart.routes.js
+│   │   ├── doctors.routes.js
+│   │   ├── orders.routes.js
+│   │   ├── products.routes.js
+│   │   ├── reviews.routes.js
+│   │   └── slots.routes.js
+│   ├── utils/
+│   │   ├── jwt.util.js
+│   │   ├── notification.util.js
+│   │   └── response.util.js
+│   └── server.js
+├── .env
+├── .gitignore
+├── ACTIONABLE_ROADMAP.md
+├── FOLDER_STRUCTURE.md
+├── README.md
+├── TASKS.md
+├── package.json
+├── package-lock.json
+├── seed.js
+└── test-connection.js
 ```
-/mern-app/
-│
-├── /client/                  # Front-end (React.js)
-│   ├── /public/              # Public static files like index.html, favicon, etc.
-│   ├── /src/
-│   │   ├── /assets/          # Images, fonts, CSS, etc.
-│   │   ├── /components/      # Reusable components (Navbar, Buttons, Forms, etc.)
-│   │   ├── /hooks/           # Custom hooks for API calls, state management
-│   │   ├── /pages/           # Each route or page of the application (Home, Profile, etc.)
-│   │   ├── /services/        # API interaction services (calls to the back-end)
-│   │   ├── /context/         # React Context API for global state management
-│   │   ├── /utils/           # Utility functions like formatters, validators, etc.
-│   │   ├── App.js            # Main app file, contains the main route logic
-│   │   ├── index.js          # Entry point, renders React app into DOM
-│   │   └── package.json      # Dependencies and scripts for the front-end
-│   │
-│   └── .env                  # Environment variables for front-end (optional)
-│
-├── /server/                  # Back-end (Express.js, Node.js)
-│   ├── /config/              # Configurations (MongoDB connection, JWT secret, etc.)
-│   ├── /controllers/         # Handles the business logic (CRUD operations, etc.)
-│   ├── /models/              # MongoDB schema models (e.g., User, Product)
-│   ├── /middlewares/         # Custom middleware (e.g., authentication, error handling)
-│   ├── /routes/              # Express routes (e.g., /api/users, /api/products)
-│   ├── /utils/               # Utility functions (like sending emails, JWT tokens, etc.)
-│   ├── /validations/         # Data validation (e.g., using Joi or express-validator)
-│   ├── server.js             # Main entry point for back-end (Express app)
-│   └── package.json          # Dependencies and scripts for the back-end
-│
-├── /tests/                   # Unit and integration tests for both front and back-end
-│
-├── /scripts/                 # Utility scripts for deployment, database seeding, etc.
-│
-├── .gitignore                # Ignoring files from Git version control
-├── .env                      # Environment variables for back-end
-├── README.md                 # Project documentation
-└── package.json              # Root-level package.json if the project is a monorepo
 
+## Folder responsibilities
+
+### `client/`
+
+Frontend-only code lives here.
+
+- `src/pages/`: route-level pages
+- `src/components/`: reusable UI pieces
+- `src/contexts/`: auth/global state providers
+- `src/services/`: API clients and axios config
+- `src/assets/`: images and static frontend resources
+
+### `server/controllers/`
+
+Each file should only contain request-handling logic.
+
+- validate request payload basics
+- call models/services
+- build API responses
+- avoid keeping route definitions here
+
+### `server/middlewares/`
+
+Keep Express middleware here.
+
+- authentication
+- role-based authorization
+- upload middleware if added later
+- centralized error middleware if added later
+
+Do not store utility helpers here.
+
+### `server/models/`
+
+All Mongoose schemas and models belong here.
+
+Rules:
+
+- one model per file
+- use lowercase file naming ending in `.model.js`
+- export shared model references through `server/models/index.js`
+- prefer importing from `../models` in controllers when possible
+
+### `server/routes/`
+
+Keep route wiring only.
+
+Rules:
+
+- one route file per feature area
+- route file imports controller + middleware only
+- no database logic inside route files
+
+### `server/utils/`
+
+Pure helper modules belong here.
+
+- response helpers
+- JWT helpers
+- notification helpers
+- constants and formatters if added later
+
+## Root-level file policy
+
+Root should stay thin.
+
+Allowed at root:
+
+- repo docs
+- workspace-level `package.json`
+- one-off scripts like `seed.js`
+- environment file
+
+Do not add these at root:
+
+- controllers
+- routes
+- middlewares
+- model files
+
+## Problems that were cleaned up
+
+These inconsistencies existed before cleanup:
+
+- backend controllers were outside `server/`
+- auth/role middleware lived under `server/utils/` instead of `server/middlewares/`
+- an extra root `middlewares/` folder contained empty placeholder files
+- route files were reaching outside `server/` to import controllers
+
+The structure now follows one backend root: `server/`.
+
+## Recommended next structure improvements
+
+These are not required immediately, but they are the next best cleanup steps.
+
+### Add `server/config/`
+
+Move environment and DB setup into:
+
+- `server/config/db.js`
+- `server/config/env.js`
+
+### Add `server/validations/`
+
+Useful for:
+
+- auth payload validation
+- appointment payload validation
+- cart/order request validation
+
+### Add `server/services/`
+
+Move multi-step business logic out of controllers later:
+
+- booking service
+- order service
+- analytics service
+- notification service
+
+### Add `docs/`
+
+Move future documentation into a dedicated folder:
+
+- `docs/API_DOCS.md`
+- `docs/DATABASE_SCHEMA.md`
+- `docs/BUGS.md`
+
+## Naming conventions
+
+Use these consistently:
+
+- controllers: `feature.controller.js`
+- routes: `feature.routes.js`
+- models: `feature.model.js`
+- middlewares: `name.middleware.js`
+- utils: `name.util.js`
+
+## Import conventions
+
+Preferred backend import pattern:
+
+```js
+const { User, Doctor, Appointment } = require("../models");
+const auth = require("../middlewares/auth.middleware");
+const { sendSuccess } = require("../utils/response.util");
 ```
 
-### **Folder Breakdown:**
+Avoid brittle imports like:
 
-#### **Client (React):**
-- **`/public/`**: Contains the `index.html` file and other static resources.
-- **`/src/`**:
-  - **`/components/`**: Reusable UI components like forms, modals, buttons, and layout components.
-  - **`/pages/`**: Each page corresponds to a specific route in the application (e.g., `Home.js`, `Dashboard.js`).
-  - **`/services/`**: Contains the code responsible for interacting with the back-end API (e.g., fetching data, submitting forms).
-  - **`/context/`**: Contains React's Context API for global state (user authentication, themes).
-  - **`/hooks/`**: Custom React hooks to manage state or side effects (e.g., `useAuth` for managing user authentication).
-  - **`App.js`**: Defines the main app layout and routes.
+```js
+require("../server/models/SomeModel");
+require("../../controllers/some.controller");
+```
 
-#### **Server (Node + Express):**
-- **`/config/`**: Configuration files (like database connection, JWT setup, third-party API keys).
-- **`/controllers/`**: Contains the business logic for handling routes (e.g., handling user login, managing products, etc.).
-- **`/models/`**: MongoDB schemas and models using Mongoose (e.g., User, Order, Product).
-- **`/routes/`**: Defines API routes (e.g., `userRoutes.js` for `/api/users`, `productRoutes.js` for `/api/products`).
-- **`/middlewares/`**: Contains Express middleware functions (e.g., authentication middleware, error handling).
-- **`/validations/`**: Manages request validation to ensure data integrity (e.g., using `express-validator` or `Joi`).
-
-#### **Deployment:**
-In a production-level project, it's common to configure deployment scripts for:
-- **Docker**: Containerizing the app for deployment.
-- **CI/CD Pipelines**: Automating deployment through platforms like Jenkins, GitHub Actions, or CircleCI.
-- **Hosting**: Using platforms like AWS, Heroku, or Vercel to deploy the app.
-
-### **Best Practices:**
-- **Modularization**: Keep components, services, and routes modular to maintain scalability.
-- **Error Handling**: Use proper middleware for global error handling and logging.
-- **Security**: Implement authentication (e.g., JWT, OAuth) and secure the API using tools like Helmet and CORS.
-- **Testing**: Ensure both the back-end and front-end are covered by unit and integration tests.
-- **Environment Management**: Use `.env` files for different environments (development, testing, production).
-
-### **Database Structure:**
-MongoDB is used for managing the database, and the schema is defined in the `/models/` directory. Example collections might include:
-- `users`
-- `products`
-- `orders`
-- `reviews`
-
-### **Technologies and Tools:**
-- **React.js**: For building the user interface and handling front-end logic.
-- **Express.js**: For handling API requests and managing the server-side logic.
-- **MongoDB**: A NoSQL database to store data.
-- **Node.js**: The runtime for JavaScript on the server.
-- **Mongoose**: For MongoDB object modeling and schema validation.
-- **JWT (JSON Web Token)**: For user authentication.
-- **Redux** (optional): For global state management in complex applications.
-
-This project structure is flexible and can be tailored to meet specific project requirements.
+Those are harder to maintain after refactors.

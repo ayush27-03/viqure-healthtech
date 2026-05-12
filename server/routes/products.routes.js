@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const prodCtrl = require('../../controllers/product.controller');
-const auth = require('../utils/auth.middleware');
-const role = require('../utils/role.middleware');
+const prodCtrl = require('../controllers/product.controller');
+const auth = require('../middlewares/auth.middleware');
+const role = require('../middlewares/role.middleware');
 
 router.get('/', prodCtrl.getProducts);
 router.get('/:idOrSlug', prodCtrl.getProductByIdOrSlug);

@@ -1,12 +1,7 @@
 const mongoose = require("mongoose");
-const Doctor      = require("../server/models/Doctor.model");
-const User        = require("../server/models/User.model");
-const Appointment = require("../server/models/Appointment.model");
-const Order       = require("../server/models/Order.model");
-const Category    = require("../server/models/Category.model");
-const Payment     = require("../server/models/Payment.model");
-const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
-const { createNotification } = require("../server/utils/notification.util");
+const { Doctor, User, Appointment, Order, Category, Payment } = require("../models");
+const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
+const { createNotification } = require("../utils/notification.util");
 
 const getAdminDoctors = async (req, res) => {
   try {

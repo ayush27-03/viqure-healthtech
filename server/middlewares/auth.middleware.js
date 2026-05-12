@@ -1,4 +1,4 @@
-const { verifyToken } = require("./jwt.util");
+const { verifyToken } = require("../utils/jwt.util");
 
 // Simple auth middleware: expects header `Authorization: Bearer <token>` where
 // token is the base64-encoded JSON produced by signToken().

@@ -1,6 +1,5 @@
-const Category     = require("../server/models/Category.model");
-const Notification = require("../server/models/Notification.model");
-const { sendSuccess, sendError } = require("../server/utils/response.util");
+const { Category, Notification } = require("../models");
+const { sendSuccess, sendError } = require("../utils/response.util");
 
 const getCategories = async (req, res) => {
   try {

@@ -1,5 +1,5 @@
-const Doctor = require("../server/models/Doctor.model");
-const { sendSuccess, sendError } = require("../server/utils/response.util");
+const { Doctor } = require("../models");
+const { sendSuccess, sendError } = require("../utils/response.util");
 
 const getDoctors = async (req, res) => {
   try {

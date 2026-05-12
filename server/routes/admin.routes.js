@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const adminCtrl = require('../../controllers/admin.controller');
-const auth = require('../utils/auth.middleware');
-const role = require('../utils/role.middleware');
+const adminCtrl = require('../controllers/admin.controller');
+const auth = require('../middlewares/auth.middleware');
+const role = require('../middlewares/role.middleware');
 
 router.get('/doctors', auth, role('admin'), adminCtrl.getAdminDoctors);
 router.patch('/doctors/:id/approve', auth, role('admin'), adminCtrl.approveDoctor);

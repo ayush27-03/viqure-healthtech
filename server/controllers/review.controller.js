@@ -1,9 +1,6 @@
 const mongoose = require("mongoose");
-const Review      = require("../server/models/Review.model");
-const Doctor      = require("../server/models/Doctor.model");
-const Product     = require("../server/models/Product.model");
-const Appointment = require("../server/models/Appointment.model");
-const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
+const { Review, Doctor, Product, Appointment } = require("../models");
+const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 
 const createReview = async (req, res) => {
   try {

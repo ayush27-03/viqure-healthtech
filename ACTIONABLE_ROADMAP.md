@@ -13,6 +13,7 @@ Create these folders inside `server`:
 - `server/routes` - created
 - `server/utils` - created
 - `server/middlewares` - created
+- `server/controllers` - created during cleanup
 
 Create these files first:
 
@@ -76,7 +77,7 @@ In `server/server.js`, add route mounting for:
 Do not start with frontend pages. Finish backend routes first.
 
 Status: routes mounted and controllers wired for core APIs (auth, admin, doctors, slots, appointments, products, cart, orders, reviews).
-Notes: auth helpers (`server/utils/jwt.util.js`, `server/utils/response.util.js`, `server/utils/auth.middleware.js`, `server/utils/role.middleware.js`) implemented minimally to allow local testing. Some controllers still require model/schema alignment (see 2.x tasks).
+Notes: auth helpers (`server/utils/jwt.util.js`, `server/utils/response.util.js`, `server/middlewares/auth.middleware.js`, `server/middlewares/role.middleware.js`) implemented minimally to allow local testing. Backend structure has been normalized so controllers also live under `server/controllers`. Some controllers still require model/schema alignment (see 2.x tasks).
 
 ## 2. Normalize your data model
 
@@ -564,3 +565,345 @@ If you want the shortest path forward, do exactly this next:
 6. test auth routes in Postman
 
 If auth is not fully working, do not move to cart/orders/analytics yet.
+
+## 20. Additional tasks added later
+
+These are the newer assignment items that need to be folded into the original execution plan.
+
+Do not treat them as separate workstreams. Attach them to the phases below.
+
+New task groups:
+
+1. larger seed data and fetch verification
+2. richer doctor earnings and appointment flow testing
+3. larger product catalog and inventory validation
+4. admin analytics and admin route audit
+5. production deployment and handover deliverables
+6. documentation deliverables
+7. final client-style walkthrough and bug triage
+
+## 21. Expanded seeding work
+
+Your old seed target is no longer enough.
+
+### 21.1 Doctor slots
+
+Seed:
+
+- 15 to 20 total slots
+- spread across at least 2 approved doctors
+- use multiple dates
+- use realistic 20 to 30 minute intervals
+
+What to verify:
+
+1. slot docs appear in Atlas
+2. `GET /api/slots/doctor/:doctorId` only returns unbooked future slots
+3. duplicate slot insertions are blocked by unique key or controller conflict handling
+
+### 21.2 Product seed expansion
+
+Seed:
+
+- 12 products minimum
+- 3 categories:
+  - medicines
+  - devices
+  - supplements
+
+For each product include:
+
+- name
+- slug
+- brand
+- category snapshot
+- base cost
+- discount factor
+- stock quantity
+- SKU
+- estimated delivery days
+- image URL placeholder if real image unavailable
+
+What to verify:
+
+1. all products appear in Atlas
+2. category-based filtering works
+3. inventory numbers are realistic and non-zero
+
+## 22. Doctor booking and earnings test expansion
+
+These are now explicit deliverables, not optional checks.
+
+### 22.1 Appointment acceptance and rejection flow
+
+In Postman test this exact sequence:
+
+1. patient books appointment
+2. doctor fetches doctor appointments
+3. doctor marks one appointment `CONFIRMED`
+4. doctor marks a different appointment `REJECTED`
+5. patient fetches patient appointments and sees updated statuses
+6. ensure unauthorized patient cannot change doctor-side statuses
+
+Failure cases to test:
+
+1. doctor tries updating another doctor's appointment
+2. patient tries setting `CONFIRMED`
+3. invalid status payload
+4. non-existent appointment id
+
+### 22.2 Doctor earnings pipeline
+
+Minimum output required:
+
+- total earnings
+- total completed paid consultations
+- average consultation fee
+- monthly grouped earnings
+
+Extra useful outputs:
+
+- most recent paid consultation date
+- current month earnings
+- previous month earnings
+
+Validation rules:
+
+- only `COMPLETED` appointments count
+- only `PAID` payment status counts
+- rejected, cancelled, and pending appointments must not count
+
+## 23. Cart, order, and inventory verification expansion
+
+### 23.1 Cart upsert validation
+
+Your task now explicitly mentions product snapshot embedding.
+
+What to verify in Postman and Atlas:
+
+1. adding a product first time creates a cart line item
+2. adding the same product again increments quantity instead of duplicating incorrectly
+3. `unitPrice` and `totalPrice` update correctly
+4. cart stores product reference plus enough product data to render the cart
+
+### 23.2 Order snapshot validation
+
+For `POST /api/orders`, confirm:
+
+1. order embeds product snapshot fields
+2. snapshot contains:
+   - name
+   - brand
+   - image
+   - MRP
+   - selling price
+3. order pricing block is filled correctly
+4. cart is deleted or emptied after order creation
+
+### 23.3 Inventory decrement validation
+
+After placing test orders:
+
+1. open Atlas
+2. compare product `inventory.stockQty` before and after order
+3. confirm decrement equals ordered quantity
+4. verify no decrement happens when order creation fails
+
+## 24. Admin analytics and audit expansion
+
+### 24.1 Platform-wide analytics pipeline
+
+Your analytics task is now broader.
+
+Required metrics:
+
+- total patients
+- total approved doctors
+- total pending doctors
+- total appointments
+- total completed appointments
+- total orders
+- consultation revenue
+- product revenue
+- combined platform revenue
+- monthly user growth
+
+Recommended breakdowns:
+
+- new patients per month
+- new doctors per month
+- orders by status
+- low-stock products
+
+### 24.2 Full admin route audit
+
+Create a dedicated Postman folder: `Admin Audit`
+
+Audit these routes one by one:
+
+1. doctor list
+2. doctor approval
+3. doctor rejection
+4. patient list
+5. analytics
+6. payments
+7. appointments list
+8. orders list
+9. category create
+10. category deactivate
+11. admin product create
+12. admin product update
+13. admin product deactivate
+
+For each route record:
+
+- request used
+- expected response
+- actual response
+- issues found
+
+## 25. Notifications, profiles, and support APIs
+
+These are now explicitly part of the task list.
+
+### 25.1 Profile APIs
+
+Build and test:
+
+- patient profile fetch
+- patient profile update
+- doctor profile fetch
+- doctor profile update
+
+Fields to support:
+
+- address
+- avatar if upload flow exists
+- doctor bio/description
+- city
+- experience
+- fees
+
+### 25.2 Notification APIs
+
+Build and test:
+
+- fetch notifications
+- mark one as read
+- mark all as read
+
+What to verify:
+
+1. appointment events create notifications
+2. doctor approval creates notifications
+3. order status updates create notifications
+4. unread count changes correctly
+
+## 26. Production and delivery tasks
+
+These are now end-stage deliverables and should happen only after local/Postman stability.
+
+### 26.1 Railway production setup
+
+Checklist:
+
+1. create Railway backend project
+2. add all required environment variables
+3. configure production MongoDB URI
+4. whitelist Railway access in Atlas if needed
+5. deploy backend
+6. verify `/api/health` on production
+
+### 26.2 CORS finalization
+
+Before final signoff:
+
+1. add production frontend URL to CORS allowlist
+2. keep localhost dev URL allowed for development
+3. retest auth and protected endpoints from production frontend
+
+### 26.3 Final live Postman pass
+
+Run the same high-value tests against the live server:
+
+1. login
+2. doctor approval
+3. slot creation
+4. booking
+5. cart add
+6. order placement
+7. analytics
+
+## 27. Final documentation and handover
+
+These are no longer optional polish items. They are assignment outputs.
+
+### 27.1 `DATABASE_SCHEMA.md`
+
+Write one section per collection:
+
+- purpose
+- key fields
+- references/relationships
+- important indexes
+- why the collection exists
+
+Collections to document at minimum:
+
+- users
+- admins
+- doctors
+- slots
+- appointments
+- categories
+- products
+- carts
+- orders
+- payments
+- reviews
+- notifications
+- medical records
+
+### 27.2 `API_DOCS.md`
+
+Document:
+
+- base URL
+- auth format
+- each endpoint
+- expected body
+- response examples
+- common errors
+
+### 27.3 Server README
+
+Include:
+
+- project purpose
+- setup steps
+- env vars
+- seed instructions
+- local run commands
+- deployment link
+
+### 27.4 Final walkthrough and bug triage
+
+During the 3-hour team walkthrough:
+
+1. act as the client
+2. follow the user journeys end to end
+3. note every bug live
+4. classify each bug:
+   - `P0`: blocks a core flow
+   - `P1`: serious but workaround exists
+   - `P2`: minor issue or polish gap
+
+### 27.5 Handover checklist
+
+Before closing the project:
+
+1. verify repo access ownership
+2. verify production credentials are stored securely
+3. hand over env variables through secure channel only
+4. export final Postman collection
+5. verify roadmap, docs, and bug list are committed

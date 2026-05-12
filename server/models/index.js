@@ -3,6 +3,7 @@ module.exports = {
   Admin:         require('./admins.model'),
   User:          require('./user.model'),
   Doctor:        require('./doctor.model'),
+  Slot:          require('./slot.model'),
   Appointment:   require('./appointments.model'),
   Consultation:  require('./consultations.model'),
   Delivery:      require('./deliveries.model'),

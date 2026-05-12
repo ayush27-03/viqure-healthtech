@@ -1,6 +1,5 @@
-const Cart    = require("../server/models/Cart.model");
-const Product = require("../server/models/Product.model");
-const { sendSuccess, sendError, sendCreated } = require("../server/utils/response.util");
+const { Cart, Product } = require("../models");
+const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 
 const addToCart = async (req, res) => {
   try {
