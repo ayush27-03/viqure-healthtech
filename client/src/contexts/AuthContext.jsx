@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
+import axiosInstance from '../services/axiosConfig'
 
 const AuthContext = createContext()
 
@@ -16,27 +17,44 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // Session restoration - runs when app loads
   useEffect(() => {
-    // Load user data from localStorage on app start
-    const storedToken = localStorage.getItem('token')
-    const storedUser = localStorage.getItem('user')
-    const storedRole = localStorage.getItem('role')
+    const restoreSession = async () => {
+      const storedToken = localStorage.getItem('token')
+      const storedUser = localStorage.getItem('user')
+      const storedRole = localStorage.getItem('role')
 
-    if (storedToken && storedUser && storedRole) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
-      setRole(storedRole)
+      if (storedToken && storedUser && storedRole) {
+        setToken(storedToken)
+        setUser(JSON.parse(storedUser))
+        setRole(storedRole)
+        
+        // Optional: Verify token with backend
+        try {
+          const response = await axiosInstance.get('/auth/verify')
+          if (response.data.valid) {
+            console.log('Session restored successfully')
+          } else {
+            // Token invalid, clear session
+            logout()
+          }
+        } catch (err) {
+          console.error('Session verification failed', err)
+          logout()
+        }
+      }
+      setLoading(false)
     }
-    setLoading(false)
+
+    restoreSession()
   }, [])
 
-  const login = (userData, token, userRole) => {
+  const login = (userData, authToken, userRole) => {
     setUser(userData)
-    setToken(token)
+    setToken(authToken)
     setRole(userRole)
     
-    // Store in localStorage
-    localStorage.setItem('token', token)
+    localStorage.setItem('token', authToken)
     localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('role', userRole)
   }
@@ -46,7 +64,6 @@ export const AuthProvider = ({ children }) => {
     setToken(null)
     setRole(null)
     
-    // Clear localStorage
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     localStorage.removeItem('role')
