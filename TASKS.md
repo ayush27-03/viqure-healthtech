@@ -1,9 +1,4 @@
 TASKLIST
-Breakdown:
-- `5` look implemented in code
-- `8` look partially done
-- `15` look still not done
-
 Important caveat: “implemented” here only means the code/path exists in the repo. I did not validate Atlas data, Postman flows, or Railway deployment in this pass.
 
 **Looks implemented in code**

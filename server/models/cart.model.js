@@ -20,6 +20,10 @@ const cartSchema = new Schema(
           type: String,
           trim: true,
         },
+        brand: {
+          type: String,
+          trim: true,
+        },
         image: {
           type: String,
           trim: true,
@@ -27,7 +31,17 @@ const cartSchema = new Schema(
         price: {
           type: Number,
           min: 0,
-          required: true,
+          default: 0,
+        },
+        unitPrice: {
+          type: Number,
+          min: 0,
+          default: 0,
+        },
+        totalPrice: {
+          type: Number,
+          min: 0,
+          default: 0,
         },
         quantity: {
           type: Number,
@@ -47,5 +61,16 @@ const cartSchema = new Schema(
     },
   }
 );
+
+cartSchema.pre('save', function syncTotals() {
+  this.items = this.items.map((item) => {
+    if (!item.unitPrice && item.price) item.unitPrice = item.price;
+    if (!item.price && item.unitPrice) item.price = item.unitPrice;
+    item.totalPrice = Number((item.unitPrice * item.quantity).toFixed(2));
+    return item;
+  });
+  this.totalAmount = Number(this.items.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2));
+  this.updatedAt = new Date();
+});
 
 module.exports = mongoose.model('Cart', cartSchema);

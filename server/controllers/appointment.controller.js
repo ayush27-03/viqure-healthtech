@@ -37,8 +37,10 @@ const createAppointment = async (req, res) => {
           patientId,
           doctorId,
           consultationFees:         doctor.consultationFees,
+          appointmentDate:          new Date(slot.date),
           appointmentStartDateTime: new Date(`${slot.date}T${slot.startTime}`),
           appointmentEndDateTime:   new Date(`${slot.date}T${slot.endTime}`),
+          slotTime:                 `${slot.startTime} - ${slot.endTime}`,
           consultationType:         "VIDEO",
           appointmentStatus:        "PENDING",
           paymentStatus:            "PENDING",
@@ -136,8 +138,8 @@ const getAppointmentById = async (req, res) => {
     const userId = req.user.id;
     const role   = req.user.role;
     if (
-      role === "patient" && appointment.patientId._id.toString() !== userId &&
-      role === "doctor"  && appointment.doctorId._id.toString() !== userId
+      (role === "patient" && appointment.patientId._id.toString() !== userId) ||
+      (role === "doctor"  && appointment.doctorId._id.toString() !== userId)
     ) {
       return sendError(res, "Not authorized", 403);
     }
@@ -226,6 +228,7 @@ const getDoctorEarnings = async (req, res) => {
           totalEarnings:      { $sum: "$consultationFees" },
           totalAppointments:  { $sum: 1 },
           avgFee:             { $avg: "$consultationFees" },
+          latestPaidConsultationAt: { $max: "$appointmentStartDateTime" },
         },
       },
     ]);
@@ -252,9 +255,42 @@ const getDoctorEarnings = async (req, res) => {
       { $limit: 12 },
     ]);
 
+    const currentMonthStart = new Date();
+    currentMonthStart.setDate(1);
+    currentMonthStart.setHours(0, 0, 0, 0);
+
+    const previousMonthStart = new Date(currentMonthStart);
+    previousMonthStart.setMonth(previousMonthStart.getMonth() - 1);
+
+    const currentMonthResult = await Appointment.aggregate([
+      {
+        $match: {
+          doctorId: new mongoose.Types.ObjectId(doctorId),
+          appointmentStatus: "COMPLETED",
+          paymentStatus: "PAID",
+          appointmentStartDateTime: { $gte: currentMonthStart },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$consultationFees" } } },
+    ]);
+
+    const previousMonthResult = await Appointment.aggregate([
+      {
+        $match: {
+          doctorId: new mongoose.Types.ObjectId(doctorId),
+          appointmentStatus: "COMPLETED",
+          paymentStatus: "PAID",
+          appointmentStartDateTime: { $gte: previousMonthStart, $lt: currentMonthStart },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$consultationFees" } } },
+    ]);
+
     return sendSuccess(res, {
-      summary: result[0] || { totalEarnings: 0, totalAppointments: 0, avgFee: 0 },
+      summary: result[0] || { totalEarnings: 0, totalAppointments: 0, avgFee: 0, latestPaidConsultationAt: null },
       monthly,
+      currentMonthEarnings: currentMonthResult[0]?.total || 0,
+      previousMonthEarnings: previousMonthResult[0]?.total || 0,
     });
   } catch (err) {
     console.error("getDoctorEarnings:", err);

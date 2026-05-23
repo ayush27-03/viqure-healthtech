@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { Doctor, User, Appointment, Order, Category, Payment } = require("../models");
+const { Doctor, User, Appointment, Order, Category, Payment, Product } = require("../models");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 const { createNotification } = require("../utils/notification.util");
 
@@ -13,7 +13,7 @@ const getAdminDoctors = async (req, res) => {
     const limitNum = Math.min(parseInt(limit), 100);
 
     const [doctors, total] = await Promise.all([
-      Doctor.find(filter).select("-password").skip((pageNum - 1) * limitNum).limit(limitNum).lean(),
+      Doctor.find(filter).select("-passwordHash").skip((pageNum - 1) * limitNum).limit(limitNum).lean(),
       Doctor.countDocuments(filter),
     ]);
 
@@ -29,7 +29,7 @@ const approveDoctor = async (req, res) => {
       req.params.id,
       { status: "approved", approvalStatus: "approved" },
       { new: true }
-    ).select("-password");
+    ).select("-passwordHash");
 
     if (!doctor) return sendError(res, "Doctor not found", 404);
 
@@ -49,12 +49,11 @@ const approveDoctor = async (req, res) => {
 const rejectDoctor = async (req, res) => {
   try {
     const { reason } = req.body;
-
     const doctor = await Doctor.findByIdAndUpdate(
       req.params.id,
       { status: "rejected", approvalStatus: reason || "Rejected by admin" },
       { new: true }
-    ).select("-password");
+    ).select("-passwordHash");
 
     if (!doctor) return sendError(res, "Doctor not found", 404);
 
@@ -81,7 +80,7 @@ const getAdminPatients = async (req, res) => {
     const limitNum = Math.min(parseInt(limit), 100);
 
     const [patients, total] = await Promise.all([
-      User.find(filter).select("-password").skip((pageNum - 1) * limitNum).limit(limitNum).lean(),
+      User.find(filter).select("-passwordHash").skip((pageNum - 1) * limitNum).limit(limitNum).lean(),
       User.countDocuments(filter),
     ]);
 
@@ -100,7 +99,9 @@ const getAnalytics = async (req, res) => {
       totalAppointments,
       completedAppointments,
       totalOrders,
-      revenueResult,
+      consultationRevenueResult,
+      productRevenueResult,
+      lowStockProducts,
     ] = await Promise.all([
       User.countDocuments({ role: "patient" }),
       Doctor.countDocuments({ status: "approved" }),
@@ -112,6 +113,15 @@ const getAnalytics = async (req, res) => {
         { $match: { appointmentStatus: "COMPLETED", paymentStatus: "PAID" } },
         { $group: { _id: null, total: { $sum: "$consultationFees" } } },
       ]),
+      Order.aggregate([
+        { $match: { status: { $in: ["confirmed", "shipped", "delivered"] } } },
+        { $group: { _id: null, total: { $sum: "$pricing.finalAmount" } } },
+      ]),
+      Product.find({ "inventory.stockQty": { $lte: 5 } })
+        .select("name inventory.stockQty inventory.lowStockThreshold")
+        .sort({ "inventory.stockQty": 1 })
+        .limit(10)
+        .lean(),
     ]);
 
     const sixMonthsAgo = new Date();
@@ -128,6 +138,26 @@ const getAnalytics = async (req, res) => {
       { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
 
+    const monthlyUserGrowth = await User.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            role: "$role",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1, "_id.role": 1 } },
+    ]);
+
+    const orderStatusBreakdown = await Order.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+
     return sendSuccess(res, {
       analytics: {
         totalPatients,
@@ -136,8 +166,13 @@ const getAnalytics = async (req, res) => {
         totalAppointments,
         completedAppointments,
         totalOrders,
-        totalRevenue: revenueResult[0]?.total || 0,
+        consultationRevenue: consultationRevenueResult[0]?.total || 0,
+        productRevenue: productRevenueResult[0]?.total || 0,
+        totalRevenue: (consultationRevenueResult[0]?.total || 0) + (productRevenueResult[0]?.total || 0),
         monthlyTrend,
+        monthlyUserGrowth,
+        orderStatusBreakdown,
+        lowStockProducts,
       },
     });
   } catch (err) {

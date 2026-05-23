@@ -1,11 +1,15 @@
 const mongoose = require("mongoose");
-const { Review, Doctor, Product, Appointment } = require("../models");
+const { Review, Doctor, Product, Appointment, Order } = require("../models");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 
 const createReview = async (req, res) => {
   try {
     const { targetEntity, targetId, rating, comment, appointmentId } = req.body;
-    const patientId = req.user.id;
+    const userId = req.user.id;
+
+    if (req.user.role !== "patient") {
+      return sendError(res, "Only patients can create reviews", 403);
+    }
 
     if (!["doctor", "product"].includes(targetEntity)) {
       return sendError(res, "targetEntity must be 'doctor' or 'product'", 400);
@@ -14,20 +18,37 @@ const createReview = async (req, res) => {
       return sendError(res, "Rating must be between 1 and 5", 400);
     }
 
-    const exists = await Review.findOne({ patientId, targetEntity, targetId });
+    const exists = await Review.findOne({ userId, targetEntity, targetId });
     if (exists) return sendError(res, "You have already reviewed this", 409);
 
-    if (targetEntity === "doctor" && appointmentId) {
+    let purchaseVerified = false;
+
+    if (targetEntity === "doctor") {
+      if (!appointmentId) {
+        return sendError(res, "appointmentId is required for doctor reviews", 400);
+      }
       const appt = await Appointment.findOne({
         _id: appointmentId,
-        patientId,
+        patientId: userId,
         doctorId: targetId,
         appointmentStatus: "COMPLETED",
       });
       if (!appt) return sendError(res, "Can only review after a completed appointment", 400);
+      purchaseVerified = true;
+    } else {
+      const deliveredOrder = await Order.findOne({
+        userId,
+        status: "delivered",
+        "items.productId": targetId,
+      }).lean();
+
+      if (!deliveredOrder) {
+        return sendError(res, "Can only review a product after a delivered purchase", 400);
+      }
+      purchaseVerified = true;
     }
 
-    const review = await Review.create({ patientId, targetEntity, targetId, rating, comment, appointmentId });
+    const review = await Review.create({ userId, targetEntity, targetId, rating, comment, appointmentId, purchaseVerified });
 
     if (targetEntity === "doctor") {
       await updateDoctorStats(targetId);
@@ -52,7 +73,7 @@ const getReviews = async (req, res) => {
 
     const [reviews, total] = await Promise.all([
       Review.find({ targetEntity, targetId })
-        .populate("patientId", "name avatar")
+        .populate("userId", "name avatar")
         .sort({ createdAt: -1 })
         .skip((pageNum - 1) * limitNum)
         .limit(limitNum)

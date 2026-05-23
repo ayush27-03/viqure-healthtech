@@ -4,7 +4,7 @@ const { sendSuccess, sendError } = require("../utils/response.util");
 
 const getDoctorProfile = async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.user.id).select("-password").lean();
+    const doctor = await Doctor.findById(req.user.id).select("-passwordHash").lean();
     if (!doctor) return sendError(res, "Doctor not found", 404);
     return sendSuccess(res, { doctor });
   } catch (err) {
@@ -34,7 +34,7 @@ const updateDoctorProfile = async (req, res) => {
       req.user.id,
       { $set: update },
       { new: true, runValidators: true }
-    ).select("-password");
+    ).select("-passwordHash");
 
     return sendSuccess(res, { doctor }, "Profile updated");
   } catch (err) {

@@ -4,7 +4,7 @@ const { sendSuccess, sendError } = require("../utils/response.util");
 
 const getPatientProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password").lean();
+    const user = await User.findById(req.user.id).select("-passwordHash").lean();
     if (!user) return sendError(res, "User not found", 404);
     return sendSuccess(res, { user });
   } catch (err) {
@@ -29,7 +29,7 @@ const updatePatientProfile = async (req, res) => {
     }
 
     const user = await User.findByIdAndUpdate(req.user.id, update, { new: true, runValidators: true })
-      .select("-password");
+      .select("-passwordHash");
 
     return sendSuccess(res, { user }, "Profile updated");
   } catch (err) {
@@ -53,7 +53,19 @@ const updateMedicalRecords = async (req, res) => {
 
     const record = await PatientMedicalRecord.findOneAndUpdate(
       { patientId: req.user.id },
-      { $set: { bloodGroup, height, weight } },
+      {
+        $set: {
+          bloodGroup,
+          height,
+          weight,
+          doctorId: req.body.doctorId || null,
+          appointmentId: req.body.appointmentId || null,
+          diagnosis: req.body.diagnosis || "General checkup",
+          symptoms: req.body.symptoms || [],
+          treatment: req.body.treatment || "",
+          followUpDate: req.body.followUpDate || null,
+        },
+      },
       { new: true, upsert: true, runValidators: true }
     );
 

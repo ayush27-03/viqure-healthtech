@@ -13,6 +13,7 @@ router.get('/analytics', auth, role('admin'), adminCtrl.getAnalytics);
 router.get('/payments', auth, role('admin'), adminCtrl.getAdminPayments);
 router.get('/appointments', auth, role('admin'), adminCtrl.getAdminAppointments);
 router.get('/orders', auth, role('admin'), adminCtrl.getAdminOrders);
+router.patch('/orders/:id/status', auth, role('admin'), require('../controllers/order.controller').updateOrderStatus);
 router.post('/categories', auth, role('admin'), adminCtrl.createCategory);
 router.patch('/categories/:id/deactivate', auth, role('admin'), adminCtrl.deleteCategory);
 
