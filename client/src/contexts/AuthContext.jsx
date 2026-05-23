@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
 
   // Session restoration - runs when app loads
   useEffect(() => {
-    const restoreSession = async () => {
+    const restoreSession = () => {
       const storedToken = localStorage.getItem('token')
       const storedUser = localStorage.getItem('user')
       const storedRole = localStorage.getItem('role')
@@ -28,20 +28,7 @@ export const AuthProvider = ({ children }) => {
         setToken(storedToken)
         setUser(JSON.parse(storedUser))
         setRole(storedRole)
-        
-        // Optional: Verify token with backend
-        try {
-          const response = await axiosInstance.get('/auth/verify')
-          if (response.data.valid) {
-            console.log('Session restored successfully')
-          } else {
-            // Token invalid, clear session
-            logout()
-          }
-        } catch (err) {
-          console.error('Session verification failed', err)
-          logout()
-        }
+        console.log('Session restored from localStorage')
       }
       setLoading(false)
     }

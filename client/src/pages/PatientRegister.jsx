@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
 
 function PatientRegister() {
@@ -16,8 +15,8 @@ function PatientRegister() {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const navigate = useNavigate()
-  const { login } = useAuth()
 
   const validateForm = () => {
     const newErrors = {}
@@ -36,7 +35,6 @@ function PatientRegister() {
       ...formData,
       [e.target.name]: e.target.value
     })
-    // Clear error for this field when user types
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: '' })
     }
@@ -48,9 +46,10 @@ function PatientRegister() {
     
     setLoading(true)
     setServerError('')
+    setSuccessMessage('')
     
     try {
-      const response = await axiosInstance.post('/auth/patient/register', {
+      await axiosInstance.post('/auth/patient/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -59,9 +58,24 @@ function PatientRegister() {
         gender: formData.gender
       })
       
-      const { user, token, role } = response.data
-      login(user, token, role)
-      navigate('/patient/dashboard')
+      setSuccessMessage('Registration successful! Please login to continue.')
+      
+      // Clear form
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+        dateOfBirth: '',
+        gender: ''
+      })
+      
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        navigate('/login')
+      }, 2000)
+      
     } catch (err) {
       setServerError(err.response?.data?.message || 'Registration failed')
     } finally {
@@ -80,14 +94,18 @@ function PatientRegister() {
             Create your account to book appointments
           </p>
           
-          <p className="text-center text-gray-600 mt-6">
-            Want to join as a doctor?
-
+          <p className="text-center text-gray-600 mb-4">
+            Want to join as a doctor?{' '}
             <Link to="/register/doctor" className="text-blue-600 hover:underline">
-            Register here
+              Register here
             </Link>
           </p>
 
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <p className="text-green-600 text-sm">{successMessage}</p>
+            </div>
+          )}
           
           {serverError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -96,6 +114,7 @@ function PatientRegister() {
           )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* ... rest of the form fields remain the same ... */}
             <div>
               <label className="block text-gray-700 font-medium mb-2">
                 Full Name *
@@ -109,9 +128,7 @@ function PatientRegister() {
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.name && (
-                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-              )}
+              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
             
             <div>
@@ -127,9 +144,7 @@ function PatientRegister() {
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
             
             <div>
@@ -142,13 +157,8 @@ function PatientRegister() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="10-digit mobile number"
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.phone ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {errors.phone && (
-                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-              )}
             </div>
             
             <div>
@@ -194,9 +204,7 @@ function PatientRegister() {
                   errors.password ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
             
             <div>
@@ -212,27 +220,15 @@ function PatientRegister() {
                   errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
-              )}
+              {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
             </div>
             
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Creating Account...
-                </span>
-              ) : (
-                'Register'
-              )}
+              {loading ? 'Creating Account...' : 'Register'}
             </button>
           </form>
           

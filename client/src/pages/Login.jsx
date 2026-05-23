@@ -28,8 +28,8 @@ function Login() {
       const { user, token, role } = response.data
       login(user, token, role)
       
-      if (role === 'patient') navigate('/patient/dashboard')
-      else if (role === 'doctor') navigate('/doctor/dashboard')
+      if (role === 'patient') navigate('/patient/profile')
+      else if (role === 'doctor') navigate('/doctor/profile')
       else if (role === 'admin') navigate('/admin/dashboard')
       else navigate('/')
       

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate  } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
 
 function Homepage() {
+  const navigate = useNavigate() 
+  const { isAuthenticated } = useAuth() 
   const [doctors, setDoctors] = useState([])
   const [filteredDoctors, setFilteredDoctors] = useState([])
   const [loading, setLoading] = useState(true)

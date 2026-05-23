@@ -1,103 +1,80 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { Link } from 'react-router-dom'
 import axiosInstance from '../services/axiosConfig'
 
 function DoctorProfile() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
-  const [doctor, setDoctor] = useState(null)
+  const { user } = useAuth()
+  const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedSlot, setSelectedSlot] = useState('')
-  const [availableSlots, setAvailableSlots] = useState([])
-  const [showBookingModal, setShowBookingModal] = useState(false)
-  const [bookingStep, setBookingStep] = useState('details')
-  const [bookingDetails, setBookingDetails] = useState({
-    reason: '',
-    symptoms: '',
-    type: 'clinic'
+  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState({
+    doctorName: '',
+    mobileNumber: '',
+    clinicAddress: '',
+    city: '', 
+    specializations: [],
+    yearsOfExperience: '',
+    consultationFees: '',
+    description: ''
   })
-  const [bookingError, setBookingError] = useState('')
-  
+  const [earnings, setEarnings] = useState({ total: 0, monthly: 0, pending: 0 })
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login')
-    }
-  }, [isAuthenticated, navigate])
+    fetchDoctorData()
+    fetchEarnings()
+  }, [])
 
-
-  useEffect(() => {
-    fetchDoctorDetails()
-  }, [id])
-
-  useEffect(() => {
-    if (selectedDate) {
-      fetchAvailableSlots()
-    }
-  }, [selectedDate])
-
-  const fetchDoctorDetails = async () => {
+  const fetchDoctorData = async () => {
     try {
-      const response = await axiosInstance.get(`/doctors/${id}`)
-      setDoctor(response.data)
+      const response = await axiosInstance.get(`/doctors/${user?.roleId}`)
+      const data = response.data
+      setFormData({
+        doctorName: data.doctorName || '',
+        mobileNumber: data.mobileNumber || '',
+        clinicAddress: data.clinicAddress || '',
+        city: data.city || '',
+        specializations: data.specializations || [],
+        yearsOfExperience: data.yearsOfExperience || '',
+        consultationFees: data.consultationFees || '',
+        description: data.description || ''
+      })
     } catch (error) {
-      console.error('Error fetching doctor:', error)
+      console.error('Error fetching doctor data:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchAvailableSlots = async () => {
+  const fetchEarnings = async () => {
     try {
-      const response = await axiosInstance.get(`/doctors/${id}/slots?date=${selectedDate}`)
-      setAvailableSlots(response.data)
+      const response = await axiosInstance.get(`/doctors/${user?.roleId}/earnings`)
+      setEarnings(response.data)
     } catch (error) {
-      console.error('Error fetching slots:', error)
+      console.error('Error fetching earnings:', error)
     }
   }
 
-  const handleBookAppointment = async () => {
-    if (!isAuthenticated) {
-      navigate('/login')
-      return
-    }
-    if (!selectedSlot) {
-      setBookingError('Please select a time slot')
-      return
-    }
-    setBookingStep('confirmation')
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
   }
 
-  const confirmBooking = async () => {
+  const handleSave = async () => {
+    setSaving(true)
     try {
-      await axiosInstance.post('/appointments', {
-        doctorId: id,
-        date: selectedDate,
-        slot: selectedSlot,
-        reason: bookingDetails.reason,
-        symptoms: bookingDetails.symptoms,
-        type: bookingDetails.type
-      })
-      setBookingStep('success')
-      setTimeout(() => {
-        navigate('/appointments')
-      }, 3000)
+      await axiosInstance.put(`/doctors/${user?.roleId}`, formData)
+      setIsEditing(false)
     } catch (error) {
-      setBookingError(error.response?.data?.message || 'Booking failed')
+      console.error('Error saving profile:', error)
+    } finally {
+      setSaving(false)
     }
   }
 
-  const getDatesForWeek = () => {
-    const dates = []
-    for (let i = 0; i < 7; i++) {
-      const date = new Date()
-      date.setDate(date.getDate() + i)
-      dates.push(date)
-    }
-    return dates
+  const handleCancel = () => {
+    setIsEditing(false)
+    fetchDoctorData()
   }
 
   if (loading) {
@@ -108,249 +85,191 @@ function DoctorProfile() {
     )
   }
 
-  if (!doctor) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Doctor not found</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Doctor Info */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-          <div className="md:flex">
-            <div className="md:w-1/3 bg-blue-600 p-8 flex flex-col items-center justify-center">
-              <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-4">
-                <svg className="w-16 h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-white text-center">{doctor.name}</h2>
-              <p className="text-blue-100 text-center">{doctor.specialization}</p>
-            </div>
-            
-            <div className="md:w-2/3 p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Experience</h3>
-                  <p className="text-gray-600">{doctor.experience || 'N/A'} years</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Consultation Fee</h3>
-                  <p className="text-2xl font-bold text-blue-600">${doctor.consultationFee}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Clinic</h3>
-                  <p className="text-gray-600">{doctor.clinicName || 'N/A'}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Location</h3>
-                  <p className="text-gray-600">{doctor.clinicAddress || 'N/A'}</p>
-                </div>
-              </div>
-              
-              {doctor.bio && (
-                <div className="mt-6">
-                  <h3 className="font-semibold text-gray-700 mb-2">About</h3>
-                  <p className="text-gray-600">{doctor.bio}</p>
-                </div>
-              )}
-              
-              <div className="mt-6 flex gap-4">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm text-gray-600">Verified License</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm text-gray-600">Available Today</span>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-100 py-12 px-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 to-green-800 px-8 py-6">
+            <h1 className="text-2xl font-bold text-white">Doctor Profile</h1>
+            <p className="text-green-100 mt-1">Manage your professional information</p>
           </div>
-        </div>
 
-        {/* Booking Section */}
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Book an Appointment</h2>
-          
-          {bookingError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-red-600">{bookingError}</p>
-            </div>
-          )}
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Date Selection */}
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-3">Select Date</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                {getDatesForWeek().map((date, index) => {
-                  const dateStr = date.toISOString().split('T')[0]
-                  const isSelected = selectedDate === dateStr
-                  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
-                  const dayNum = date.getDate()
-                  
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedDate(dateStr)}
-                      className={`p-3 rounded-lg text-center transition ${
-                        isSelected
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      <div className="text-sm font-medium">{dayName}</div>
-                      <div className="text-lg font-bold">{dayNum}</div>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-            
-            {/* Time Slots */}
-            {selectedDate && (
+          {/* Earnings Summary */}
+          <div className="bg-gray-50 px-8 py-4 border-b">
+            <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <h3 className="font-semibold text-gray-700 mb-3">Select Time</h3>
-                {availableSlots.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {availableSlots.map((slot, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedSlot(slot.time)}
-                        className={`p-2 rounded-lg text-center transition ${
-                          selectedSlot === slot.time
-                            ? 'bg-blue-600 text-white'
-                            : slot.available
-                            ? 'bg-green-100 text-gray-700 hover:bg-green-200'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        }`}
-                        disabled={!slot.available}
-                      >
-                        {slot.time}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">No available slots for this date</p>
-                )}
+                <p className="text-sm text-gray-500">Total Earnings</p>
+                <p className="text-xl font-bold text-green-600">₹{earnings.total}</p>
               </div>
-            )}
-          </div>
-          
-          {selectedSlot && (
-            <div className="mt-6">
-              <button
-                onClick={handleBookAppointment}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-              >
-                Proceed to Book
-              </button>
+              <div>
+                <p className="text-sm text-gray-500">This Month</p>
+                <p className="text-xl font-bold text-blue-600">₹{earnings.monthly}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Pending</p>
+                <p className="text-xl font-bold text-yellow-600">₹{earnings.pending}</p>
+              </div>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Booking Modal */}
-      {showBookingModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            {bookingStep === 'details' && (
-              <>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Booking Details</h2>
+          <div className="p-8">
+            {!isEditing ? (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center pb-4 border-b">
+                  <h2 className="text-xl font-semibold text-gray-800">Professional Information</h2>
+                  <div className="flex gap-3">
+                    <Link
+                      to="/doctor/settings"
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center gap-2"
+                    >
+                      ⚙️ Availability Settings
+                    </Link>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                    >
+                      ✏️ Edit Profile
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-sm text-gray-500">Doctor Name</label>
+                    <p className="text-lg font-medium text-gray-800">{formData.doctorName || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Email</label>
+                    <p className="text-lg font-medium text-gray-800">{user?.email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Mobile Number</label>
+                    <p className="text-lg font-medium text-gray-800">{formData.mobileNumber || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Specializations</label>
+                    <p className="text-lg font-medium text-gray-800">{formData.specializations?.join(', ') || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Years of Experience</label>
+                    <p className="text-lg font-medium text-gray-800">{formData.yearsOfExperience || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Consultation Fee</label>
+                    <p className="text-lg font-medium text-gray-800">₹{formData.consultationFees || 'Not provided'}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-sm text-gray-500">Clinic Address</label>
+                    <p className="text-lg font-medium text-gray-800">{formData.clinicAddress || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">City</label>
+                    <p className="text-lg font-medium text-gray-800">{formData.city || 'Not provided'}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-sm text-gray-500">Bio / Description</label>
+                    <p className="text-gray-800">{formData.description || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center pb-4 border-b">
+                  <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleCancel}
+                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-gray-700 mb-2">Reason for Visit</label>
-                    <textarea
-                      value={bookingDetails.reason}
-                      onChange={(e) => setBookingDetails({...bookingDetails, reason: e.target.value})}
-                      rows="3"
+                    <label className="block text-gray-700 font-medium mb-2">Doctor Name</label>
+                    <input
+                      type="text"
+                      name="doctorName"
+                      value={formData.doctorName}
+                      onChange={handleChange}
                       className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Please describe your symptoms or reason for visiting"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 mb-2">Appointment Type</label>
-                    <select
-                      value={bookingDetails.type}
-                      onChange={(e) => setBookingDetails({...bookingDetails, type: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg"
-                    >
-                      <option value="clinic">In-Clinic Visit</option>
-                      <option value="video">Video Consultation</option>
-                    </select>
+                    <label className="block text-gray-700 font-medium mb-2">Mobile Number</label>
+                    <input
+                      type="tel"
+                      name="mobileNumber"
+                      value={formData.mobileNumber}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                  <button
-                    onClick={() => setBookingStep('confirmation')}
-                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-                  >
-                    Continue
-                  </button>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Clinic Address</label>
+                    <textarea
+                      name="clinicAddress"
+                      value={formData.clinicAddress}
+                      onChange={handleChange}
+                      rows="2"
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">City</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Years of Experience</label>
+                    <input
+                      type="number"
+                      name="yearsOfExperience"
+                      value={formData.yearsOfExperience}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Consultation Fee (₹)</label>
+                    <input
+                      type="number"
+                      name="consultationFees"
+                      value={formData.consultationFees}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Bio / Description</label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows="4"
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
-              </>
-            )}
-            
-            {bookingStep === 'confirmation' && (
-              <>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Confirm Booking</h2>
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Doctor:</span>
-                    <span className="font-semibold">{doctor.name}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Date:</span>
-                    <span className="font-semibold">{new Date(selectedDate).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Time:</span>
-                    <span className="font-semibold">{selectedSlot}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Fee:</span>
-                    <span className="font-semibold text-blue-600">${doctor.consultationFee}</span>
-                  </div>
-                </div>
-                <button
-                  onClick={confirmBooking}
-                  className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 mb-2"
-                >
-                  Confirm & Pay
-                </button>
-                <button
-                  onClick={() => setBookingStep('details')}
-                  className="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  Back
-                </button>
-              </>
-            )}
-            
-            {bookingStep === 'success' && (
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Booking Confirmed!</h2>
-                <p className="text-gray-600">Your appointment has been booked successfully.</p>
-                <p className="text-gray-500 text-sm mt-2">Redirecting to appointments...</p>
               </div>
             )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

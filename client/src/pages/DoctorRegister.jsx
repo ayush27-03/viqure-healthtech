@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
 
 function DoctorRegister() {
@@ -21,8 +20,8 @@ function DoctorRegister() {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const navigate = useNavigate()
-  const { login } = useAuth()
 
   const specializations = [
     'Cardiologist',
@@ -68,9 +67,10 @@ function DoctorRegister() {
     
     setLoading(true)
     setServerError('')
+    setSuccessMessage('')
     
     try {
-      const response = await axiosInstance.post('/auth/doctor/register', {
+      await axiosInstance.post('/auth/doctor/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -84,9 +84,29 @@ function DoctorRegister() {
         bio: formData.bio
       })
       
-      const { user, token, role } = response.data
-      login(user, token, role)
-      navigate('/doctor/dashboard')
+      setSuccessMessage('Registration submitted for admin approval! You will be notified once approved.')
+      
+      // Clear form
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+        specialization: '',
+        licenseNumber: '',
+        experience: '',
+        clinicName: '',
+        clinicAddress: '',
+        consultationFee: '',
+        bio: ''
+      })
+      
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        navigate('/login')
+      }, 3000)
+      
     } catch (err) {
       setServerError(err.response?.data?.message || 'Registration failed')
     } finally {
@@ -105,6 +125,19 @@ function DoctorRegister() {
             Join our platform and start helping patients
           </p>
           
+          <p className="text-center text-gray-600 mb-4">
+            Want to register as a patient?{' '}
+            <Link to="/register/patient" className="text-blue-600 hover:underline">
+              Register here
+            </Link>
+          </p>
+
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <p className="text-green-600 text-sm">{successMessage}</p>
+            </div>
+          )}
+          
           {serverError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
               <p className="text-red-600 text-sm">{serverError}</p>
@@ -112,6 +145,7 @@ function DoctorRegister() {
           )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Form fields remain the same as your existing code */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
@@ -146,6 +180,7 @@ function DoctorRegister() {
               </div>
             </div>
             
+            {/* ... rest of your form fields remain exactly the same ... */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
@@ -309,7 +344,7 @@ function DoctorRegister() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
             >
-              {loading ? 'Registering...' : 'Register as Doctor'}
+              {loading ? 'Submitting for Approval...' : 'Register as Doctor'}
             </button>
           </form>
           
@@ -317,13 +352,6 @@ function DoctorRegister() {
             Already have an account?{' '}
             <Link to="/login" className="text-blue-600 hover:underline">
               Login here
-            </Link>
-          </p>
-          
-          <p className="text-center text-gray-600 mt-4">
-            Want to register as a patient?{' '}
-            <Link to="/register/patient" className="text-blue-600 hover:underline">
-              Register here
             </Link>
           </p>
         </div>
