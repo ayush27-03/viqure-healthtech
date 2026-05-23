@@ -53,23 +53,18 @@ const adminSchema = new Schema(
   }
 );
 
-adminSchema.pre('save', async function (next) {
+adminSchema.pre('save', async function assignAdminId() {
   if (!this.isNew) {
-    return next();
+    return;
   }
 
-  try {
-    const counter = await Counter.findByIdAndUpdate(
-      'adminId',
-      { $inc: { seq: 1 } },
-      { new: true, upsert: true }
-    );
+  const counter = await Counter.findByIdAndUpdate(
+    'adminId',
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
 
-    this.adminId = counter.seq;
-    next();
-  } catch (error) {
-    next(error);
-  }
+  this.adminId = counter.seq;
 });
 
 module.exports = mongoose.model('Admin', adminSchema);

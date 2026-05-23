@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { Order, Cart, Product } = require("../models");
+const { Order, Cart, Product, Delivery } = require("../models");
 const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
 const { createNotification } = require("../utils/notification.util");
 
@@ -61,6 +61,11 @@ const createOrder = async (req, res) => {
     const deliveryCharge = subtotal >= 500 ? 0 : 49;
     const finalAmount    = subtotal + deliveryCharge;
 
+    const estimatedMaxDeliveryDays = cart.items.reduce((maxDays, item) => {
+      const product = item.productId;
+      return Math.max(maxDays, product?.estimatedDeliveryDays || 0);
+    }, 0);
+
     const order = await Order.create(
       [
         {
@@ -74,6 +79,25 @@ const createOrder = async (req, res) => {
       { session }
     );
 
+    const estimatedDeliveryDate = new Date();
+    estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + Math.max(estimatedMaxDeliveryDays, 2));
+
+    const delivery = await Delivery.create(
+      [
+        {
+          orderId: order[0]._id,
+          userId,
+          deliveryAddress: shippingAddress,
+          deliveryCharge,
+          estimatedDeliveryDate,
+        },
+      ],
+      { session }
+    );
+
+    order[0].deliveryId = delivery[0]._id;
+    await order[0].save({ session });
+
     await Cart.deleteOne({ userId }, { session });
 
     await session.commitTransaction();
@@ -85,7 +109,7 @@ const createOrder = async (req, res) => {
       type: "order", refId: order[0]._id, refModel: "Order",
     });
 
-    return sendCreated(res, { order: order[0] }, "Order placed successfully");
+    return sendCreated(res, { order: order[0], delivery: delivery[0] }, "Order placed successfully");
   } catch (err) {
     await session.abortTransaction();
     console.error("createOrder:", err);
@@ -125,6 +149,23 @@ const updateOrderStatus = async (req, res) => {
       { new: true }
     );
     if (!order) return sendError(res, "Order not found", 404);
+
+    const deliveryStatusMap = {
+      pending: "pending",
+      confirmed: "dispatched",
+      shipped: "out_for_delivery",
+      delivered: "delivered",
+      returned: "returned",
+      cancelled: "failed",
+    };
+
+    if (order.deliveryId) {
+      await Delivery.findByIdAndUpdate(order.deliveryId, {
+        status: deliveryStatusMap[status] || "pending",
+        actualDeliveryDate: status === "delivered" ? new Date() : null,
+        verificationStatus: status === "delivered" ? "verified" : "unverified",
+      });
+    }
 
     createNotification({
       userId: order.userId, userModel: "User",

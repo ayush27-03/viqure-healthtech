@@ -9,7 +9,7 @@ const getDoctors = async (req, res) => {
 
     const [doctors, total] = await Promise.all([
       Doctor.find({ status: "approved" })
-        .select("-password -documents")
+        .select("-passwordHash -documents")
         .skip(skip)
         .limit(limit)
         .lean(),
@@ -53,7 +53,7 @@ const searchDoctors = async (req, res) => {
 
     const [doctors, total] = await Promise.all([
       Doctor.find(filter)
-        .select("-password -documents")
+        .select("-passwordHash -documents")
         .sort(sortObj)
         .skip(skip)
         .limit(limitNum)
@@ -74,7 +74,7 @@ const searchDoctors = async (req, res) => {
 const getDoctorById = async (req, res) => {
   try {
     const doctor = await Doctor.findOne({ _id: req.params.id, status: "approved" })
-      .select("-password -documents")
+      .select("-passwordHash -documents")
       .lean();
 
     if (!doctor) return sendError(res, "Doctor not found", 404);

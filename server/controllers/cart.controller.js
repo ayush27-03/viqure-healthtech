@@ -5,13 +5,10 @@ const addToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
     const userId = req.user.id;
+    const quantityNum = Math.max(parseInt(quantity, 10) || 1, 1);
 
     const product = await Product.findById(productId);
     if (!product || !product.isAvailable) return sendError(res, "Product not available", 404);
-
-    if (product.inventory.stockQty < quantity) {
-      return sendError(res, `Only ${product.inventory.stockQty} in stock`, 400);
-    }
 
     const sellingPrice = parseFloat(
       (product.baseCost * (1 - (product.discountFactor || 0))).toFixed(2)
@@ -22,17 +19,47 @@ const addToCart = async (req, res) => {
     if (!cart) {
       cart = await Cart.create({
         userId,
-        items: [{ productId, quantity, unitPrice: sellingPrice, totalPrice: sellingPrice * quantity }],
+        items: [{
+          productId,
+          name: product.name,
+          brand: product.brand,
+          image: product.images?.[0] || "",
+          price: sellingPrice,
+          unitPrice: sellingPrice,
+          quantity: quantityNum,
+          totalPrice: sellingPrice * quantityNum,
+        }],
       });
       return sendCreated(res, { cart }, "Item added to cart");
     }
 
     const itemIdx = cart.items.findIndex((i) => i.productId.toString() === productId);
     if (itemIdx > -1) {
-      cart.items[itemIdx].quantity   += quantity;
+      const nextQuantity = cart.items[itemIdx].quantity + quantityNum;
+      if (product.inventory.stockQty < nextQuantity) {
+        return sendError(res, `Only ${product.inventory.stockQty} in stock`, 400);
+      }
+      cart.items[itemIdx].name = product.name;
+      cart.items[itemIdx].brand = product.brand;
+      cart.items[itemIdx].image = product.images?.[0] || "";
+      cart.items[itemIdx].price = sellingPrice;
+      cart.items[itemIdx].unitPrice = sellingPrice;
+      cart.items[itemIdx].quantity = nextQuantity;
       cart.items[itemIdx].totalPrice  = cart.items[itemIdx].quantity * sellingPrice;
     } else {
-      cart.items.push({ productId, quantity, unitPrice: sellingPrice, totalPrice: sellingPrice * quantity });
+      if (product.inventory.stockQty < quantityNum) {
+        return sendError(res, `Only ${product.inventory.stockQty} in stock`, 400);
+      }
+      cart.items.push({
+        productId,
+        name: product.name,
+        brand: product.brand,
+        image: product.images?.[0] || "",
+        price: sellingPrice,
+        unitPrice: sellingPrice,
+        quantity: quantityNum,
+        totalPrice: sellingPrice * quantityNum,
+      });
     }
 
     await cart.save();

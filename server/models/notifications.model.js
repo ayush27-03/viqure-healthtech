@@ -13,10 +13,13 @@ const notificationSchema = new Schema(
     type: {
       type: String,
       enum: [
+        'appointment',
         'appointment_booked',
         'appointment_confirmed',
         'appointment_rejected',
+        'doctor_approval',
         'doctor_approved',
+        'order',
         'order_placed',
         'order_shipped',
         'order_delivered',
@@ -24,8 +27,17 @@ const notificationSchema = new Schema(
       ],
       required: true,
     },
+    userModel: {
+      type: String,
+      enum: ['User', 'Doctor', 'Admin'],
+      default: 'User',
+    },
     refId: {
       type: Schema.Types.ObjectId,
+      default: null,
+    },
+    refModel: {
+      type: String,
       default: null,
     },
     isRead:    { type: Boolean, default: false },

@@ -1,7 +1,5 @@
 const { verifyToken } = require("../utils/jwt.util");
 
-// Simple auth middleware: expects header `Authorization: Bearer <token>` where
-// token is the base64-encoded JSON produced by signToken().
 module.exports = function authMiddleware(req, res, next) {
   const auth = req.headers.authorization || req.headers.Authorization;
   if (!auth) return res.status(401).json({ success: false, message: "Missing Authorization header" });

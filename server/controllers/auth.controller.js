@@ -45,14 +45,15 @@ const registerDoctor = async (req, res) => {
   try {
     const {
       doctorName, email, password, mobileNumber, dob, gender,
-      city, description, licenseNo, yearsOfExperience,
-      consultationFees, specializations,
+      city, description, licenseNo, licenseNumber, yearsOfExperience,
+      consultationFees, specializations, qualifications,
     } = req.body;
+    const normalizedLicense = licenseNumber || licenseNo;
 
     const exists = await Doctor.findOne({ email: email.toLowerCase() });
     if (exists) return sendError(res, "Email already registered", 409);
 
-    const licExists = await Doctor.findOne({ licenseNo });
+    const licExists = await Doctor.findOne({ licenseNumber: normalizedLicense });
     if (licExists) return sendError(res, "License number already registered", 409);
 
     const hashed = await bcrypt.hash(password, 12);
@@ -66,9 +67,10 @@ const registerDoctor = async (req, res) => {
       gender,
       city,
       description,
-      licenseNo,
+      licenseNumber: normalizedLicense,
       yearsOfExperience,
       consultationFees,
+      qualifications: qualifications || [],
       specializations: Array.isArray(specializations) ? specializations : [specializations],
       status: "pending",
     });
@@ -121,6 +123,7 @@ const login = async (req, res) => {
     }
 
     const token = signToken({ id: account._id, role: tokenRole, email: account.email });
+    await account.updateOne({ lastLogin: new Date() }).catch(() => null);
 
     const userData =
       role === "patient"
