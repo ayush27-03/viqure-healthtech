@@ -81,7 +81,10 @@ async function seedDb() {
     const product1 = await Product.create({
       name: "Paracetamol 500mg",
       categoryId: category1._id, // Linking!
-      pricing: { finalPrice: 50 },
+      description: 'Analgesic',
+      images: ['https://example.com/images/paracetamol-500.jpg'],
+      pricing: { pricing: { mrp: 50, purchasePrice: 30, basePrice: 50, discountPercentage: 0, taxRate: 0, finalPrice: 50 } },
+      inventory: { inventory: { sku: `SKU-BULK-1-${Date.now()}`, supplier: 'SeedSupplier', warehouse: 'WH-1', stockCount: 100, reorderLevel: 10, batches: [{ batchNumber: 'B1', expiryDate: new Date(Date.now()+365*24*60*60*1000), quantity: 100 }] } },
     });
     console.log("Products seeded...");
 
@@ -151,18 +154,28 @@ async function bulkSeedDb() {
       {
         name: "Paracetamol 500mg",
         categoryId: createdCategories[0]._id, // Links to Pharmaceuticals
-        pricing: { finalPrice: 50, basePrice: 55 },
+        description: 'Analgesic',
+        images: ['https://example.com/images/paracetamol-500.jpg'],
+        pricing: { pricing: { mrp: 55, purchasePrice: 30, basePrice: 55, discountPercentage: 0, taxRate: 0, finalPrice: 50 } },
+        inventory: { inventory: { sku: `SKU-BULK-${Date.now()}-1`, supplier: 'SeedSupplier', warehouse: 'WH-BULK-1', stockCount: 200, reorderLevel: 10 } },
       },
       {
         name: "Vitamin C Tablets",
         categoryId: createdCategories[1]._id, // Links to Supplements
-        pricing: { finalPrice: 250, basePrice: 300 },
+        description: 'Vitamin supplement',
+        images: ['https://example.com/images/vitamin-c.jpg'],
+        pricing: { pricing: { mrp: 300, purchasePrice: 150, basePrice: 300, discountPercentage: 0, taxRate: 0, finalPrice: 250 } },
+        inventory: { inventory: { sku: `SKU-BULK-${Date.now()}-2`, supplier: 'SeedSupplier', warehouse: 'WH-BULK-2', stockCount: 150, reorderLevel: 10 } },
       },
       {
         name: "Digital Thermometer",
         categoryId: createdCategories[2]._id, // Links to Devices
-        pricing: { finalPrice: 450, basePrice: 500 },
+        description: 'Handheld digital thermometer',
+        images: ['https://example.com/images/thermometer.jpg'],
+        pricing: { pricing: { mrp: 500, purchasePrice: 300, basePrice: 500, discountPercentage: 0, taxRate: 0, finalPrice: 450 } },
+        inventory: { inventory: { sku: `SKU-BULK-${Date.now()}-3`, supplier: 'SeedSupplier', warehouse: 'WH-BULK-3', stockCount: 80, reorderLevel: 5 } },
       },
+
     ];
     await Product.insertMany(productsData);
     console.log("Products seeded...");
@@ -191,13 +204,8 @@ async function seedOneDocumentEach() {
       categoryId: category._id,
       description: "Analgesic for fever and pain",
       images: ["https://example.com/images/paracetamol-500.jpg"],
-      pricing: {
-        basePrice: 55,
-        discountPercentage: 10,
-        taxRate: 18,
-        finalPrice: 49.5,
-      },
-      inventory: { warehouse: "WH-SEED-1", stockCount: 500 },
+      pricing: { pricing: { mrp: 55, purchasePrice: 30, basePrice: 55, discountPercentage: 10, taxRate: 18, finalPrice: 49.5 } },
+      inventory: { inventory: { sku: `SKU-SEED-${Date.now()}`, supplier: 'SeedSupplier', warehouse: "WH-SEED-1", stockCount: 500, reorderLevel: 10, batches: [{ batchNumber: 'B-SEED-1', expiryDate: new Date(Date.now()+365*24*60*60*1000), quantity: 500 }] } },
       specifications: {
         form: "tablet",
         strength: "500mg",
