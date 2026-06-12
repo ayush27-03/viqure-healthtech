@@ -114,7 +114,6 @@ const userSchema = new Schema(
 
 // Indexes: keep unique constraints and common filters fast
 userSchema.index({ phone: 1 }, { unique: true, sparse: true });
-userSchema.index({ "detailsOfHealthCareProfessional.medicalLicense": 1 }, { unique: true, sparse: true });
 userSchema.index({ role: 1 });
 
 module.exports = mongoose.model("User", userSchema);
