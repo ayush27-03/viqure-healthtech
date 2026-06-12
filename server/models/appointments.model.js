@@ -1,6 +1,164 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
+const DocumentSchema = new Schema(
+  {
+    uploadedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    documentURL: {
+      type: String,
+      trim: true,
+    },
+    documentType: {
+      type: String,
+      trim: true,
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
+const PaymentDetailsSchema = new Schema(
+  {
+    paymentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Payment',
+    },
+    status: {
+      type: String,
+      enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'],
+      default: 'PENDING',
+    },
+    currency: {
+      type: String,
+      default: 'INR',
+    },
+    paidAt: {
+      type: Date,
+    },
+  },
+  { _id: false }
+);
+
+const CancellationSchema = new Schema(
+  {
+    cancelledBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    cancelReason: {
+      type: String,
+      trim: true,
+    },
+    cancelledAt: {
+      type: Date,
+    },
+  },
+  { _id: false }
+);
+
+const MeetingSchema = new Schema(
+  {
+    meetingId: {
+      type: String,
+      trim: true,
+    },
+    meetingLink: {
+      type: String,
+      trim: true,
+    },
+    consultationType: {
+      type: String,
+      enum: ['VIDEO', 'PHONE', 'IN_PERSON'],
+      default: 'VIDEO',
+    },
+  },
+  { _id: false }
+);
+
+const FinancialsSchema = new Schema(
+  {
+    consultationFee: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    taxAmount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    totalAmount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    refundableAmount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+  },
+  { _id: false }
+);
+
+const RemarksSchema = new Schema(
+  {
+    text: {
+      type: String,
+      maxlength: 2000,
+    },
+    mode: {
+      type: String,
+      enum: ['File', 'Text'],
+    },
+  },
+  { _id: false }
+);
+
+const FeedbackSchema = new Schema(
+  {
+    rating: {
+      type: Number,
+      min: 0,
+      max: 5,
+    },
+    comment: {
+      type: String,
+      maxlength: 1000,
+    },
+  },
+  { _id: false }
+);
+
+const ReportedIssueSchema = new Schema(
+  {
+    issue: {
+      type: String,
+      trim: true,
+    },
+    reportedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    status: {
+      type: String,
+      enum: ['OPEN', 'RESOLVED'],
+      default: 'OPEN',
+    },
+    resolution: {
+      type: String,
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 const appointmentSchema = new Schema(
   {
     patientId: {
@@ -10,54 +168,31 @@ const appointmentSchema = new Schema(
     },
     doctorId: {
       type: Schema.Types.ObjectId,
-      ref: 'Doctor',
+      ref: 'User',
       required: true,
     },
-    consultationId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Consultation',
+    schedule: {
+      scheduledAt: {
+        type: Date,
+        required: true,
+      },
+      slotTime: {
+        type: String,
+      },
+      startDateTime: {
+        type: Date,
+      },
+      endDateTime: {
+        type: Date,
+      },
     },
-    paymentId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Payment',
-    },
-    paymentStatus: {
-      type: String,
-      enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'],
-      default: 'PENDING',
-    },
-    consultationFees: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-    appointmentDate: {
-      type: Date,
-      required: true,
-    },
-    appointmentStartDateTime: {
-      type: Date,
-    },
-    appointmentEndDateTime: {
-      type: Date,
-    },
-    slotTime: {
-      type: String,
-      required: true,
-    },
-    consultationType: {
-      type: String,
-      enum: ['VIDEO'],
-      default: 'VIDEO',
-    },
+    meeting: { type: MeetingSchema, default: {} },
+    financials: { type: FinancialsSchema, default: {} },
+    paymentDetails: { type: PaymentDetailsSchema, default: {} },
     appointmentStatus: {
       type: String,
-      enum: ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'REJECTED'],
-      default: 'PENDING',
-    },
-    hospitalId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Hospital',
+      enum: ['BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'REJECTED'],
+      default: 'BOOKED',
     },
     reason: {
       type: String,
@@ -67,62 +202,16 @@ const appointmentSchema = new Schema(
       type: String,
       maxlength: 1000,
     },
-    cancelledBy: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
+    cancellation: { type: CancellationSchema, default: null },
+    documentsShared: {
+      type: [DocumentSchema],
+      default: [],
     },
-    cancelReason: {
-      type: String,
-    },
-    meetingId: {
-      type: String,
-      trim: true,
-    },
-    documentsShared: [
-      {
-        uploadedBy: {
-          type: Schema.Types.ObjectId,
-          ref: 'User',
-        },
-        documentURL: {
-          type: String,
-          trim: true,
-        },
-        documentType: {
-          type: String,
-          trim: true,
-        },
-        uploadedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
-    doctorRemarks: {
-      type: String,
-      maxlength: 2000,
-    },
-    doctorRemarksMode: {
-      type: String,
-      enum: ['File', 'Text'],
-    },
-    feedback: {
-      rating: {
-        type: Number,
-        min: 0,
-        max: 5,
-      },
-      comment: {
-        type: String,
-        maxlength: 1000,
-      },
-    },
+    doctorRemarks: { type: RemarksSchema, default: {} },
+    feedback: { type: FeedbackSchema, default: {} },
+    reportedIssue: { type: ReportedIssueSchema, default: null },
   },
   { timestamps: true }
 );
-
-appointmentSchema.index({ patientId: 1, appointmentDate: -1 });
-appointmentSchema.index({ doctorId: 1, appointmentDate: 1 });
-appointmentSchema.index({ appointmentStatus: 1 });
 
 module.exports = mongoose.model('Appointment', appointmentSchema);

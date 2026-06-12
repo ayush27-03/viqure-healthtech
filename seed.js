@@ -1,79 +1,70 @@
-const mongoose = require("mongoose");
-require("dotenv").config();
-const bcrypt = require("bcryptjs");
 
-const { Doctor } = require("./server/models");
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log("Connected to MongoDB");
+// Imports finalized models
+const { User, Category, Product } = require('./server/models/index');
 
-  const doctorHash = await bcrypt.hash("Doctor@123", 10);
-  await Doctor.deleteMany({});
+/**
+ * $ First connection to the cluster.
+ * $ Deletion of old seed daata if present.
+ * @ Direct Seeding of independent models for collection and document development
+ * @ Direct Seeding of dependent models for collection and document development
+ * * Each above step is executed as a whole within the try catch block inside an async function
+ * * Reason for using async-await is because database operations with mongoose are asynchronous.
+ * # Specifically making the code easier to read and write and execute them in correct order with ease of error handling. Any promise  rejection is captured by catch block. Race conditions, duplicate and partial seed is avoided.
+ */
 
-  await Doctor.insertMany([
-    {
-      doctorName: "Dr. Rakesh Sharma",
-      email: "rakesh.sharma@viqure.com",
-      passwordHash: doctorHash,
-      mobileNumber: "+919100000001",
-      gender: "male",
-      dob: new Date("1983-04-12"),
-      licenseNumber: "MCI-NOIDA-001",
-      specializations: ["Cardiology"],
-      qualifications: ["MBBS", "MD Cardiology"],
-      yearsOfExperience: 10,
-      consultationFees: 800,
-      city: "Noida",
-      description: "Cardiologist focused on preventive heart care and long-term lifestyle management.",
-      status: "approved",
-      approvalStatus: "approved",
-      isAvailable: true,
-    },
-    {
-      doctorName: "Dr. Anjali Mehta",
-      email: "anjali.mehta@viqure.com",
-      passwordHash: doctorHash,
-      mobileNumber: "+919100000002",
-      gender: "female",
-      dob: new Date("1988-09-22"),
-      licenseNumber: "MCI-DELHI-002",
-      specializations: ["Dermatology"],
-      qualifications: ["MBBS", "MD Dermatology"],
-      yearsOfExperience: 7,
-      consultationFees: 650,
-      city: "Delhi",
-      description: "Dermatologist handling acne, pigmentation, and long-term skin routines.",
-      status: "approved",
-      approvalStatus: "approved",
-      isAvailable: true,
-    },
-    {
-      doctorName: "Dr. Kunal Bansal",
-      email: "kunal.bansal@viqure.com",
-      passwordHash: doctorHash,
-      mobileNumber: "+919100000003",
-      gender: "male",
-      dob: new Date("1990-01-18"),
-      licenseNumber: "MCI-GGN-003",
-      specializations: ["Pediatrics"],
-      qualifications: ["MBBS", "DCH"],
-      yearsOfExperience: 5,
-      consultationFees: 550,
-      city: "Gurugram",
-      description: "Pediatric specialist for routine child consultations and follow-up care.",
-      status: "pending",
-      approvalStatus: "pending",
-      isAvailable: true,
-    },
-  ]);
+async function seedDatabase() {
+  try {
+    // 1. Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("Connected to MongoDB...");
 
-  console.log("Seed complete. Only doctors seeded.");
-  await mongoose.disconnect();
+    // 2. SEEDING INDEPENDENT ENTITIES (Categories)
+    const category1 = await Category.create({
+      name: "Pharmaceuticals",
+      description: "Prescription Medicines"
+    });
+    console.log("Categories seeded...");
+
+    // 3. SEED USERS
+    const patient = await User.create({
+      email: "patient@test.com",
+      passwordHash: "hashed_pass_123", // normally you'd use bcrypt here
+      role: "CUSTOMER",
+      profile: { firstName: "John", lastName: "Doe" }
+    });
+
+    const doctor = await User.create({
+      email: "dr.smith@test.com",
+      passwordHash: "hashed_pass_456",
+      role: "DOCTOR",
+      detailsOfHealthCareProfessional: {
+        medicalLicense: "MED-9999",
+        approvalStatus: "APPROVED",
+        consultationFee: 500
+      }
+    });
+    console.log("Users seeded...");
+
+    // 5. SEED PRODUCTS (Using the Category ID from Step 3)
+    const product1 = await Product.create({
+      name: "Paracetamol 500mg",
+      categoryId: category1._id, // Linking!
+      pricing: { finalPrice: 50 }
+    });
+    console.log("Products seeded...");
+
+    // 6. Disconnect when finished
+    console.log("Seeding complete!");
+    process.exit(0);
+
+  } catch (error) {
+    console.error("Error during seeding:", error);
+    process.exit(1);
+  }
 }
 
-seed().catch(async (error) => {
-  console.error("Seed failed:", error);
-  await mongoose.disconnect().catch(() => null);
-  process.exit(1);
-});
+// Execute the function
+seedDatabase();

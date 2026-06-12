@@ -8,79 +8,57 @@ const productSchema = new Schema(
       required: [true, 'Product name is required'],
       trim: true,
     },
-    slug: {
-      type: String,
-      required: [true, 'Product slug is required'],
-      unique: true,
-      trim: true,
-      lowercase: true,
+    categoryId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Category',
+      required: [true, 'Category is required'],
     },
     description: {
       type: String,
       trim: true,
     },
-    brand: {
-      type: String,
-      trim: true,
-    },
-    category: {
-      categoryId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Category',
-      },
-      name: {
-        type: String,
-        trim: true,
-      },
-    },
     images: [{ type: String, trim: true }],
-    baseCost: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-    discountFactor: {
-      type: Number,
-      min: 0,
-      max: 1,
-      default: 0,
+    pricing: {
+      basePrice: {
+        type: Number,
+        min: 0,
+        default: 0,
+      },
+      discountPercentage: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0,
+      },
+      taxRate: {
+        type: Number,
+        min: 0,
+        default: 0,
+      },
+      finalPrice: {
+        type: Number,
+        min: 0,
+        default: 0,
+      },
     },
     inventory: {
-      stockQty: {
-        type: Number,
-        min: 0,
-        default: 0,
-      },
-      sku: {
+      warehouse: {
         type: String,
         trim: true,
       },
-      lowStockThreshold: {
+      stockCount: {
         type: Number,
         min: 0,
         default: 0,
       },
     },
-    ratings: {
-      average: {
-        type: Number,
-        min: 0,
-        max: 5,
-        default: 0,
-      },
-      totalReviews: {
-        type: Number,
-        min: 0,
-        default: 0,
-      },
+    specifications: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
-    isAvailable: {
+    isActive: {
       type: Boolean,
       default: true,
-    },
-    estimatedDeliveryDays: {
-      type: Number,
-      min: 0,
     },
   },
   { timestamps: true }

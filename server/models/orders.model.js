@@ -1,18 +1,19 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { Schema } = mongoose;
+
 
 const orderSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     items: [
       {
         productId: {
           type: Schema.Types.ObjectId,
-          ref: 'Product',
+          ref: "Product",
           required: true,
         },
         productSnapshot: {
@@ -67,32 +68,76 @@ const orderSchema = new Schema(
       },
       currency: {
         type: String,
-        default: 'INR',
+        default: "INR",
       },
     },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned'],
-      default: 'pending',
+      enum: [
+        "pending",
+        "confirmed",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "failed",
+        "returned",
+      ],
+      default: "pending",
     },
-    paymentId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Payment',
+    paymentDetails: {
+      transactionId: String,
+      method: String,
+      status: { type: String, enum: ["PENDING", "SUCCESS", "FAILED"] },
+      paymentDate: Date,
     },
-    deliveryId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Delivery',
-    },
-    shippingAddress: {
-      fullName: { type: String, trim: true },
-      phone: { type: String, trim: true },
-      addressLine: { type: String, trim: true },
-      city: { type: String, trim: true },
-      state: { type: String, trim: true },
-      pincode: { type: String, trim: true },
+    shipmentDetails: {
+      status: {
+        type: String,
+        enum: ['PENDING', 'DISPATCHED', 'DELIVERED', 'FAILED', 'RETURNED'],
+        default: 'pending',
+      },
+      courier: {
+        name: { type: String, trim: true },
+        trackingNumber: { type: String, trim: true },
+        contact: { type: String, trim: true },
+      },
+      deliveryAddress: {
+        fullName: { type: String, trim: true },
+        phone: { type: String, trim: true },
+        addressLine: { type: String, trim: true },
+        city: { type: String, trim: true },
+        state: { type: String, trim: true },
+        pincode: { type: String, trim: true },
+      },
+      otp: {
+        type: String,
+        trim: true,
+      },
+      otpVerification: {
+        status: {
+          type: String,
+          enum: ['VERIFIED', 'UNVERIFIED'],
+          default: 'UNVERIFIED',
+        },
+        verifiedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+      estimatedDeliveryDate: {
+        type: Date,
+      },
+      actualDeliveryDate: {
+        type: Date,
+        default: null,
+      },
+      lastUpdatedAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model("Order", orderSchema);

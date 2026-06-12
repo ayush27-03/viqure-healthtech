@@ -9,12 +9,6 @@ const categorySchema = new Schema(
       unique: true,
       trim: true,
     },
-    slug: {
-      type: String,
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
     icon: {
       type: String,
       trim: true,
@@ -22,11 +16,6 @@ const categorySchema = new Schema(
     description: {
       type: String,
       trim: true,
-    },
-    type: {
-      type: String,
-      enum: ['product', 'specialty'],
-      default: 'product',
     },
     isActive: {
       type: Boolean,
