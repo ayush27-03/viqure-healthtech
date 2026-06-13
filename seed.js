@@ -26,6 +26,7 @@ const {
  * ? But what is idempotency ? --> Idempotency is the property of an operation whereby applying it multiple times produces the same result as applying it for once.
  * # In context of database seeding: An idempotent seed operation is one where running node seed.js ten times leaves the database in the exact same state as running it once—no duplicate documents, no partial data, consistent results.
  * $ It is better to construct your code in a set of asynchronous functions so that you can handle the seed composition iteratively and in any form.
+ * ~ Developing async seed functions - a strategy is to mirror user jounreys via multiple scenarios.
  */
 
 async function checkDbConnection() {
@@ -81,10 +82,34 @@ async function seedDb() {
     const product1 = await Product.create({
       name: "Paracetamol 500mg",
       categoryId: category1._id, // Linking!
-      description: 'Analgesic',
-      images: ['https://example.com/images/paracetamol-500.jpg'],
-      pricing: { pricing: { mrp: 50, purchasePrice: 30, basePrice: 50, discountPercentage: 0, taxRate: 0, finalPrice: 50 } },
-      inventory: { inventory: { sku: `SKU-BULK-1-${Date.now()}`, supplier: 'SeedSupplier', warehouse: 'WH-1', stockCount: 100, reorderLevel: 10, batches: [{ batchNumber: 'B1', expiryDate: new Date(Date.now()+365*24*60*60*1000), quantity: 100 }] } },
+      description: "Analgesic",
+      images: ["https://example.com/images/paracetamol-500.jpg"],
+      pricing: {
+        pricing: {
+          mrp: 50,
+          purchasePrice: 30,
+          basePrice: 50,
+          discountPercentage: 0,
+          taxRate: 0,
+          finalPrice: 50,
+        },
+      },
+      inventory: {
+        inventory: {
+          sku: `SKU-BULK-1-${Date.now()}`,
+          supplier: "SeedSupplier",
+          warehouse: "WH-1",
+          stockCount: 100,
+          reorderLevel: 10,
+          batches: [
+            {
+              batchNumber: "B1",
+              expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+              quantity: 100,
+            },
+          ],
+        },
+      },
     });
     console.log("Products seeded...");
 
@@ -154,28 +179,78 @@ async function bulkSeedDb() {
       {
         name: "Paracetamol 500mg",
         categoryId: createdCategories[0]._id, // Links to Pharmaceuticals
-        description: 'Analgesic',
-        images: ['https://example.com/images/paracetamol-500.jpg'],
-        pricing: { pricing: { mrp: 55, purchasePrice: 30, basePrice: 55, discountPercentage: 0, taxRate: 0, finalPrice: 50 } },
-        inventory: { inventory: { sku: `SKU-BULK-${Date.now()}-1`, supplier: 'SeedSupplier', warehouse: 'WH-BULK-1', stockCount: 200, reorderLevel: 10 } },
+        description: "Analgesic",
+        images: ["https://example.com/images/paracetamol-500.jpg"],
+        pricing: {
+          pricing: {
+            mrp: 55,
+            purchasePrice: 30,
+            basePrice: 55,
+            discountPercentage: 0,
+            taxRate: 0,
+            finalPrice: 50,
+          },
+        },
+        inventory: {
+          inventory: {
+            sku: `SKU-BULK-${Date.now()}-1`,
+            supplier: "SeedSupplier",
+            warehouse: "WH-BULK-1",
+            stockCount: 200,
+            reorderLevel: 10,
+          },
+        },
       },
       {
         name: "Vitamin C Tablets",
         categoryId: createdCategories[1]._id, // Links to Supplements
-        description: 'Vitamin supplement',
-        images: ['https://example.com/images/vitamin-c.jpg'],
-        pricing: { pricing: { mrp: 300, purchasePrice: 150, basePrice: 300, discountPercentage: 0, taxRate: 0, finalPrice: 250 } },
-        inventory: { inventory: { sku: `SKU-BULK-${Date.now()}-2`, supplier: 'SeedSupplier', warehouse: 'WH-BULK-2', stockCount: 150, reorderLevel: 10 } },
+        description: "Vitamin supplement",
+        images: ["https://example.com/images/vitamin-c.jpg"],
+        pricing: {
+          pricing: {
+            mrp: 300,
+            purchasePrice: 150,
+            basePrice: 300,
+            discountPercentage: 0,
+            taxRate: 0,
+            finalPrice: 250,
+          },
+        },
+        inventory: {
+          inventory: {
+            sku: `SKU-BULK-${Date.now()}-2`,
+            supplier: "SeedSupplier",
+            warehouse: "WH-BULK-2",
+            stockCount: 150,
+            reorderLevel: 10,
+          },
+        },
       },
       {
         name: "Digital Thermometer",
         categoryId: createdCategories[2]._id, // Links to Devices
-        description: 'Handheld digital thermometer',
-        images: ['https://example.com/images/thermometer.jpg'],
-        pricing: { pricing: { mrp: 500, purchasePrice: 300, basePrice: 500, discountPercentage: 0, taxRate: 0, finalPrice: 450 } },
-        inventory: { inventory: { sku: `SKU-BULK-${Date.now()}-3`, supplier: 'SeedSupplier', warehouse: 'WH-BULK-3', stockCount: 80, reorderLevel: 5 } },
+        description: "Handheld digital thermometer",
+        images: ["https://example.com/images/thermometer.jpg"],
+        pricing: {
+          pricing: {
+            mrp: 500,
+            purchasePrice: 300,
+            basePrice: 500,
+            discountPercentage: 0,
+            taxRate: 0,
+            finalPrice: 450,
+          },
+        },
+        inventory: {
+          inventory: {
+            sku: `SKU-BULK-${Date.now()}-3`,
+            supplier: "SeedSupplier",
+            warehouse: "WH-BULK-3",
+            stockCount: 80,
+            reorderLevel: 5,
+          },
+        },
       },
-
     ];
     await Product.insertMany(productsData);
     console.log("Products seeded...");
@@ -204,8 +279,32 @@ async function seedOneDocumentEach() {
       categoryId: category._id,
       description: "Analgesic for fever and pain",
       images: ["https://example.com/images/paracetamol-500.jpg"],
-      pricing: { pricing: { mrp: 55, purchasePrice: 30, basePrice: 55, discountPercentage: 10, taxRate: 18, finalPrice: 49.5 } },
-      inventory: { inventory: { sku: `SKU-SEED-${Date.now()}`, supplier: 'SeedSupplier', warehouse: "WH-SEED-1", stockCount: 500, reorderLevel: 10, batches: [{ batchNumber: 'B-SEED-1', expiryDate: new Date(Date.now()+365*24*60*60*1000), quantity: 500 }] } },
+      pricing: {
+        pricing: {
+          mrp: 55,
+          purchasePrice: 30,
+          basePrice: 55,
+          discountPercentage: 10,
+          taxRate: 18,
+          finalPrice: 49.5,
+        },
+      },
+      inventory: {
+        inventory: {
+          sku: `SKU-SEED-${Date.now()}`,
+          supplier: "SeedSupplier",
+          warehouse: "WH-SEED-1",
+          stockCount: 500,
+          reorderLevel: 10,
+          batches: [
+            {
+              batchNumber: "B-SEED-1",
+              expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+              quantity: 500,
+            },
+          ],
+        },
+      },
       specifications: {
         form: "tablet",
         strength: "500mg",
@@ -406,6 +505,495 @@ async function seedOneDocumentEach() {
   }
 }
 
+async function seedAuthenticationScenario() {
+  try {
+    console.log("🌱 Seeding For Authentication Scenario...");
+    const users = [
+      {
+        email: "admin@viqure.com",
+        passwordHash: await bcrypt.hash("adminPass_123", 8),
+        role: "ADMIN",
+        isVerified: true,
+        isActive: true,
+        profile: {
+          firstName: "Saket",
+          lastName: "Adit",
+        },
+      },
+
+      {
+        email: "customer@viqure.com",
+        passwordHash: await bcrypt.hash("customerPass_123", 8),
+        role: "CUSTOMER",
+        isVerified: true,
+        isActive: true,
+        profile: {
+          firstName: "Kabir",
+          lastName: "Golwalkar",
+        },
+      },
+
+      {
+        email: "doctor.pending@viqure.com",
+        passwordHash: await bcrypt.hash("doctorPass_123", 8),
+        role: "DOCTOR",
+        isVerified: true,
+        isActive: true,
+        profile: {
+          firstName: "Vijesh",
+          lastName: "Basu",
+        },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "DOC-PENDING-001",
+          approvalStatus: "PENDING",
+          consultationFee: 500,
+          qualifications: ["MBBS"],
+          yearsOfExperience: 3,
+          isAvailable: true,
+        },
+      },
+
+      {
+        email: "doctor.approved@viqure.com",
+        passwordHash: await bcrypt.hash("doctorPass_123", 8),
+        role: "DOCTOR",
+        isVerified: true,
+        isActive: true,
+        profile: {
+          firstName: "Priya",
+          lastName: "Ekanka",
+        },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "DOC-APPROVED-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 800,
+          qualifications: ["MBBS", "MD"],
+          yearsOfExperience: 10,
+          isAvailable: true,
+          stats: {
+            rating: 4.8,
+            totalRatings: 120,
+            totalAppointments: 450,
+          },
+        },
+      },
+
+      {
+        email: "doctor.rejected@viqure.com",
+        passwordHash: await bcrypt.hash("doctorPass_123", 8),
+        role: "DOCTOR",
+        isVerified: true,
+        isActive: true,
+        profile: {
+          firstName: "Rohit",
+          lastName: "Brijan",
+        },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "DOC-REJECTED-001",
+          approvalStatus: "REJECTED",
+          consultationFee: 400,
+          qualifications: ["BAMS"],
+          yearsOfExperience: 2,
+          isAvailable: false,
+        },
+      },
+    ];
+
+    await User.insertMany(users);
+
+    console.log("✅ Authentication Scenario Seeded");
+    console.log(`👥 Users Created: ${users.length}`);
+  } catch (error) {
+    console.error("❌ Authentication Scenario Failed");
+    throw error;
+  }
+}
+
+async function seedDoctorMarketplaceScenario() {
+  try {
+    console.log("🌱 Seeding Doctor Marketplace Scenario...");
+
+    // Categories
+    const categories = await Category.insertMany([
+      {
+        name: "Cardiology",
+        description: "Heart and cardiovascular care",
+        isActive: true,
+      },
+      {
+        name: "Dermatology",
+        description: "Skin and hair treatments",
+        isActive: true,
+      },
+      {
+        name: "General Medicine",
+        description: "Primary healthcare services",
+        isActive: true,
+      },
+      {
+        name: "Pediatrics",
+        description: "Child healthcare specialists",
+        isActive: true,
+      },
+    ]);
+
+    const doctorsPasswordHash = await bcrypt.hash("doctorPass_123", 8);
+
+    const doctors = [
+      {
+        email: "cardio.junior@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+
+        profile: {
+          firstName: "Amit",
+          lastName: "Sharma",
+        },
+
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "CARDIO-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 300,
+          qualifications: ["MBBS"],
+          yearsOfExperience: 2,
+          isAvailable: true,
+          stats: {
+            rating: 3.8,
+            totalRatings: 18,
+            totalAppointments: 40,
+          },
+        },
+      },
+
+      {
+        email: "derma.senior@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+        profile: { firstName: "Nisha", lastName: "Verma" },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "DERMA-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 600,
+          qualifications: ["MBBS", "DDV"],
+          yearsOfExperience: 8,
+          isAvailable: true,
+          stats: { rating: 4.2, totalRatings: 76, totalAppointments: 200 },
+        },
+      },
+
+      {
+        email: "genmed.senior@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+        profile: { firstName: "Ravi", lastName: "Kumar" },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "GENMED-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 250,
+          qualifications: ["MBBS"],
+          yearsOfExperience: 12,
+          isAvailable: true,
+          stats: { rating: 4.5, totalRatings: 200, totalAppointments: 900 },
+        },
+      },
+
+      {
+        email: "pediatrics.lead@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+        profile: { firstName: "Sonia", lastName: "Mehta" },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "PED-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 400,
+          qualifications: ["MBBS", "DCH"],
+          yearsOfExperience: 6,
+          isAvailable: true,
+          stats: { rating: 4.1, totalRatings: 34, totalAppointments: 120 },
+        },
+      },
+
+      {
+        email: "cardio.senior@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+        profile: { firstName: "Karan", lastName: "Malhotra" },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "CARDIO-002",
+          approvalStatus: "APPROVED",
+          consultationFee: 1200,
+          qualifications: ["MBBS", "MD"],
+          yearsOfExperience: 15,
+          isAvailable: true,
+          stats: { rating: 4.7, totalRatings: 300, totalAppointments: 1000 },
+        },
+      },
+
+      {
+        email: "ortho.specialist@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+        profile: { firstName: "Anita", lastName: "Ghosh" },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "ORTHO-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 700,
+          qualifications: ["MBBS", "MS(Ortho)"],
+          yearsOfExperience: 9,
+          isAvailable: true,
+          stats: { rating: 4.3, totalRatings: 89, totalAppointments: 340 },
+        },
+      },
+
+      {
+        email: "neuro.consult@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+        profile: { firstName: "Vikram", lastName: "Singh" },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "NEURO-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 1500,
+          qualifications: ["MBBS", "DM(Neurology)"],
+          yearsOfExperience: 20,
+          isAvailable: true,
+          stats: { rating: 4.9, totalRatings: 500, totalAppointments: 2000 },
+        },
+      },
+
+      {
+        email: "ent.expert@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+        profile: { firstName: "Meera", lastName: "Patel" },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "ENT-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 350,
+          qualifications: ["MBBS", "DLO"],
+          yearsOfExperience: 7,
+          isAvailable: true,
+          stats: { rating: 3.9, totalRatings: 22, totalAppointments: 60 },
+        },
+      },
+    ];
+
+    await User.insertMany(doctors);
+
+    console.log("✅ Doctor Marketplace Scenario Seeded");
+  } catch (error) {
+    console.error("❌ Doctor Marketplace Scenario Failed");
+    throw error;
+  }
+}
+
+async function seedAppointmentLifecycleScenario() {
+  try {
+    console.log("🌱 Seeding Appointment Lifecycle Scenario...");
+
+    const doctorsPasswordHash = await bcrypt.hash("doctorPass_123", 8);
+
+    // Doctors
+    const doctors = await User.insertMany([
+      {
+        email: "doctor.lifecycle1@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+
+        profile: {
+          firstName: "Rajesh",
+          lastName: "Kumar",
+        },
+
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "LIFE-DOC-001",
+          approvalStatus: "APPROVED",
+          consultationFee: 500,
+          qualifications: ["MBBS", "MD"],
+          yearsOfExperience: 8,
+        },
+      },
+
+      {
+        email: "doctor.lifecycle2@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "DOCTOR",
+        isVerified: true,
+
+        profile: {
+          firstName: "Neha",
+          lastName: "Verma",
+        },
+
+        detailsOfHealthCareProfessional: {
+          medicalLicense: "LIFE-DOC-002",
+          approvalStatus: "APPROVED",
+          consultationFee: 800,
+          qualifications: ["MBBS"],
+          yearsOfExperience: 5,
+        },
+      },
+    ]);
+
+    // Customers
+
+    const customers = await User.insertMany([
+      {
+        email: "patient1@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "CUSTOMER",
+        isVerified: true,
+      },
+
+      {
+        email: "patient2@viqure.com",
+        passwordHash: doctorsPasswordHash,
+        role: "CUSTOMER",
+        isVerified: true,
+      },
+    ]);
+
+    // Appointments
+    const appointments = await Appointment.insertMany([
+      {
+        patientId: customers[0]._id,
+        doctorId: doctors[0]._id,
+
+        schedule: {
+          scheduledAt: new Date(),
+        },
+
+        appointmentStatus: "BOOKED",
+
+        paymentDetails: {
+          status: "PENDING",
+        },
+      },
+
+      {
+        patientId: customers[0]._id,
+        doctorId: doctors[1]._id,
+
+        appointmentStatus: "CONFIRMED",
+
+        meeting: {
+          consultationType: "VIDEO",
+          meetingLink: "https://meet.viqure.com/abc",
+        },
+
+        paymentDetails: {
+          status: "PAID",
+        },
+      },
+
+      {
+        patientId: customers[1]._id,
+        doctorId: doctors[0]._id,
+
+        appointmentStatus: "COMPLETED",
+
+        meeting: {
+          consultationType: "VIDEO",
+        },
+
+        paymentDetails: {
+          status: "PAID",
+        },
+
+        doctorRemarks: {
+          text: "Patient recovering well",
+          mode: "Text",
+        },
+
+        feedback: {
+          rating: 5,
+          comment: "Excellent consultation",
+        },
+      },
+
+      {
+        patientId: customers[0]._id,
+        doctorId: doctors[1]._id,
+
+        appointmentStatus: "COMPLETED",
+
+        meeting: {
+          consultationType: "IN_PERSON",
+        },
+
+        paymentDetails: {
+          status: "PAID",
+        },
+
+        feedback: {
+          rating: 4,
+          comment: "Helpful guidance",
+        },
+      },
+
+      {
+        patientId: customers[1]._id,
+        doctorId: doctors[1]._id,
+
+        appointmentStatus: "CANCELLED",
+
+        cancellation: {
+          cancelReason: "Patient unavailable",
+          cancelledAt: new Date(),
+        },
+      },
+
+      {
+        patientId: customers[1]._id,
+        doctorId: doctors[0]._id,
+
+        appointmentStatus: "REJECTED",
+
+        doctorRemarks: {
+          text: "Schedule conflict",
+          mode: "Text",
+        },
+      },
+    ]);
+
+    // -----------------------------
+    // Medical Records
+    // -----------------------------
+
+    await MedicalRecord.insertMany([
+      {
+        patientId: customers[1]._id,
+        doctorId: doctors[0]._id,
+        appointmentId: appointments[2]._id,
+        documentType: "PRESCRIPTION",
+        fileUrl: "https://example.com/prescription1.pdf",
+      },
+
+      {
+        patientId: customers[0]._id,
+        doctorId: doctors[1]._id,
+        appointmentId: appointments[3]._id,
+        documentType: "LAB_REPORT",
+        fileUrl: "https://example.com/report1.pdf",
+      },
+    ]);
+
+    console.log("✅ Appointment Lifecycle Scenario Seeded");
+  } catch (error) {
+    console.error("❌ Appointment Lifecycle Scenario Failed");
+    throw error;
+  }
+}
+
 // Execute the async functions
 // ! Following is the wrong execution order given they would start executing in parallel as they are async.
 // checkDbConnection();
@@ -420,6 +1008,9 @@ async function main() {
     await cleanDbForSeed();
     // await bulkSeedDb();
     // await seedOneDocumentEach();
+    // await seedAuthenticationScenario();
+    // await seedDoctorMarketplaceScenario();
+
     await mongoose.disconnect();
     process.exit(0);
   } catch (error) {

@@ -1,0 +1,36 @@
+seedAuthenticationScenario()
+
+Tests all three roles (ADMIN, CUSTOMER, DOCTOR)
+Tests all doctor approval states (PENDING, APPROVED, REJECTED)
+Tests role-based middleware
+Tests admin approval endpoints
+Tests login/profile endpoints
+Uses insertMany() (faster than multiple create() calls)
+No cross-collection dependencies
+Completely self-contained and idempotent when paired with your DB cleanup routine
+
+seedDoctorMarketplaceScenario()
+
+Doctor Discovery
+Doctor Search
+Doctor Filters
+Doctor Sorting
+Doctor Profile Pages
+Availability Logic
+Ratings Display
+Pagination
+
+seedAppointmentLifecycleScenario()
+
+Book Appointment
+Doctor Accept Appointment
+Doctor Reject Appointment
+Patient Cancel Appointment
+Consultation Completion
+Video Consultation Metadata
+Payment Status Handling
+Doctor Remarks
+Patient Feedback
+Medical Record Uploads
+Appointment History
+Appointment Analytics

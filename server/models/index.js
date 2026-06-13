@@ -8,3 +8,4 @@ module.exports = {
   MedicalRecord: require('./medicalRecords.model'),
   Appointment:   require('./appointments.model')
 };
+
