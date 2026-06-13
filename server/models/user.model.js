@@ -117,3 +117,13 @@ userSchema.index({ phone: 1 }, { unique: true, sparse: true });
 userSchema.index({ role: 1 });
 
 module.exports = mongoose.model("User", userSchema);
+
+/**
+IMPORTANT:
+The uploaded schemas are the source of truth.
+Never invent fields.
+Never rename fields.
+Never create properties not present in the schema.
+If a field is required by the schema, populate it.
+If a relationship exists in the schema, maintain referential integrity.
+ */

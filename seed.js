@@ -365,7 +365,7 @@ async function seedOneDocumentEach() {
         refundableAmount: 0,
       },
       paymentDetails: {
-        transactionId: mongoose.Types.ObjectId().toString(),
+        transactionId: "PAYMENT-ID-1",
         status: "PAID",
         currency: "INR",
         paidAt: new Date(),
@@ -1744,7 +1744,7 @@ async function main() {
     await checkDbConnection();
     await cleanDbForSeed();
     // await bulkSeedDb();
-    await seedOneDocumentEach();
+    // await seedOneDocumentEach();
     // await seedAuthenticationScenario();
     // await seedDoctorMarketplaceScenario();
     // await seedAppointmentLifecycleScenario();
