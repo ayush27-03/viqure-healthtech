@@ -25,9 +25,11 @@ const DocumentSchema = new Schema(
 
 const PaymentDetailsSchema = new Schema(
   {
-    paymentId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Payment',
+    transactionId: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true
     },
     status: {
       type: String,

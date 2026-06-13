@@ -1734,11 +1734,11 @@ async function main() {
     await checkDbConnection();
     await cleanDbForSeed();
     // await bulkSeedDb();
-    // await seedOneDocumentEach();
+    await seedOneDocumentEach();
     // await seedAuthenticationScenario();
     // await seedDoctorMarketplaceScenario();
     // await seedAppointmentLifecycleScenario();
-    await seedProductCatalogScenario();
+    // await seedProductCatalogScenario();
 
     await mongoose.disconnect();
     process.exit(0);

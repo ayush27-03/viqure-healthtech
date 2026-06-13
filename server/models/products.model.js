@@ -1,8 +1,12 @@
 const mongoose = require("mongoose");
+
+/**
+ * $ Below line employs variable based object destructuring to pull out the constructor Schema from the mongoose object. 
+ */
 const { Schema } = mongoose;
 
-const PricingSubSchema = new Schema({
-  pricing: {
+const PricingSubSchema = new Schema(
+  {
     mrp: {
       // NEW: Printed price
       type: Number,
@@ -36,12 +40,13 @@ const PricingSubSchema = new Schema({
       type: Number,
       min: 0,
       default: 0,
-    },
+    }
   },
-});
+  { _id: false }
+);
 
-const InventorySubSchema = new Schema({
-  inventory: {
+const InventorySubSchema = new Schema(
+  {
     sku: {
       // NEW
       type: String,
@@ -76,9 +81,10 @@ const InventorySubSchema = new Schema({
         expiryDate: { type: Date },
         quantity: { type: Number, min: 0 },
       },
-    ],
+    ]
   },
-});
+  { _id: false }
+);
 
 const productSchema = new Schema(
   {
