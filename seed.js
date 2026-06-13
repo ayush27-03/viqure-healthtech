@@ -85,30 +85,26 @@ async function seedDb() {
       description: "Analgesic",
       images: ["https://example.com/images/paracetamol-500.jpg"],
       pricing: {
-        pricing: {
-          mrp: 50,
-          purchasePrice: 30,
-          basePrice: 50,
-          discountPercentage: 0,
-          taxRate: 0,
-          finalPrice: 50,
-        },
+        mrp: 50,
+        purchasePrice: 30,
+        basePrice: 50,
+        discountPercentage: 0,
+        taxRate: 0,
+        finalPrice: 50,
       },
       inventory: {
-        inventory: {
-          sku: `SKU-BULK-1-${Date.now()}`,
-          supplier: "SeedSupplier",
-          warehouse: "WH-1",
-          stockCount: 100,
-          reorderLevel: 10,
-          batches: [
-            {
-              batchNumber: "B1",
-              expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-              quantity: 100,
-            },
-          ],
-        },
+        sku: `SKU-BULK-1-${Date.now()}`,
+        supplier: "SeedSupplier",
+        warehouse: "WH-1",
+        stockCount: 100,
+        reorderLevel: 10,
+        batches: [
+          {
+            batchNumber: "B1",
+            expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            quantity: 100,
+          },
+        ],
       },
     });
     console.log("Products seeded...");
@@ -182,23 +178,19 @@ async function bulkSeedDb() {
         description: "Analgesic",
         images: ["https://example.com/images/paracetamol-500.jpg"],
         pricing: {
-          pricing: {
-            mrp: 55,
-            purchasePrice: 30,
-            basePrice: 55,
-            discountPercentage: 0,
-            taxRate: 0,
-            finalPrice: 50,
-          },
+          mrp: 55,
+          purchasePrice: 30,
+          basePrice: 55,
+          discountPercentage: 0,
+          taxRate: 0,
+          finalPrice: 50,
         },
         inventory: {
-          inventory: {
-            sku: `SKU-BULK-${Date.now()}-1`,
-            supplier: "SeedSupplier",
-            warehouse: "WH-BULK-1",
-            stockCount: 200,
-            reorderLevel: 10,
-          },
+          sku: `SKU-BULK-${Date.now()}-1`,
+          supplier: "SeedSupplier",
+          warehouse: "WH-BULK-1",
+          stockCount: 200,
+          reorderLevel: 10,
         },
       },
       {
@@ -207,23 +199,19 @@ async function bulkSeedDb() {
         description: "Vitamin supplement",
         images: ["https://example.com/images/vitamin-c.jpg"],
         pricing: {
-          pricing: {
-            mrp: 300,
-            purchasePrice: 150,
-            basePrice: 300,
-            discountPercentage: 0,
-            taxRate: 0,
-            finalPrice: 250,
-          },
+          mrp: 300,
+          purchasePrice: 150,
+          basePrice: 300,
+          discountPercentage: 0,
+          taxRate: 0,
+          finalPrice: 250,
         },
         inventory: {
-          inventory: {
-            sku: `SKU-BULK-${Date.now()}-2`,
-            supplier: "SeedSupplier",
-            warehouse: "WH-BULK-2",
-            stockCount: 150,
-            reorderLevel: 10,
-          },
+          sku: `SKU-BULK-${Date.now()}-2`,
+          supplier: "SeedSupplier",
+          warehouse: "WH-BULK-2",
+          stockCount: 150,
+          reorderLevel: 10,
         },
       },
       {
@@ -232,23 +220,19 @@ async function bulkSeedDb() {
         description: "Handheld digital thermometer",
         images: ["https://example.com/images/thermometer.jpg"],
         pricing: {
-          pricing: {
-            mrp: 500,
-            purchasePrice: 300,
-            basePrice: 500,
-            discountPercentage: 0,
-            taxRate: 0,
-            finalPrice: 450,
-          },
+          mrp: 500,
+          purchasePrice: 300,
+          basePrice: 500,
+          discountPercentage: 0,
+          taxRate: 0,
+          finalPrice: 450,
         },
         inventory: {
-          inventory: {
-            sku: `SKU-BULK-${Date.now()}-3`,
-            supplier: "SeedSupplier",
-            warehouse: "WH-BULK-3",
-            stockCount: 80,
-            reorderLevel: 5,
-          },
+          sku: `SKU-BULK-${Date.now()}-3`,
+          supplier: "SeedSupplier",
+          warehouse: "WH-BULK-3",
+          stockCount: 80,
+          reorderLevel: 5,
         },
       },
     ];
@@ -279,31 +263,28 @@ async function seedOneDocumentEach() {
       categoryId: category._id,
       description: "Analgesic for fever and pain",
       images: ["https://example.com/images/paracetamol-500.jpg"],
+
       pricing: {
-        pricing: {
-          mrp: 55,
-          purchasePrice: 30,
-          basePrice: 55,
-          discountPercentage: 10,
-          taxRate: 18,
-          finalPrice: 49.5,
-        },
+        mrp: 55,
+        purchasePrice: 30,
+        basePrice: 55,
+        discountPercentage: 10,
+        taxRate: 18,
+        finalPrice: 49.5,
       },
       inventory: {
-        inventory: {
-          sku: `SKU-SEED-${Date.now()}`,
-          supplier: "SeedSupplier",
-          warehouse: "WH-SEED-1",
-          stockCount: 500,
-          reorderLevel: 10,
-          batches: [
-            {
-              batchNumber: "B-SEED-1",
-              expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-              quantity: 500,
-            },
-          ],
-        },
+        sku: `SKU-SEED-${Date.now()}`,
+        supplier: "SeedSupplier",
+        warehouse: "WH-SEED-1",
+        stockCount: 500,
+        reorderLevel: 10,
+        batches: [
+          {
+            batchNumber: "B-SEED-1",
+            expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            quantity: 500,
+          },
+        ],
       },
       specifications: {
         form: "tablet",
@@ -315,6 +296,7 @@ async function seedOneDocumentEach() {
 
     // 3) Single User (used as both patient and doctor for references)
     const passwordHash = await bcrypt.hash("SeedPass!23", 8);
+    
     const user = await User.create({
       email: `seed.user+${Date.now()}@test.com`,
       phone: "+911234567890",
@@ -383,7 +365,7 @@ async function seedOneDocumentEach() {
         refundableAmount: 0,
       },
       paymentDetails: {
-        paymentId: mongoose.Types.ObjectId(),
+        transactionId: mongoose.Types.ObjectId().toString(),
         status: "PAID",
         currency: "INR",
         paidAt: new Date(),
@@ -1644,6 +1626,10 @@ async function seedOrderLifecycleScenario() {
 
       {
         userId: customers[0]._id,
+        pricing: {
+          finalAmount: 0,
+          currency: "INR",
+        },
         status: "confirmed",
         paymentDetails: {
           status: "SUCCESS",
@@ -1655,6 +1641,10 @@ async function seedOrderLifecycleScenario() {
 
       {
         userId: customers[1]._id,
+        pricing: {
+          finalAmount: 0,
+          currency: "INR",
+        },
         status: "shipped",
         paymentDetails: {
           status: "SUCCESS",
@@ -1666,6 +1656,10 @@ async function seedOrderLifecycleScenario() {
 
       {
         userId: customers[1]._id,
+        pricing: {
+          finalAmount: 0,
+          currency: "INR",
+        },
         status: "delivered",
         paymentDetails: {
           status: "SUCCESS",
@@ -1677,6 +1671,10 @@ async function seedOrderLifecycleScenario() {
 
       {
         userId: customers[0]._id,
+        pricing: {
+          finalAmount: 0,
+          currency: "INR",
+        },
         status: "delivered",
         paymentDetails: {
           status: "SUCCESS",
@@ -1688,6 +1686,10 @@ async function seedOrderLifecycleScenario() {
 
       {
         userId: customers[2]._id,
+        pricing: {
+          finalAmount: 0,
+          currency: "INR",
+        },
         status: "cancelled",
         paymentDetails: {
           status: "FAILED",
@@ -1696,6 +1698,10 @@ async function seedOrderLifecycleScenario() {
 
       {
         userId: customers[2]._id,
+        pricing: {
+          finalAmount: 0,
+          currency: "INR",
+        },
         status: "failed",
         paymentDetails: {
           status: "FAILED",
@@ -1704,6 +1710,10 @@ async function seedOrderLifecycleScenario() {
 
       {
         userId: customers[1]._id,
+        pricing: {
+          finalAmount: 0,
+          currency: "INR",
+        },
         status: "returned",
         paymentDetails: {
           status: "SUCCESS",
