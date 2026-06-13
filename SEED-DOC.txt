@@ -32,3 +32,44 @@ Doctor Remarks gathering
 Video Consultation Flow
 Payment States - Status Handling
 Appointment History/Analytics sample metadata 
+
+seedProductCatalogScenario()
+
+Product Listing
+Category Filtering
+Search
+Pricing Logic
+Inventory Management
+SKU Tracking
+Batch Tracking
+Expiry Monitoring
+Low Stock Alerts
+
+seedOrderLifecycleScenario()
+
+Customer
+  ↓
+Browse Products
+  ↓
+Add To Cart
+  ↓
+Checkout
+  ↓
+Payment
+  ↓
+Shipment
+  ↓
+Delivery
+  ↓
+Return / Cancellation
+
+Checkout Flow
+Payment Flow
+Order Tracking
+Shipment Tracking
+Delivered Orders
+Cancelled Orders
+Failed Orders
+Returned Orders
+Customer Purchase History
+Revenue Analytics

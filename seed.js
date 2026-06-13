@@ -639,6 +639,7 @@ async function seedDoctorMarketplaceScenario() {
 
     const doctorsPasswordHash = await bcrypt.hash("doctorPass_123", 8);
 
+    // Doctors
     const doctors = [
       {
         email: "cardio.junior@viqure.com",
@@ -845,7 +846,6 @@ async function seedAppointmentLifecycleScenario() {
     ]);
 
     // Customers
-
     const customers = await User.insertMany([
       {
         email: "patient1@viqure.com",
@@ -966,7 +966,6 @@ async function seedAppointmentLifecycleScenario() {
     ]);
 
     // Medical Records
-
     await MedicalRecord.insertMany([
       {
         patientId: customers[1]._id,
@@ -1576,6 +1575,152 @@ async function seedProductCatalogScenario() {
   }
 }
 
+async function seedOrderLifecycleScenario() {
+  try {
+    console.log("🌱 Seeding Order Lifecycle Scenario...");
+
+    const customerPasswordHash = await bcrypt.hash("customerPass_123", 8);
+
+    // Users
+    const customers = await User.insertMany([
+      {
+        email: "order.customer1@viqure.com",
+        passwordHash: customerPasswordHash,
+        role: "CUSTOMER",
+        isVerified: true,
+      },
+
+      {
+        email: "order.customer2@viqure.com",
+        passwordHash: customerPasswordHash,
+        role: "CUSTOMER",
+        isVerified: true,
+      },
+
+      {
+        email: "order.customer3@viqure.com",
+        passwordHash: customerPasswordHash,
+        role: "CUSTOMER",
+        isVerified: true,
+      },
+    ]);
+
+    const products = await Product.find().limit(5);
+
+    // Order
+    await Order.insertMany([
+      {
+        userId: customers[0]._id,
+
+        items: [
+          {
+            productId: products[0]._id,
+            productSnapshot: {
+              name: products[0].name,
+              mrp: products[0].pricing.mrp,
+              sellingPrice: products[0].pricing.finalPrice,
+            },
+            quantity: 2,
+            unitPrice: products[0].pricing.finalPrice,
+            totalPrice: products[0].pricing.finalPrice * 2,
+          },
+        ],
+
+        pricing: {
+          subtotal: 100,
+          finalAmount: 100,
+        },
+
+        status: "pending",
+
+        paymentDetails: {
+          status: "PENDING",
+        },
+
+        shipmentDetails: {
+          status: "PENDING",
+        },
+      },
+
+      {
+        userId: customers[0]._id,
+        status: "confirmed",
+        paymentDetails: {
+          status: "SUCCESS",
+        },
+        shipmentDetails: {
+          status: "PENDING",
+        },
+      },
+
+      {
+        userId: customers[1]._id,
+        status: "shipped",
+        paymentDetails: {
+          status: "SUCCESS",
+        },
+        shipmentDetails: {
+          status: "DISPATCHED",
+        },
+      },
+
+      {
+        userId: customers[1]._id,
+        status: "delivered",
+        paymentDetails: {
+          status: "SUCCESS",
+        },
+        shipmentDetails: {
+          status: "DELIVERED",
+        },
+      },
+
+      {
+        userId: customers[0]._id,
+        status: "delivered",
+        paymentDetails: {
+          status: "SUCCESS",
+        },
+        shipmentDetails: {
+          status: "DELIVERED",
+        },
+      },
+
+      {
+        userId: customers[2]._id,
+        status: "cancelled",
+        paymentDetails: {
+          status: "FAILED",
+        },
+      },
+
+      {
+        userId: customers[2]._id,
+        status: "failed",
+        paymentDetails: {
+          status: "FAILED",
+        },
+      },
+
+      {
+        userId: customers[1]._id,
+        status: "returned",
+        paymentDetails: {
+          status: "SUCCESS",
+        },
+        shipmentDetails: {
+          status: "RETURNED",
+        },
+      },
+    ]);
+
+    console.log("✅ Order Lifecycle Scenario Seeded");
+  } catch (error) {
+    console.error("❌ Order Lifecycle Scenario Failed");
+    throw error;
+  }
+}
+
 // Execute the async functions
 // ! Following is the wrong execution order given they would start executing in parallel as they are async.
 // checkDbConnection();
@@ -1592,7 +1737,8 @@ async function main() {
     // await seedOneDocumentEach();
     // await seedAuthenticationScenario();
     // await seedDoctorMarketplaceScenario();
-    await seedAppointmentLifecycleScenario();
+    // await seedAppointmentLifecycleScenario();
+    await seedProductCatalogScenario();
 
     await mongoose.disconnect();
     process.exit(0);
