@@ -965,9 +965,7 @@ async function seedAppointmentLifecycleScenario() {
       },
     ]);
 
-    // -----------------------------
     // Medical Records
-    // -----------------------------
 
     await MedicalRecord.insertMany([
       {
@@ -994,6 +992,590 @@ async function seedAppointmentLifecycleScenario() {
   }
 }
 
+async function seedProductCatalogScenario() {
+  try {
+    console.log("🌱 Seeding Product Catalog Scenario...");
+
+    const categories = await Category.insertMany([
+      {
+        name: "Pain Relief",
+        description: "Pain and fever medications",
+        isActive: true,
+      },
+
+      {
+        name: "Cold & Allergy",
+        description: "Cold and allergy treatments",
+        isActive: true,
+      },
+
+      {
+        name: "Digestive Care",
+        description: "Digestive health products",
+        isActive: true,
+      },
+
+      {
+        name: "Vitamins & Supplements",
+        description: "Daily nutritional supplements",
+        isActive: true,
+      },
+
+      {
+        name: "First Aid",
+        description: "First aid essentials",
+        isActive: true,
+      },
+
+      {
+        name: "Diabetes Care",
+        description: "Diabetes management products",
+        isActive: true,
+      },
+    ]);
+
+    const products = [
+      {
+        name: "Dolo 650",
+        categoryId: categories[0]._id,
+
+        pricing: {
+          mrp: 35,
+          purchasePrice: 20,
+          basePrice: 35,
+          discountPercentage: 10,
+          taxRate: 12,
+          finalPrice: 31.5,
+        },
+
+        inventory: {
+          sku: "PAIN-001",
+          supplier: "Micro Labs",
+          stockCount: 250,
+          reorderLevel: 30,
+
+          batches: [
+            {
+              batchNumber: "DL650-A1",
+              expiryDate: new Date("2027-12-31"),
+              quantity: 150,
+            },
+            {
+              batchNumber: "DL650-A2",
+              expiryDate: new Date("2028-06-30"),
+              quantity: 100,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Electral Sachet",
+        categoryId: categories[2]._id,
+
+        pricing: {
+          mrp: 25,
+          purchasePrice: 12,
+          basePrice: 25,
+          taxRate: 5,
+          finalPrice: 25,
+        },
+
+        inventory: {
+          sku: "DIG-001",
+          supplier: "FDC Ltd",
+          stockCount: 12,
+          reorderLevel: 25,
+
+          batches: [
+            {
+              batchNumber: "ELE-001",
+              expiryDate: new Date("2026-08-01"),
+              quantity: 12,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "OneTouch Test Strips",
+        categoryId: categories[5]._id,
+
+        pricing: {
+          mrp: 950,
+          purchasePrice: 760,
+          basePrice: 950,
+          finalPrice: 950,
+        },
+
+        inventory: {
+          sku: "DIA-001",
+          supplier: "LifeScan",
+          stockCount: 3,
+          reorderLevel: 20,
+
+          batches: [
+            {
+              batchNumber: "OT-001",
+              expiryDate: new Date("2027-03-01"),
+              quantity: 3,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Crocin 500",
+        categoryId: categories[0]._id,
+        pricing: {
+          mrp: 30,
+          purchasePrice: 18,
+          basePrice: 30,
+          discountPercentage: 5,
+          taxRate: 12,
+          finalPrice: 28.5,
+        },
+        inventory: {
+          sku: "PAIN-002",
+          supplier: "GSK",
+          stockCount: 180,
+          reorderLevel: 20,
+          batches: [
+            {
+              batchNumber: "CR500-01",
+              expiryDate: new Date("2027-11-30"),
+              quantity: 180,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Benadryl Syrup",
+        categoryId: categories[1]._id,
+        pricing: {
+          mrp: 90,
+          purchasePrice: 50,
+          basePrice: 90,
+          discountPercentage: 0,
+          taxRate: 12,
+          finalPrice: 90,
+        },
+        inventory: {
+          sku: "COLD-001",
+          supplier: "Johnson & Johnson",
+          stockCount: 60,
+          reorderLevel: 15,
+          batches: [
+            {
+              batchNumber: "BDR-01",
+              expiryDate: new Date("2026-09-15"),
+              quantity: 60,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Gaviscon",
+        categoryId: categories[2]._id,
+        pricing: {
+          mrp: 120,
+          purchasePrice: 70,
+          basePrice: 120,
+          discountPercentage: 10,
+          taxRate: 5,
+          finalPrice: 108,
+        },
+        inventory: {
+          sku: "DIG-002",
+          supplier: "Reckitt",
+          stockCount: 90,
+          reorderLevel: 20,
+          batches: [
+            {
+              batchNumber: "GAV-01",
+              expiryDate: new Date("2028-01-01"),
+              quantity: 90,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Vitamin C 500mg",
+        categoryId: categories[3]._id,
+        pricing: {
+          mrp: 150,
+          purchasePrice: 80,
+          basePrice: 150,
+          discountPercentage: 20,
+          taxRate: 0,
+          finalPrice: 120,
+        },
+        inventory: {
+          sku: "VIT-001",
+          supplier: "Himalaya",
+          stockCount: 300,
+          reorderLevel: 40,
+          batches: [
+            {
+              batchNumber: "VC500-1",
+              expiryDate: new Date("2028-06-01"),
+              quantity: 300,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Band Aid Pack",
+        categoryId: categories[4]._id,
+        pricing: {
+          mrp: 60,
+          purchasePrice: 25,
+          basePrice: 60,
+          discountPercentage: 0,
+          taxRate: 12,
+          finalPrice: 60,
+        },
+        inventory: {
+          sku: "FA-001",
+          supplier: "3M",
+          stockCount: 120,
+          reorderLevel: 30,
+          batches: [
+            {
+              batchNumber: "BA-01",
+              expiryDate: new Date("2030-01-01"),
+              quantity: 120,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Insulin Cartridge (10ml)",
+        categoryId: categories[5]._id,
+        pricing: {
+          mrp: 950,
+          purchasePrice: 700,
+          basePrice: 950,
+          discountPercentage: 5,
+          taxRate: 0,
+          finalPrice: 902.5,
+        },
+        inventory: {
+          sku: "DIA-002",
+          supplier: "Novo Nordisk",
+          stockCount: 25,
+          reorderLevel: 10,
+          batches: [
+            {
+              batchNumber: "INS-10-01",
+              expiryDate: new Date("2026-12-31"),
+              quantity: 25,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Aspirin 75mg",
+        categoryId: categories[0]._id,
+        pricing: {
+          mrp: 45,
+          purchasePrice: 20,
+          basePrice: 45,
+          discountPercentage: 0,
+          taxRate: 12,
+          finalPrice: 45,
+        },
+        inventory: {
+          sku: "PAIN-003",
+          supplier: "Bayer",
+          stockCount: 200,
+          reorderLevel: 25,
+          batches: [
+            {
+              batchNumber: "ASP75-01",
+              expiryDate: new Date("2029-05-01"),
+              quantity: 200,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Cetirizine 10mg",
+        categoryId: categories[1]._id,
+        pricing: {
+          mrp: 25,
+          purchasePrice: 10,
+          basePrice: 25,
+          discountPercentage: 0,
+          taxRate: 12,
+          finalPrice: 25,
+        },
+        inventory: {
+          sku: "COLD-002",
+          supplier: "Cipla",
+          stockCount: 400,
+          reorderLevel: 50,
+          batches: [
+            {
+              batchNumber: "CTZ10-01",
+              expiryDate: new Date("2027-02-10"),
+              quantity: 400,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Probiotic Sachet",
+        categoryId: categories[2]._id,
+        pricing: {
+          mrp: 220,
+          purchasePrice: 130,
+          basePrice: 220,
+          discountPercentage: 10,
+          taxRate: 5,
+          finalPrice: 198,
+        },
+        inventory: {
+          sku: "DIG-003",
+          supplier: "Yakult",
+          stockCount: 140,
+          reorderLevel: 30,
+          batches: [
+            {
+              batchNumber: "PRO-01",
+              expiryDate: new Date("2026-10-20"),
+              quantity: 140,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Multivitamin for Women",
+        categoryId: categories[3]._id,
+        pricing: {
+          mrp: 399,
+          purchasePrice: 220,
+          basePrice: 399,
+          discountPercentage: 10,
+          taxRate: 0,
+          finalPrice: 359.1,
+        },
+        inventory: {
+          sku: "VIT-002",
+          supplier: "Centrum",
+          stockCount: 160,
+          reorderLevel: 25,
+          batches: [
+            {
+              batchNumber: "MVW-01",
+              expiryDate: new Date("2029-03-01"),
+              quantity: 160,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Antiseptic Spray",
+        categoryId: categories[4]._id,
+        pricing: {
+          mrp: 180,
+          purchasePrice: 80,
+          basePrice: 180,
+          discountPercentage: 0,
+          taxRate: 12,
+          finalPrice: 180,
+        },
+        inventory: {
+          sku: "FA-002",
+          supplier: "Dettol",
+          stockCount: 95,
+          reorderLevel: 20,
+          batches: [
+            {
+              batchNumber: "ANTSP-01",
+              expiryDate: new Date("2028-11-11"),
+              quantity: 95,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Insulin Pen (Disposable)",
+        categoryId: categories[5]._id,
+        pricing: {
+          mrp: 1800,
+          purchasePrice: 1200,
+          basePrice: 1800,
+          discountPercentage: 5,
+          taxRate: 0,
+          finalPrice: 1710,
+        },
+        inventory: {
+          sku: "DIA-003",
+          supplier: "Sanofi",
+          stockCount: 12,
+          reorderLevel: 5,
+          batches: [
+            {
+              batchNumber: "IPEN-01",
+              expiryDate: new Date("2027-07-01"),
+              quantity: 12,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Ibuprofen 400mg",
+        categoryId: categories[0]._id,
+        pricing: {
+          mrp: 80,
+          purchasePrice: 40,
+          basePrice: 80,
+          discountPercentage: 10,
+          taxRate: 12,
+          finalPrice: 72,
+        },
+        inventory: {
+          sku: "PAIN-004",
+          supplier: "Abbott",
+          stockCount: 220,
+          reorderLevel: 30,
+          batches: [
+            {
+              batchNumber: "IB400-01",
+              expiryDate: new Date("2028-04-01"),
+              quantity: 220,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Nasal Spray",
+        categoryId: categories[1]._id,
+        pricing: {
+          mrp: 140,
+          purchasePrice: 75,
+          basePrice: 140,
+          discountPercentage: 0,
+          taxRate: 12,
+          finalPrice: 140,
+        },
+        inventory: {
+          sku: "COLD-003",
+          supplier: "GlaxoSmithKline",
+          stockCount: 80,
+          reorderLevel: 20,
+          batches: [
+            {
+              batchNumber: "NS-01",
+              expiryDate: new Date("2027-08-08"),
+              quantity: 80,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "ORS Pack",
+        categoryId: categories[2]._id,
+        pricing: {
+          mrp: 15,
+          purchasePrice: 5,
+          basePrice: 15,
+          discountPercentage: 0,
+          taxRate: 0,
+          finalPrice: 15,
+        },
+        inventory: {
+          sku: "DIG-004",
+          supplier: "Electral",
+          stockCount: 500,
+          reorderLevel: 100,
+          batches: [
+            {
+              batchNumber: "ORS-01",
+              expiryDate: new Date("2029-01-01"),
+              quantity: 500,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Calcium + Vitamin D",
+        categoryId: categories[3]._id,
+        pricing: {
+          mrp: 220,
+          purchasePrice: 120,
+          basePrice: 220,
+          discountPercentage: 5,
+          taxRate: 0,
+          finalPrice: 209,
+        },
+        inventory: {
+          sku: "VIT-003",
+          supplier: "Sun Pharma",
+          stockCount: 130,
+          reorderLevel: 30,
+          batches: [
+            {
+              batchNumber: "CAD-01",
+              expiryDate: new Date("2028-09-01"),
+              quantity: 130,
+            },
+          ],
+        },
+      },
+
+      {
+        name: "Sterile Gauze Pack",
+        categoryId: categories[4]._id,
+        pricing: {
+          mrp: 95,
+          purchasePrice: 40,
+          basePrice: 95,
+          discountPercentage: 0,
+          taxRate: 12,
+          finalPrice: 95,
+        },
+        inventory: {
+          sku: "FA-003",
+          supplier: "Medline",
+          stockCount: 210,
+          reorderLevel: 40,
+          batches: [
+            {
+              batchNumber: "GAU-01",
+              expiryDate: new Date("2030-06-01"),
+              quantity: 210,
+            },
+          ],
+        },
+      },
+    ];
+
+    await Product.insertMany(products);
+
+    console.log("✅ Product Catalog Scenario Seeded");
+  } catch (error) {
+    console.error("❌ Product Catalog Scenario Failed");
+    throw error;
+  }
+}
+
 // Execute the async functions
 // ! Following is the wrong execution order given they would start executing in parallel as they are async.
 // checkDbConnection();
@@ -1010,6 +1592,7 @@ async function main() {
     // await seedOneDocumentEach();
     // await seedAuthenticationScenario();
     // await seedDoctorMarketplaceScenario();
+    await seedAppointmentLifecycleScenario();
 
     await mongoose.disconnect();
     process.exit(0);

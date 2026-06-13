@@ -22,15 +22,13 @@ Pagination
 
 seedAppointmentLifecycleScenario()
 
-Book Appointment
-Doctor Accept Appointment
-Doctor Reject Appointment
-Patient Cancel Appointment
-Consultation Completion
-Video Consultation Metadata
-Payment Status Handling
-Doctor Remarks
-Patient Feedback
-Medical Record Uploads
-Appointment History
-Appointment Analytics
+Booking Appointment Flow
+Doctor Confirmation/Rejection of Appointment Flow
+Consultation Completion Flow and metadata
+Patient Appointment Cancellation Flow
+Patient Feedback Flow
+Medical Records Flow and sample metadata
+Doctor Remarks gathering
+Video Consultation Flow
+Payment States - Status Handling
+Appointment History/Analytics sample metadata 
