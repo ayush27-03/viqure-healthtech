@@ -14,7 +14,16 @@ import PatientProfile from './pages/PatientProfile'
 import DoctorProfile from './pages/DoctorProfile'
 import DoctorSettings from './pages/DoctorSettings'
 
-import AdminDashboard from './pages/AdminDashboard'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminDoctors from './pages/admin/AdminDoctors'
+import AdminPatients from './pages/admin/AdminPatients'
+import AdminAppointments from './pages/admin/AdminAppointments'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminOrders from './pages/admin/AdminOrders'
+import AdminCategories from './pages/admin/AdminCategories'
+import AdminSettings from './pages/admin/AdminSettings'
+
+import NotificationBell from './components/NotificationBell'
 
 import Documents from './pages/Documents'
 
@@ -28,6 +37,9 @@ import Appointments from './pages/Appointments'
 import Shop from './pages/Shop'
 import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/Cart'
+import Checkout from './pages/Checkout'
+import Orders from './pages/Orders'
+import OrderDetail from './pages/OrderDetail'
 
 function Navigation() {
   const { isAuthenticated, user, logout, role } = useAuth()
@@ -41,7 +53,7 @@ function Navigation() {
     } else if (role === 'doctor') {
       navigate('/doctor/profile')
     } else if (role === 'admin') {
-      navigate('/admin/dashboard')
+      navigate('/admin')
     }
     setShowProfileMenu(false)
   }
@@ -50,6 +62,45 @@ function Navigation() {
     logout()
     navigate('/')
     setShowProfileMenu(false)
+  }
+
+  if (role === 'admin') {
+    return (
+      <nav className="bg-blue-600 text-white p-4 shadow-lg">
+        <div className="flex justify-between items-center px-6">
+          <Link to="/admin" className="font-bold text-xl hover:text-blue-200">
+            🏥 HealthApp Admin
+          </Link>
+          
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <div className="relative">
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-2 bg-blue-500 hover:bg-blue-700 px-3 py-2 rounded-full transition"
+              >
+                <span className="text-xl">👤</span>
+                <span className="text-sm">Admin</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-50">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 rounded-lg"
+                  >
+                    🚪 Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+    )
   }
 
   return (
@@ -67,7 +118,10 @@ function Navigation() {
           <Link to="/shop" className="hover:text-blue-200">Shop</Link>
           
           {isAuthenticated && (
-            <Link to="/appointments" className="hover:text-blue-200">My Appointments</Link>
+            <>
+              <Link to="/appointments" className="hover:text-blue-200">My Appointments</Link>
+              <Link to="/orders" className="hover:text-blue-200">My Orders</Link>
+            </>
           )}
         </div>
         
@@ -144,6 +198,25 @@ function AppRoutes() {
           <Cart />
         </ProtectedRoute>
       } />
+
+            
+      <Route path="/checkout" element={
+        <ProtectedRoute allowedRoles={['patient']}>
+          <Checkout />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/orders" element={
+        <ProtectedRoute allowedRoles={['patient']}>
+          <Orders />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/orders/:id" element={
+        <ProtectedRoute allowedRoles={['patient']}>
+          <OrderDetail />
+        </ProtectedRoute>
+      } />
       
       {/* Put specific routes BEFORE dynamic routes */}
       <Route path="/doctor/settings" element={
@@ -171,11 +244,20 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
-      <Route path="/admin/dashboard" element={
+      <Route path="/admin" element={
         <ProtectedRoute allowedRoles={['admin']}>
           <AdminDashboard />
         </ProtectedRoute>
-      } />
+      }>
+        <Route index element={<AdminDashboard />} />
+        <Route path="doctors" element={<AdminDoctors />} />
+        <Route path="patients" element={<AdminPatients />} />
+        <Route path="appointments" element={<AdminAppointments />} />
+        <Route path="products" element={<AdminProducts />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="categories" element={<AdminCategories />} />
+        <Route path="settings" element={<AdminSettings />} />
+      </Route>
       
       <Route path="/appointments" element={
         <ProtectedRoute allowedRoles={['patient', 'doctor']}>

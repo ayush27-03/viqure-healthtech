@@ -215,10 +215,10 @@ function Cart() {
                 </div>
 
                 <button
-                  disabled
-                  className="w-full mt-6 bg-gray-400 text-white py-3 rounded-lg cursor-not-allowed"
+                  onClick={() => navigate('/checkout')}
+                  className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition text-center block font-medium"
                 >
-                  Checkout (Coming Soon)
+                  Proceed to Checkout
                 </button>
 
                 <Link

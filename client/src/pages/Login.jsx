@@ -30,7 +30,7 @@ function Login() {
       
       if (role === 'patient') navigate('/patient/profile')
       else if (role === 'doctor') navigate('/doctor/profile')
-      else if (role === 'admin') navigate('/admin/dashboard')
+      else if (role === 'admin') navigate('/admin')
       else navigate('/')
       
     } catch (err) {
