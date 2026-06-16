@@ -15,10 +15,11 @@ const {
   MedicalRecord,
 } = require("./server/models/index");
 
+
 // Global Password Hashes
-const customerPasswordHash = bcrypt.hash('customerpass123', 8);
-const doctorPasswordHash = bcrypt.hash('doctorpass123', 8);
-const adminPasswordHash = bcrypt.hash('adminpass123', 8);
+let customerPasswordHash;
+let doctorPasswordHash;
+let adminPasswordHash;
 
 // Globals populated by helper functions
 let categoryDocs = [];
@@ -1482,6 +1483,9 @@ async function assignCarts() {
 
 // 6. APPOINTMENTS
 async function createAppointments() {
+  /**
+   * # Similar to carts the following is the way we filter appointments properly. And assign them based on reference.
+   */
   const approvedDoctors = doctorDocs.filter(
     (d) => d.detailsOfHealthCareProfessional.approvalStatus === "APPROVED",
   );
@@ -2000,7 +2004,6 @@ async function createAppointments() {
 }
 
 // 7. MEDICAL RECORDS
-
 async function createMedicalRecords() {
   // Link to COMPLETED appointments (indices 6–10 in appointmentDocs → local index 6–10)
   const completedAppts = appointmentDocs.filter(
@@ -2156,8 +2159,11 @@ async function createMedicalRecords() {
 }
 
 // 8. ORDERS
-
 async function createOrders() {
+  /**
+   * $ For products we use pr array variable to input product id-wise into the it based on the product documents array within.
+   * * As post-products insertion it is important to use that as helper array and seed properly
+   */
   const pr = (idx) => productDocs[idx];
 
   function snap(p) {
@@ -2197,6 +2203,9 @@ async function createOrders() {
 
   const dt = (y, m, day) => new Date(y, m - 1, day);
 
+  /**
+   * ~ populating the orders is a little challenging as in you are required to specifically pick products and place them into the order mutating array in a way that everything aligns properly.
+   */
   const ordersData = [
     // pending (2)
     {
@@ -2602,8 +2611,11 @@ async function createOrders() {
 }
 
 // 9. REVIEWS
-
 async function createReviews() {
+  /**
+   * ? It is essential that only customers who are registered and logged in be able to drop reviews and rating to approved doctors and products. So at priority we first get the filtered result of approved doctors within an array.
+   * $ Later simply indices of arrays customers and approvedDoctors are directly used to embed the mongoDB generated IDs. We populate the reviews in separate arrays so that we can simply use spread operator to easily get all the reviews within a single array object and insert in bulk easily.
+   */
   const approvedDoctors = doctorDocs.filter(
     (d) => d.detailsOfHealthCareProfessional.approvalStatus === "APPROVED",
   );
@@ -2820,15 +2832,13 @@ async function createReviews() {
   );
 }
 
-// ORCHESTRATOR
-
+// COMPILE MAIN
 async function runOnceForCompleteDbSampleData() {
   try {
-    console.log("\n── Hashing passwords …");
     customerPasswordHash = await bcrypt.hash("custom_pass123", 8);
     doctorPasswordHash = await bcrypt.hash("doctorPass_123", 8);
     adminPasswordHash = await bcrypt.hash("adminPass_123!", 10);
-
+    
     console.log("── Dropping existing collections …");
     await Promise.all([
       User.deleteMany({}),
@@ -2870,19 +2880,19 @@ async function runOnceForCompleteDbSampleData() {
   }
 }
 
+// EXECUTION MAIN
 async function completeSeed() {
   try {
-    console.log("🔗  Connecting to MongoDB …");
+    console.log("🔗 Connecting to MongoDB …");
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("✔  Connected.\n");
-
     await runOnceForCompleteDbSampleData();
   } catch (error) {
-    console.error("❌  Fatal error:", error);
+    console.error("❌ Fatal error:", error);
     process.exit(1);
   } finally {
     await mongoose.disconnect();
-    console.log("🔌  Disconnected.");
+    console.log("🔌Disconnected.");
   }
 }
 
