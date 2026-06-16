@@ -1,35 +1,30 @@
-const crypto = require("crypto");
+const jwt = require('jsonwebtoken');
 
-const secret = process.env.JWT_SECRET || "dev-only-secret";
-const defaultExpirySeconds = Number(process.env.JWT_EXPIRES_IN_SECONDS || 60 * 60 * 24 * 7);
+const secret = process.env.JWT_SECRET || 'dev-only-secret';
+const defaultExpiry = process.env.JWT_EXPIRES_IN || '7d';
 
-function encode(data) {
-  return Buffer.from(JSON.stringify(data)).toString("base64url");
+/**
+ * Signs a JWT containing the user's _id and role.
+ * @param {Object} user – Mongoose user document (needs _id and role).
+ * @returns {string} Signed JWT string.
+ */
+function signToken(user) {
+  return jwt.sign(
+    { _id: String(user._id), role: user.role },
+    secret,
+    { expiresIn: defaultExpiry },
+  );
 }
 
-function sign(payload) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("base64url");
-}
-
-function signToken(payload = {}) {
-  const body = {
-    ...payload,
-    exp: Math.floor(Date.now() / 1000) + defaultExpirySeconds,
-  };
-  const encoded = encode(body);
-  return `${encoded}.${sign(encoded)}`;
-}
-
+/**
+ * Verifies a JWT and returns the decoded payload, or null on failure.
+ * @param {string} token – Raw JWT string (without "Bearer " prefix).
+ * @returns {Object|null} Decoded payload or null.
+ */
 function verifyToken(token) {
   try {
-    const [encoded, signature] = String(token || "").split(".");
-    if (!encoded || !signature) return null;
-    if (sign(encoded) !== signature) return null;
-
-    const payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
-    return payload;
-  } catch (err) {
+    return jwt.verify(token, secret);
+  } catch {
     return null;
   }
 }
