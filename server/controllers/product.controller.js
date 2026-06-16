@@ -1,119 +1,166 @@
-const { Product } = require("../models");
-const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
+const { Product, Category } = require('../models/index');
+const catchAsync = require('../utils/catchAsync');
+const ApiError = require('../utils/ApiError');
 
-const getProducts = async (req, res) => {
-  try {
-    const { category, minPrice, maxPrice, brand, q, sort, page = 1, limit = 12 } = req.query;
+/**
+ * GET /api/products
+ * Public listing with search, category filter, price range, pagination.
+ * Query: q, categoryId, minPrice, maxPrice, inStock, page, limit, sort
+ */
+const listProducts = catchAsync(async (req, res) => {
+  const { q, categoryId, minPrice, maxPrice, inStock, page = 1, limit = 20, sort } = req.query;
 
-    const filter = { isAvailable: true };
-    if (category)  filter["category.name"] = new RegExp(category, "i");
-    if (brand)     filter.brand = new RegExp(brand, "i");
-    if (q)         filter.name  = new RegExp(q, "i");
-    if (minPrice || maxPrice) {
-      filter.baseCost = {};
-      if (minPrice) filter.baseCost.$gte = parseFloat(minPrice);
-      if (maxPrice) filter.baseCost.$lte = parseFloat(maxPrice);
-    }
-
-    let sortObj = {};
-    switch (sort) {
-      case "price_asc":  sortObj = { baseCost: 1 };             break;
-      case "price_desc": sortObj = { baseCost: -1 };            break;
-      case "rating":     sortObj = { "ratings.average": -1 };   break;
-      case "newest":     sortObj = { createdAt: -1 };           break;
-      default:           sortObj = { createdAt: -1 };
-    }
-
-    const pageNum  = Math.max(parseInt(page) || 1, 1);
-    const limitNum = Math.min(parseInt(limit) || 12, 50);
-    const skip     = (pageNum - 1) * limitNum;
-
-    const [products, total] = await Promise.all([
-      Product.find(filter).sort(sortObj).skip(skip).limit(limitNum).lean(),
-      Product.countDocuments(filter),
-    ]);
-
-    return sendSuccess(res, {
-      products,
-      pagination: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
-    });
-  } catch (err) {
-    console.error("getProducts:", err);
-    return sendError(res, "Failed to fetch products", 500);
+  const filter = { isActive: true };
+  if (categoryId) filter.categoryId = categoryId;
+  if (q) filter.name = { $regex: q, $options: 'i' };
+  if (minPrice || maxPrice) {
+    filter['pricing.finalPrice'] = {};
+    if (minPrice) filter['pricing.finalPrice'].$gte = Number(minPrice);
+    if (maxPrice) filter['pricing.finalPrice'].$lte = Number(maxPrice);
   }
-};
+  if (inStock === 'true') filter['inventory.stockCount'] = { $gt: 0 };
 
-const getProductByIdOrSlug = async (req, res) => {
-  try {
-    const { idOrSlug } = req.params;
-    const isObjectId   = /^[a-f\d]{24}$/i.test(idOrSlug);
+  let sortOption = { createdAt: -1 };
+  if (sort === 'price_asc') sortOption = { 'pricing.finalPrice': 1 };
+  if (sort === 'price_desc') sortOption = { 'pricing.finalPrice': -1 };
+  if (sort === 'name_asc') sortOption = { name: 1 };
 
-    const product = await Product.findOne(
-      isObjectId ? { _id: idOrSlug } : { slug: idOrSlug }
-    ).lean();
+  const skip = (Number(page) - 1) * Number(limit);
 
-    if (!product) return sendError(res, "Product not found", 404);
-    return sendSuccess(res, { product });
-  } catch (err) {
-    console.error("getProductByIdOrSlug:", err);
-    return sendError(res, "Failed to fetch product", 500);
+  const [products, total] = await Promise.all([
+    Product.find(filter).populate('categoryId', 'name icon').sort(sortOption).skip(skip).limit(Number(limit)),
+    Product.countDocuments(filter),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: products,
+    pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) },
+  });
+});
+
+/**
+ * GET /api/products/:id
+ * Public product detail.
+ */
+const getProductById = catchAsync(async (req, res) => {
+  const product = await Product.findById(req.params.id).populate('categoryId', 'name icon');
+  if (!product || !product.isActive) throw new ApiError(404, 'Product not found');
+  res.status(200).json({ success: true, data: product });
+});
+
+/**
+ * POST /api/products
+ * Admin only
+ */
+const createProduct = catchAsync(async (req, res) => {
+  const { name, categoryId, description, images, pricing, inventory, specifications, isActive } = req.body;
+
+  if (!name) throw new ApiError(400, 'name is required');
+  if (!categoryId) throw new ApiError(400, 'categoryId is required');
+
+  const category = await Category.findById(categoryId);
+  if (!category) throw new ApiError(404, 'Referenced category does not exist');
+
+  const product = await Product.create({
+    name,
+    categoryId,
+    description,
+    images,
+    pricing,
+    inventory,
+    specifications,
+    isActive,
+  });
+
+  res.status(201).json({ success: true, data: product });
+});
+
+/**
+ * PATCH /api/products/:id
+ * Admin only — general field update.
+ */
+const updateProduct = catchAsync(async (req, res) => {
+  const allowed = ['name', 'categoryId', 'description', 'images', 'pricing', 'inventory', 'specifications', 'isActive'];
+  const updates = {};
+  for (const field of allowed) {
+    if (req.body[field] !== undefined) updates[field] = req.body[field];
   }
-};
 
-const createProduct = async (req, res) => {
-  try {
-    const { name, description, brand, category, images, baseCost, discountFactor,
-            inventory, estimatedDeliveryDays } = req.body;
-
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-
-    const product = await Product.create({
-      name, slug, description, brand, category, images,
-      baseCost, discountFactor: discountFactor || 0,
-      inventory, estimatedDeliveryDays,
-      isAvailable: true,
-      ratings: { average: 0, totalReviews: 0 },
-    });
-
-    return sendCreated(res, { product }, "Product created");
-  } catch (err) {
-    if (err.code === 11000) return sendError(res, "Product with this name/slug already exists", 409);
-    console.error("createProduct:", err);
-    return sendError(res, "Failed to create product", 500);
+  if (updates.categoryId) {
+    const category = await Category.findById(updates.categoryId);
+    if (!category) throw new ApiError(404, 'Referenced category does not exist');
   }
-};
 
-const updateProduct = async (req, res) => {
-  try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true, runValidators: true }
-    );
-    if (!product) return sendError(res, "Product not found", 404);
-    return sendSuccess(res, { product }, "Product updated");
-  } catch (err) {
-    console.error("updateProduct:", err);
-    return sendError(res, "Failed to update product", 500);
+  const product = await Product.findByIdAndUpdate(req.params.id, updates, {
+    new: true,
+    runValidators: true,
+  });
+  if (!product) throw new ApiError(404, 'Product not found');
+
+  res.status(200).json({ success: true, data: product });
+});
+
+/**
+ * PATCH /api/products/:id/stock
+ * Admin / Product Manager — basic inventory adjustment.
+ * body: { stockCount } (absolute) or { adjustBy } (relative, +/-)
+ */
+const updateStock = catchAsync(async (req, res) => {
+  const { stockCount, adjustBy } = req.body;
+  const product = await Product.findById(req.params.id);
+  if (!product) throw new ApiError(404, 'Product not found');
+
+  if (stockCount !== undefined) {
+    if (stockCount < 0) throw new ApiError(400, 'stockCount cannot be negative');
+    product.inventory.stockCount = stockCount;
+  } else if (adjustBy !== undefined) {
+    const newCount = product.inventory.stockCount + Number(adjustBy);
+    if (newCount < 0) throw new ApiError(400, 'Resulting stock count cannot be negative');
+    product.inventory.stockCount = newCount;
+  } else {
+    throw new ApiError(400, 'Provide either stockCount or adjustBy');
   }
-};
 
-const deactivateProduct = async (req, res) => {
-  try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { isAvailable: false },
-      { new: true }
-    );
-    if (!product) return sendError(res, "Product not found", 404);
-    return sendSuccess(res, { product }, "Product deactivated");
-  } catch (err) {
-    console.error("deactivateProduct:", err);
-    return sendError(res, "Failed to deactivate product", 500);
-  }
-};
+  await product.save();
 
-module.exports = { getProducts, getProductByIdOrSlug, createProduct, updateProduct, deactivateProduct };
+  const lowStock = product.inventory.stockCount <= product.inventory.reorderLevel;
+  res.status(200).json({
+    success: true,
+    data: product,
+    lowStockAlert: lowStock,
+  });
+});
+
+/**
+ * GET /api/products/low-stock
+ * Admin / Product Manager — products at or below reorder level.
+ */
+const getLowStockProducts = catchAsync(async (req, res) => {
+  const products = await Product.find({
+    isActive: true,
+    $expr: { $lte: ['$inventory.stockCount', '$inventory.reorderLevel'] },
+  }).populate('categoryId', 'name');
+
+  res.status(200).json({ success: true, data: products });
+});
+
+/**
+ * DELETE /api/products/:id
+ * Admin only — soft delete via isActive flag.
+ */
+const deleteProduct = catchAsync(async (req, res) => {
+  const product = await Product.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+  if (!product) throw new ApiError(404, 'Product not found');
+  res.status(200).json({ success: true, message: 'Product deactivated', data: product });
+});
+
+module.exports = {
+  listProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  updateStock,
+  getLowStockProducts,
+  deleteProduct,
+};

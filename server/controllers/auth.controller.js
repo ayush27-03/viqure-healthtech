@@ -1,168 +1,154 @@
-const bcrypt = require("bcryptjs");
-const { signToken } = require("../utils/jwt.util");
-const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { User } = require('../models/index');
+const catchAsync = require('../utils/catchAsync');
+const ApiError = require('../utils/ApiError');
 
-const { User, Doctor, Admin } = require("../models");
+const signToken = (user) =>
+  jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  });
 
-const registerPatient = async (req, res) => {
-  try {
-    const { name, email, password, phone, gender, dob } = req.body;
+const sanitizeUser = (userDoc) => {
+  const user = userDoc.toObject ? userDoc.toObject() : userDoc;
+  delete user.passwordHash;
+  return user;
+};
 
-    const exists = await User.findOne({ email: email.toLowerCase() });
-    if (exists) return sendError(res, "Email already registered", 409);
+/**
+ * POST /api/auth/register
+ * Registers a CUSTOMER or DOCTOR. Doctors start with approvalStatus PENDING.
+ */
+const register = catchAsync(async (req, res) => {
+  const { email, phone, password, role, gender, dob, profile, detailsOfHealthCareProfessional } = req.body;
 
-    const hashed = await bcrypt.hash(password, 12);
-
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      passwordHash: hashed,
-      phone,
-      gender,
-      dob,
-      role: "patient",
-    });
-
-    const token = signToken({ id: user._id, role: "patient", email: user.email });
-
-    return sendCreated(res, {
-      token,
-      user: {
-        id:    user._id,
-        name:  user.name,
-        email: user.email,
-        role:  user.role,
-        phone: user.phone,
-      },
-    }, "Patient registered successfully");
-  } catch (err) {
-    console.error("registerPatient:", err);
-    return sendError(res, "Registration failed", 500);
+  if (!email || !password || !role) {
+    throw new ApiError(400, 'email, password and role are required');
   }
-};
-
-const registerDoctor = async (req, res) => {
-  try {
-    const {
-      doctorName, email, password, mobileNumber, dob, gender,
-      city, description, licenseNo, licenseNumber, yearsOfExperience,
-      consultationFees, specializations, qualifications,
-    } = req.body;
-    const normalizedLicense = licenseNumber || licenseNo;
-
-    const exists = await Doctor.findOne({ email: email.toLowerCase() });
-    if (exists) return sendError(res, "Email already registered", 409);
-
-    const licExists = await Doctor.findOne({ licenseNumber: normalizedLicense });
-    if (licExists) return sendError(res, "License number already registered", 409);
-
-    const hashed = await bcrypt.hash(password, 12);
-
-    const doctor = await Doctor.create({
-      doctorName,
-      email: email.toLowerCase(),
-      passwordHash: hashed,
-      mobileNumber,
-      dob,
-      gender,
-      city,
-      description,
-      licenseNumber: normalizedLicense,
-      yearsOfExperience,
-      consultationFees,
-      qualifications: qualifications || [],
-      specializations: Array.isArray(specializations) ? specializations : [specializations],
-      status: "pending",
-    });
-
-    const token = signToken({ id: doctor._id, role: "doctor", email: doctor.email });
-
-    return sendCreated(res, {
-      token,
-      doctor: {
-        id:         doctor._id,
-        doctorName: doctor.doctorName,
-        email:      doctor.email,
-        status:     doctor.status,
-      },
-    }, "Doctor registered. Pending admin approval.");
-  } catch (err) {
-    console.error("registerDoctor:", err);
-    return sendError(res, "Registration failed", 500);
+  if (!['CUSTOMER', 'DOCTOR'].includes(role)) {
+    throw new ApiError(400, 'role must be CUSTOMER or DOCTOR for self-registration');
   }
-};
 
-const login = async (req, res) => {
-  try {
-    const { email, password, role } = req.body;
-
-    let account = null;
-    let tokenRole = role;
-
-    if (role === "patient") {
-      account = await User.findOne({ email: email.toLowerCase() }).select("+passwordHash");
-    } else if (role === "doctor") {
-      account = await Doctor.findOne({ email: email.toLowerCase() }).select("+passwordHash");
-    } else if (role === "admin") {
-      account = await Admin.findOne({ email: email.toLowerCase() }).select("+passwordHash");
-    } else {
-      return sendError(res, "Invalid role. Must be patient, doctor, or admin", 400);
-    }
-
-    if (!account) return sendError(res, "Invalid email or password", 401);
-
-    const isMatch = await bcrypt.compare(password, account.passwordHash);
-    if (!isMatch) return sendError(res, "Invalid email or password", 401);
-
-    if (role === "doctor" && account.status !== "approved") {
-      return sendError(res, `Account not approved. Status: ${account.status}`, 403);
-    }
-
-    if ((role === "patient") && account.isActive === false) {
-      return sendError(res, "Account has been deactivated. Contact support.", 403);
-    }
-
-    const token = signToken({ id: account._id, role: tokenRole, email: account.email });
-    await account.updateOne({ lastLogin: new Date() }).catch(() => null);
-
-    const userData =
-      role === "patient"
-        ? { id: account._id, name: account.name,       email: account.email, role: "patient", avatar: account.avatar }
-        : role === "doctor"
-        ? { id: account._id, name: account.doctorName, email: account.email, role: "doctor",  status: account.status }
-        : { id: account._id, name: account.name,       email: account.email, role: "admin",   adminRole: account.adminRole };
-
-    return sendSuccess(res, { token, user: userData }, "Login successful");
-  } catch (err) {
-    console.error("login:", err);
-    return sendError(res, "Login failed", 500);
+  const existing = await User.findOne({ email });
+  if (existing) {
+    throw new ApiError(409, 'A user with this email already exists');
   }
-};
 
-const getMe = async (req, res) => {
-  try {
-    const { id, role } = req.user;
-    let account;
+  const passwordHash = await bcrypt.hash(password, 10);
 
-    if (role === "patient") {
-      account = await User.findById(id).select("-passwordHash");
-    } else if (role === "doctor") {
-      account = await Doctor.findById(id).select("-passwordHash");
-    } else if (role === "admin") {
-      account = await Admin.findById(id).select("-passwordHash");
-    }
+  const userPayload = {
+    email,
+    phone,
+    passwordHash,
+    role,
+    gender,
+    dob,
+    profile,
+  };
 
-    if (!account) return sendError(res, "User not found", 404);
-
-    return sendSuccess(res, { user: account });
-  } catch (err) {
-    console.error("getMe:", err);
-    return sendError(res, "Failed to fetch profile", 500);
+  if (role === 'DOCTOR') {
+    userPayload.detailsOfHealthCareProfessional = {
+      ...detailsOfHealthCareProfessional,
+      approvalStatus: 'PENDING',
+      isAvailable: false,
+    };
+    userPayload.isVerified = false;
   }
-};
 
-const logout = (req, res) => {
-  return sendSuccess(res, {}, "Logged out successfully");
-};
+  const newUser = await User.create(userPayload);
+  const token = signToken(newUser);
 
-module.exports = { registerPatient, registerDoctor, login, getMe, logout };
+  res.status(201).json({
+    success: true,
+    message: role === 'DOCTOR'
+      ? 'Registration submitted. Awaiting admin approval.'
+      : 'Registration successful.',
+    data: { user: sanitizeUser(newUser), token },
+  });
+});
+
+/**
+ * POST /api/auth/login
+ */
+const login = catchAsync(async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    throw new ApiError(400, 'email and password are required');
+  }
+
+  const user = await User.findOne({ email }).select('+passwordHash');
+  if (!user) {
+    throw new ApiError(401, 'Invalid email or password');
+  }
+
+  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!isMatch) {
+    throw new ApiError(401, 'Invalid email or password');
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(403, 'This account has been deactivated');
+  }
+
+  if (user.role === 'DOCTOR' && user.detailsOfHealthCareProfessional?.approvalStatus !== 'APPROVED') {
+    throw new ApiError(403, `Your doctor account is ${user.detailsOfHealthCareProfessional?.approvalStatus}. You cannot log in until approved.`);
+  }
+
+  user.lastLoginAt = new Date();
+  await user.save();
+
+  const token = signToken(user);
+  res.status(200).json({
+    success: true,
+    data: { user: sanitizeUser(user), token },
+  });
+});
+
+/**
+ * GET /api/auth/me
+ */
+const getMe = catchAsync(async (req, res) => {
+  res.status(200).json({ success: true, data: sanitizeUser(req.user) });
+});
+
+/**
+ * PATCH /api/auth/me
+ * Update own profile (not role, password, or doctor approval fields).
+ */
+const updateMe = catchAsync(async (req, res) => {
+  const allowedFields = ['phone', 'gender', 'dob', 'profile', 'addresses', 'avatar', 'fcmToken'];
+  const updates = {};
+  for (const field of allowedFields) {
+    if (req.body[field] !== undefined) updates[field] = req.body[field];
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(req.user._id, updates, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({ success: true, data: sanitizeUser(updatedUser) });
+});
+
+/**
+ * PATCH /api/auth/change-password
+ */
+const changePassword = catchAsync(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(400, 'currentPassword and newPassword are required');
+  }
+
+  const user = await User.findById(req.user._id).select('+passwordHash');
+  const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isMatch) {
+    throw new ApiError(401, 'Current password is incorrect');
+  }
+
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  res.status(200).json({ success: true, message: 'Password updated successfully' });
+});
+
+module.exports = { register, login, getMe, updateMe, changePassword };

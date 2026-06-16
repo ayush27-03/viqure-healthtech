@@ -1,309 +1,395 @@
-const mongoose = require("mongoose");
-const { randomUUID } = require("crypto");
+const { Appointment, User } = require('../models/index');
+const catchAsync = require('../utils/catchAsync');
+const ApiError = require('../utils/ApiError');
 
-const { Appointment, Slot, Doctor } = require("../models");
-const { sendSuccess, sendError, sendCreated } = require("../utils/response.util");
-const { createNotification } = require("../utils/notification.util");
+const TAX_RATE = 0.18; // 18% applied on consultation fee for MVP simplicity
 
-const createAppointment = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const { doctorId, slotId } = req.body;
-    const patientId = req.user.id;
+/**
+ * POST /api/appointments
+ * Patient books an appointment against a doctor's open time slot.
+ * body: { doctorId, slotId, reason, consultationType }
+ */
+const bookAppointment = catchAsync(async (req, res) => {
+  if (req.user.role !== 'CUSTOMER') throw new ApiError(403, 'Only patients can book appointments');
 
-    const slot = await Slot.findById(slotId).session(session);
-    if (!slot || slot.isBooked) {
-      await session.abortTransaction();
-      return sendError(res, "Slot not available", 400);
-    }
-    if (slot.doctorId.toString() !== doctorId) {
-      await session.abortTransaction();
-      return sendError(res, "Slot does not belong to the specified doctor", 400);
-    }
+  const { doctorId, slotId, reason, consultationType = 'VIDEO' } = req.body;
+  if (!doctorId || !slotId) throw new ApiError(400, 'doctorId and slotId are required');
 
-    const doctor = await Doctor.findById(doctorId).session(session);
-    if (!doctor || doctor.status !== "approved") {
-      await session.abortTransaction();
-      return sendError(res, "Doctor not found or not approved", 404);
-    }
+  const doctor = await User.findOne({
+    _id: doctorId,
+    role: 'DOCTOR',
+    'detailsOfHealthCareProfessional.approvalStatus': 'APPROVED',
+  });
+  if (!doctor) throw new ApiError(404, 'Doctor not found or not approved');
 
-    slot.isBooked = true;
-    await slot.save({ session });
+  const slot = doctor.detailsOfHealthCareProfessional.timeSlots.find(
+    (s) => s._id.toString() === slotId
+  );
+  if (!slot) throw new ApiError(404, 'Slot not found');
+  if (slot.isBooked) throw new ApiError(409, 'This slot is already booked');
 
-    const appointment = await Appointment.create(
-      [
-        {
-          patientId,
-          doctorId,
-          consultationFees:         doctor.consultationFees,
-          appointmentDate:          new Date(slot.date),
-          appointmentStartDateTime: new Date(`${slot.date}T${slot.startTime}`),
-          appointmentEndDateTime:   new Date(`${slot.date}T${slot.endTime}`),
-          slotTime:                 `${slot.startTime} - ${slot.endTime}`,
-          consultationType:         "VIDEO",
-          appointmentStatus:        "PENDING",
-          paymentStatus:            "PENDING",
-          meetingId:                randomUUID(),
-        },
-      ],
-      { session }
-    );
+  const fee = doctor.detailsOfHealthCareProfessional.consultationFee || 0;
+  const taxAmount = Math.round(fee * TAX_RATE);
+  const totalAmount = fee + taxAmount;
 
-    await session.commitTransaction();
+  const [startH, startM] = (slot.startTime || '00:00').split(':').map(Number);
+  const [endH, endM] = (slot.endTime || '00:00').split(':').map(Number);
+  const startDateTime = new Date(slot.date);
+  startDateTime.setHours(startH, startM, 0, 0);
+  const endDateTime = new Date(slot.date);
+  endDateTime.setHours(endH, endM, 0, 0);
 
-    createNotification({
-      userId: doctorId, userModel: "Doctor",
-      title: "New Appointment Booked",
-      message: `A patient booked a consultation on ${slot.date} at ${slot.startTime}.`,
-      type: "appointment", refId: appointment[0]._id, refModel: "Appointment",
+  const appointment = await Appointment.create({
+    patientId: req.user._id,
+    doctorId: doctor._id,
+    schedule: {
+      scheduledAt: slot.date,
+      slotTime: `${slot.startTime} - ${slot.endTime}`,
+      startDateTime,
+      endDateTime,
+    },
+    meeting: { consultationType },
+    financials: {
+      consultationFee: fee,
+      taxAmount,
+      totalAmount,
+      refundableAmount: totalAmount,
+    },
+    paymentDetails: { status: 'PENDING', currency: 'INR' },
+    appointmentStatus: 'BOOKED',
+    reason,
+  });
+
+  slot.isBooked = true;
+  await doctor.save();
+
+  res.status(201).json({ success: true, data: appointment });
+});
+
+/**
+ * GET /api/appointments
+ * Role-aware listing: customer sees own, doctor sees own, admin sees all (with filters).
+ */
+const listAppointments = catchAsync(async (req, res) => {
+  const { status, page = 1, limit = 20 } = req.query;
+  const filter = {};
+
+  if (req.user.role === 'CUSTOMER') filter.patientId = req.user._id;
+  else if (req.user.role === 'DOCTOR') filter.doctorId = req.user._id;
+  // ADMIN: no identity restriction
+
+  if (status) filter.appointmentStatus = status;
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const [appointments, total] = await Promise.all([
+    Appointment.find(filter)
+      .populate('patientId', 'profile email phone')
+      .populate('doctorId', 'profile email detailsOfHealthCareProfessional.consultationFee')
+      .sort({ 'schedule.scheduledAt': -1 })
+      .skip(skip)
+      .limit(Number(limit)),
+    Appointment.countDocuments(filter),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: appointments,
+    pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) },
+  });
+});
+
+/**
+ * GET /api/appointments/:id
+ */
+const getAppointmentById = catchAsync(async (req, res) => {
+  const appointment = await Appointment.findById(req.params.id)
+    .populate('patientId', 'profile email phone')
+    .populate('doctorId', 'profile email detailsOfHealthCareProfessional.consultationFee');
+
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+
+  const isOwner =
+    appointment.patientId._id.toString() === req.user._id.toString() ||
+    appointment.doctorId._id.toString() === req.user._id.toString();
+  if (req.user.role !== 'ADMIN' && !isOwner) {
+    throw new ApiError(403, 'You do not have access to this appointment');
+  }
+
+  res.status(200).json({ success: true, data: appointment });
+});
+
+/**
+ * PATCH /api/appointments/:id/confirm
+ * Doctor confirms a BOOKED appointment (typically after payment captured).
+ */
+const confirmAppointment = catchAsync(async (req, res) => {
+  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only the doctor can confirm an appointment');
+
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+  if (appointment.doctorId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'You can only confirm your own appointments');
+  }
+  if (appointment.appointmentStatus !== 'BOOKED') {
+    throw new ApiError(400, `Cannot confirm an appointment in ${appointment.appointmentStatus} status`);
+  }
+
+  appointment.appointmentStatus = 'CONFIRMED';
+  appointment.financials.refundableAmount = 0;
+  await appointment.save();
+
+  res.status(200).json({ success: true, data: appointment });
+});
+
+/**
+ * PATCH /api/appointments/:id/reject
+ * Doctor rejects a BOOKED appointment. body: { reason }
+ */
+const rejectAppointment = catchAsync(async (req, res) => {
+  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only the doctor can reject an appointment');
+
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+  if (appointment.doctorId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'You can only reject your own appointments');
+  }
+  if (appointment.appointmentStatus !== 'BOOKED') {
+    throw new ApiError(400, `Cannot reject an appointment in ${appointment.appointmentStatus} status`);
+  }
+
+  appointment.appointmentStatus = 'REJECTED';
+  appointment.doctorRemarks = { text: req.body.reason || 'Appointment rejected by doctor', mode: 'Text' };
+  if (appointment.paymentDetails.status === 'PAID') {
+    appointment.paymentDetails.status = 'REFUNDED';
+  }
+  await appointment.save();
+
+  await freeUpSlot(appointment);
+
+  res.status(200).json({ success: true, data: appointment });
+});
+
+/**
+ * PATCH /api/appointments/:id/cancel
+ * Patient or doctor cancels a BOOKED/CONFIRMED appointment. body: { cancelReason }
+ */
+const cancelAppointment = catchAsync(async (req, res) => {
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+
+  const isPatient = appointment.patientId.toString() === req.user._id.toString();
+  const isDoctor = appointment.doctorId.toString() === req.user._id.toString();
+  if (req.user.role !== 'ADMIN' && !isPatient && !isDoctor) {
+    throw new ApiError(403, 'You do not have permission to cancel this appointment');
+  }
+
+  if (!['BOOKED', 'CONFIRMED'].includes(appointment.appointmentStatus)) {
+    throw new ApiError(400, `Cannot cancel an appointment in ${appointment.appointmentStatus} status`);
+  }
+
+  appointment.appointmentStatus = 'CANCELLED';
+  appointment.cancellation = {
+    cancelledBy: req.user._id,
+    cancelReason: req.body.cancelReason || 'No reason provided',
+    cancelledAt: new Date(),
+  };
+  if (appointment.paymentDetails.status === 'PAID') {
+    appointment.paymentDetails.status = 'REFUNDED';
+  }
+  await appointment.save();
+
+  await freeUpSlot(appointment);
+
+  res.status(200).json({ success: true, data: appointment });
+});
+
+/**
+ * Internal helper: re-open the doctor's time slot tied to a cancelled/rejected appointment.
+ */
+async function freeUpSlot(appointment) {
+  const doctor = await User.findById(appointment.doctorId);
+  if (!doctor) return;
+  const slot = doctor.detailsOfHealthCareProfessional.timeSlots.find(
+    (s) =>
+      new Date(s.date).getTime() === new Date(appointment.schedule.scheduledAt).getTime() &&
+      appointment.schedule.slotTime?.startsWith(s.startTime)
+  );
+  if (slot) {
+    slot.isBooked = false;
+    await doctor.save();
+  }
+}
+
+/**
+ * PATCH /api/appointments/:id/complete
+ * Doctor marks a CONFIRMED appointment complete and adds remarks.
+ * body: { doctorRemarks: { text, mode } }
+ */
+const completeAppointment = catchAsync(async (req, res) => {
+  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only the doctor can complete an appointment');
+
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+  if (appointment.doctorId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'You can only complete your own appointments');
+  }
+  if (appointment.appointmentStatus !== 'CONFIRMED') {
+    throw new ApiError(400, `Cannot complete an appointment in ${appointment.appointmentStatus} status`);
+  }
+
+  appointment.appointmentStatus = 'COMPLETED';
+  if (req.body.doctorRemarks) appointment.doctorRemarks = req.body.doctorRemarks;
+  if (req.body.notes) appointment.notes = req.body.notes;
+  await appointment.save();
+
+  await User.findByIdAndUpdate(req.user._id, {
+    $inc: { 'detailsOfHealthCareProfessional.stats.totalAppointments': 1 },
+  });
+
+  res.status(200).json({ success: true, data: appointment });
+});
+
+/**
+ * POST /api/appointments/:id/documents
+ * Patient or doctor shares a document on the appointment.
+ * body: { documentURL, documentType }
+ */
+const shareDocument = catchAsync(async (req, res) => {
+  const { documentURL, documentType } = req.body;
+  if (!documentURL) throw new ApiError(400, 'documentURL is required');
+
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+
+  const isPatient = appointment.patientId.toString() === req.user._id.toString();
+  const isDoctor = appointment.doctorId.toString() === req.user._id.toString();
+  if (!isPatient && !isDoctor) throw new ApiError(403, 'You do not have access to this appointment');
+
+  appointment.documentsShared.push({
+    uploadedBy: req.user._id,
+    documentURL,
+    documentType,
+  });
+  await appointment.save();
+
+  res.status(201).json({ success: true, data: appointment.documentsShared });
+});
+
+/**
+ * POST /api/appointments/:id/feedback
+ * Patient leaves feedback on a COMPLETED appointment.
+ * body: { rating, comment }
+ */
+const leaveFeedback = catchAsync(async (req, res) => {
+  if (req.user.role !== 'CUSTOMER') throw new ApiError(403, 'Only the patient can leave feedback');
+
+  const { rating, comment } = req.body;
+  if (rating === undefined) throw new ApiError(400, 'rating is required');
+
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+  if (appointment.patientId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'You can only leave feedback on your own appointments');
+  }
+  if (appointment.appointmentStatus !== 'COMPLETED') {
+    throw new ApiError(400, 'Feedback can only be left on completed appointments');
+  }
+
+  appointment.feedback = { rating, comment };
+  await appointment.save();
+
+  // Recompute doctor's average rating across all rated, completed appointments
+  const stats = await Appointment.aggregate([
+    { $match: { doctorId: appointment.doctorId, 'feedback.rating': { $gte: 1 } } },
+    { $group: { _id: null, avgRating: { $avg: '$feedback.rating' }, count: { $sum: 1 } } },
+  ]);
+
+  if (stats.length > 0) {
+    await User.findByIdAndUpdate(appointment.doctorId, {
+      'detailsOfHealthCareProfessional.averageRating': Math.round(stats[0].avgRating * 10) / 10,
+      'detailsOfHealthCareProfessional.stats.rating': Math.round(stats[0].avgRating * 10) / 10,
+      'detailsOfHealthCareProfessional.stats.totalRatings': stats[0].count,
     });
-
-    return sendCreated(res, { appointment: appointment[0] }, "Appointment booked successfully");
-  } catch (err) {
-    await session.abortTransaction();
-    console.error("createAppointment:", err);
-    return sendError(res, "Failed to book appointment", 500);
-  } finally {
-    session.endSession();
   }
-};
 
-const getPatientAppointments = async (req, res) => {
-  try {
-    const { status, page = 1, limit = 10 } = req.query;
-    const filter = { patientId: req.user.id };
-    if (status) filter.appointmentStatus = status.toUpperCase();
+  res.status(200).json({ success: true, data: appointment });
+});
 
-    const skip = (Math.max(parseInt(page), 1) - 1) * Math.min(parseInt(limit), 50);
+/**
+ * POST /api/appointments/:id/report-issue
+ * body: { issue }
+ */
+const reportIssue = catchAsync(async (req, res) => {
+  const { issue } = req.body;
+  if (!issue) throw new ApiError(400, 'issue description is required');
 
-    const [appointments, total] = await Promise.all([
-      Appointment.find(filter)
-        .populate("doctorId", "doctorName profileIcon specializations city consultationFees")
-        .sort({ appointmentStartDateTime: -1 })
-        .skip(skip)
-        .limit(Math.min(parseInt(limit), 50))
-        .lean(),
-      Appointment.countDocuments(filter),
-    ]);
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
 
-    return sendSuccess(res, {
-      appointments,
-      pagination: { total, page: parseInt(page), limit: Math.min(parseInt(limit), 50), pages: Math.ceil(total / Math.min(parseInt(limit), 50)) },
-    });
-  } catch (err) {
-    console.error("getPatientAppointments:", err);
-    return sendError(res, "Failed to fetch appointments", 500);
+  const isPatient = appointment.patientId.toString() === req.user._id.toString();
+  const isDoctor = appointment.doctorId.toString() === req.user._id.toString();
+  if (!isPatient && !isDoctor) throw new ApiError(403, 'You do not have access to this appointment');
+
+  appointment.reportedIssue = { issue, reportedAt: new Date(), status: 'OPEN' };
+  await appointment.save();
+
+  res.status(201).json({ success: true, data: appointment.reportedIssue });
+});
+
+/**
+ * PATCH /api/appointments/:id/resolve-issue
+ * Admin only. body: { resolution }
+ */
+const resolveIssue = catchAsync(async (req, res) => {
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+  if (!appointment.reportedIssue) throw new ApiError(400, 'No issue reported on this appointment');
+
+  appointment.reportedIssue.status = 'RESOLVED';
+  appointment.reportedIssue.resolution = req.body.resolution || 'Resolved by admin';
+  await appointment.save();
+
+  res.status(200).json({ success: true, data: appointment.reportedIssue });
+});
+
+/**
+ * PATCH /api/appointments/:id/payment
+ * Records payment success for a BOOKED appointment (called post payment-gateway callback).
+ * body: { transactionId }
+ */
+const recordPayment = catchAsync(async (req, res) => {
+  const { transactionId } = req.body;
+  if (!transactionId) throw new ApiError(400, 'transactionId is required');
+
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new ApiError(404, 'Appointment not found');
+  if (appointment.patientId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'You can only pay for your own appointments');
   }
-};
 
-const getDoctorAppointments = async (req, res) => {
-  try {
-    const { status, page = 1, limit = 10 } = req.query;
-    const filter = { doctorId: req.user.id };
-    if (status) filter.appointmentStatus = status.toUpperCase();
+  appointment.paymentDetails = {
+    transactionId,
+    status: 'PAID',
+    currency: appointment.paymentDetails.currency,
+    paidAt: new Date(),
+  };
+  appointment.financials.refundableAmount = 0;
+  await appointment.save();
 
-    const skip = (Math.max(parseInt(page), 1) - 1) * Math.min(parseInt(limit), 50);
-    const limitNum = Math.min(parseInt(limit), 50);
-
-    const [appointments, total] = await Promise.all([
-      Appointment.find(filter)
-        .populate("patientId", "name email phone avatar")
-        .sort({ appointmentStartDateTime: -1 })
-        .skip(skip)
-        .limit(limitNum)
-        .lean(),
-      Appointment.countDocuments(filter),
-    ]);
-
-    return sendSuccess(res, {
-      appointments,
-      pagination: { total, page: parseInt(page), limit: limitNum, pages: Math.ceil(total / limitNum) },
-    });
-  } catch (err) {
-    console.error("getDoctorAppointments:", err);
-    return sendError(res, "Failed to fetch appointments", 500);
-  }
-};
-
-const getAppointmentById = async (req, res) => {
-  try {
-    const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "name email phone avatar")
-      .populate("doctorId", "doctorName profileIcon specializations consultationFees")
-      .lean();
-
-    if (!appointment) return sendError(res, "Appointment not found", 404);
-
-    const userId = req.user.id;
-    const role   = req.user.role;
-    if (
-      (role === "patient" && appointment.patientId._id.toString() !== userId) ||
-      (role === "doctor"  && appointment.doctorId._id.toString() !== userId)
-    ) {
-      return sendError(res, "Not authorized", 403);
-    }
-
-    return sendSuccess(res, { appointment });
-  } catch (err) {
-    console.error("getAppointmentById:", err);
-    return sendError(res, "Failed to fetch appointment", 500);
-  }
-};
-
-const updateAppointmentStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
-    const role = req.user.role;
-
-    const appointment = await Appointment.findById(req.params.id);
-    if (!appointment) return sendError(res, "Appointment not found", 404);
-
-    if (role === "doctor") {
-      if (appointment.doctorId.toString() !== req.user.id) return sendError(res, "Not authorized", 403);
-      const allowed = ["CONFIRMED", "REJECTED", "COMPLETED"];
-      if (!allowed.includes(status)) return sendError(res, `Doctor can set: ${allowed.join(", ")}`, 400);
-    } else if (role === "patient") {
-      if (appointment.patientId.toString() !== req.user.id) return sendError(res, "Not authorized", 403);
-      if (status !== "CANCELLED") return sendError(res, "Patient can only cancel", 400);
-    } else if (role === "admin") {
-    }
-
-    appointment.appointmentStatus = status;
-    await appointment.save();
-
-    const notifyId    = role === "doctor" ? appointment.patientId : appointment.doctorId;
-    const notifyModel = role === "doctor" ? "User" : "Doctor";
-    createNotification({
-      userId: notifyId, userModel: notifyModel,
-      title: "Appointment Status Updated",
-      message: `Your appointment has been ${status.toLowerCase()}.`,
-      type: "appointment", refId: appointment._id, refModel: "Appointment",
-    });
-
-    return sendSuccess(res, { appointment }, "Status updated");
-  } catch (err) {
-    console.error("updateAppointmentStatus:", err);
-    return sendError(res, "Failed to update status", 500);
-  }
-};
-
-const addDoctorRemarks = async (req, res) => {
-  try {
-    const { remarks, remarksMode } = req.body;
-
-    const appointment = await Appointment.findById(req.params.id);
-    if (!appointment) return sendError(res, "Appointment not found", 404);
-    if (appointment.doctorId.toString() !== req.user.id) return sendError(res, "Not authorized", 403);
-    if (appointment.appointmentStatus !== "COMPLETED") {
-      return sendError(res, "Remarks can only be added to completed appointments", 400);
-    }
-
-    appointment.doctorRemarks     = remarks;
-    appointment.doctorRemarksMode = remarksMode || "Text";
-    await appointment.save();
-
-    return sendSuccess(res, { appointment }, "Remarks added");
-  } catch (err) {
-    console.error("addDoctorRemarks:", err);
-    return sendError(res, "Failed to add remarks", 500);
-  }
-};
-
-const getDoctorEarnings = async (req, res) => {
-  try {
-    const doctorId = req.user.id;
-
-    const result = await Appointment.aggregate([
-      {
-        $match: {
-          doctorId: new mongoose.Types.ObjectId(doctorId),
-          appointmentStatus: "COMPLETED",
-          paymentStatus: "PAID",
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalEarnings:      { $sum: "$consultationFees" },
-          totalAppointments:  { $sum: 1 },
-          avgFee:             { $avg: "$consultationFees" },
-          latestPaidConsultationAt: { $max: "$appointmentStartDateTime" },
-        },
-      },
-    ]);
-
-    const monthly = await Appointment.aggregate([
-      {
-        $match: {
-          doctorId: new mongoose.Types.ObjectId(doctorId),
-          appointmentStatus: "COMPLETED",
-          paymentStatus: "PAID",
-        },
-      },
-      {
-        $group: {
-          _id: {
-            year:  { $year: "$appointmentStartDateTime" },
-            month: { $month: "$appointmentStartDateTime" },
-          },
-          earnings: { $sum: "$consultationFees" },
-          count:    { $sum: 1 },
-        },
-      },
-      { $sort: { "_id.year": -1, "_id.month": -1 } },
-      { $limit: 12 },
-    ]);
-
-    const currentMonthStart = new Date();
-    currentMonthStart.setDate(1);
-    currentMonthStart.setHours(0, 0, 0, 0);
-
-    const previousMonthStart = new Date(currentMonthStart);
-    previousMonthStart.setMonth(previousMonthStart.getMonth() - 1);
-
-    const currentMonthResult = await Appointment.aggregate([
-      {
-        $match: {
-          doctorId: new mongoose.Types.ObjectId(doctorId),
-          appointmentStatus: "COMPLETED",
-          paymentStatus: "PAID",
-          appointmentStartDateTime: { $gte: currentMonthStart },
-        },
-      },
-      { $group: { _id: null, total: { $sum: "$consultationFees" } } },
-    ]);
-
-    const previousMonthResult = await Appointment.aggregate([
-      {
-        $match: {
-          doctorId: new mongoose.Types.ObjectId(doctorId),
-          appointmentStatus: "COMPLETED",
-          paymentStatus: "PAID",
-          appointmentStartDateTime: { $gte: previousMonthStart, $lt: currentMonthStart },
-        },
-      },
-      { $group: { _id: null, total: { $sum: "$consultationFees" } } },
-    ]);
-
-    return sendSuccess(res, {
-      summary: result[0] || { totalEarnings: 0, totalAppointments: 0, avgFee: 0, latestPaidConsultationAt: null },
-      monthly,
-      currentMonthEarnings: currentMonthResult[0]?.total || 0,
-      previousMonthEarnings: previousMonthResult[0]?.total || 0,
-    });
-  } catch (err) {
-    console.error("getDoctorEarnings:", err);
-    return sendError(res, "Failed to fetch earnings", 500);
-  }
-};
+  res.status(200).json({ success: true, data: appointment });
+});
 
 module.exports = {
-  createAppointment,
-  getPatientAppointments,
-  getDoctorAppointments,
+  bookAppointment,
+  listAppointments,
   getAppointmentById,
-  updateAppointmentStatus,
-  addDoctorRemarks,
-  getDoctorEarnings,
+  confirmAppointment,
+  rejectAppointment,
+  cancelAppointment,
+  completeAppointment,
+  shareDocument,
+  leaveFeedback,
+  reportIssue,
+  resolveIssue,
+  recordPayment,
 };
