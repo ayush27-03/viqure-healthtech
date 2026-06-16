@@ -1,13 +1,15 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+const doctorController = require('../controllers/doctor.controller');
+const { protect, restrictTo } = require('../middlewares/auth.middleware');
 
-const doctorProfileCtrl = require("../controllers/doctorProfile.controller");
-const appointmentCtrl = require("../controllers/appointment.controller");
-const auth = require("../middlewares/auth.middleware");
-const role = require("../middlewares/role.middleware");
+router.use(protect, restrictTo('DOCTOR'));
 
-router.get("/me", auth, role("doctor"), doctorProfileCtrl.getDoctorProfile);
-router.patch("/me", auth, role("doctor"), doctorProfileCtrl.updateDoctorProfile);
-router.get("/earnings", auth, role("doctor"), appointmentCtrl.getDoctorEarnings);
+router.patch('/me/profile', doctorController.updateDoctorProfile);
+router.get('/me/slots', doctorController.getMySlots);
+router.post('/me/slots', doctorController.addTimeSlots);
+router.delete('/me/slots/:slotId', doctorController.removeTimeSlot);
+router.get('/me/appointments', doctorController.getMyAppointments);
+router.get('/me/earnings', doctorController.getEarningsDashboard);
 
 module.exports = router;

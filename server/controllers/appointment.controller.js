@@ -204,7 +204,7 @@ const cancelAppointment = catchAsync(async (req, res) => {
 });
 
 /**
- * Internal helper: re-open the doctor's time slot tied to a cancelled/rejected appointment.
+ * Internal helper: re-opens the doctor's time slot tied to a cancelled/rejected appointment.
  */
 async function freeUpSlot(appointment) {
   const doctor = await User.findById(appointment.doctorId);

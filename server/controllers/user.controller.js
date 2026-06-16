@@ -1,6 +1,6 @@
-const { User } = require('../models/index');
-const catchAsync = require('../utils/catchAsync');
-const ApiError = require('../utils/ApiError');
+const { User } = require("../models/index");
+const catchAsync = require("../utils/catchAsync");
+const ApiError = require("../utils/ApiError");
 
 const sanitizeUser = (userDoc) => {
   const user = userDoc.toObject ? userDoc.toObject() : userDoc;
@@ -17,27 +17,30 @@ const listDoctors = catchAsync(async (req, res) => {
   const { city, minRating, isAvailable, page = 1, limit = 20 } = req.query;
 
   const filter = {
-    role: 'DOCTOR',
+    role: "DOCTOR",
     isActive: true,
-    'detailsOfHealthCareProfessional.approvalStatus': 'APPROVED',
+    "detailsOfHealthCareProfessional.approvalStatus": "APPROVED",
   };
 
   if (city) {
-    filter['addresses.city'] = { $regex: city, $options: 'i' };
+    filter["addresses.city"] = { $regex: city, $options: "i" };
   }
   if (minRating) {
-    filter['detailsOfHealthCareProfessional.averageRating'] = { $gte: Number(minRating) };
+    filter["detailsOfHealthCareProfessional.averageRating"] = {
+      $gte: Number(minRating),
+    };
   }
   if (isAvailable !== undefined) {
-    filter['detailsOfHealthCareProfessional.isAvailable'] = isAvailable === 'true';
+    filter["detailsOfHealthCareProfessional.isAvailable"] =
+      isAvailable === "true";
   }
 
   const skip = (Number(page) - 1) * Number(limit);
 
   const [doctors, total] = await Promise.all([
     User.find(filter)
-      .select('-passwordHash -cart -fcmToken')
-      .sort({ 'detailsOfHealthCareProfessional.averageRating': -1 })
+      .select("-passwordHash -cart -fcmToken")
+      .sort({ "detailsOfHealthCareProfessional.averageRating": -1 })
       .skip(skip)
       .limit(Number(limit)),
     User.countDocuments(filter),
@@ -46,7 +49,12 @@ const listDoctors = catchAsync(async (req, res) => {
   res.status(200).json({
     success: true,
     data: doctors,
-    pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) },
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / limit),
+    },
   });
 });
 
@@ -57,11 +65,11 @@ const listDoctors = catchAsync(async (req, res) => {
 const getDoctorById = catchAsync(async (req, res) => {
   const doctor = await User.findOne({
     _id: req.params.id,
-    role: 'DOCTOR',
-    'detailsOfHealthCareProfessional.approvalStatus': 'APPROVED',
-  }).select('-passwordHash -cart -fcmToken');
+    role: "DOCTOR",
+    "detailsOfHealthCareProfessional.approvalStatus": "APPROVED",
+  }).select("-passwordHash -cart -fcmToken");
 
-  if (!doctor) throw new ApiError(404, 'Doctor not found');
+  if (!doctor) throw new ApiError(404, "Doctor not found");
   res.status(200).json({ success: true, data: doctor });
 });
 
@@ -71,13 +79,13 @@ const getDoctorById = catchAsync(async (req, res) => {
 const addAddress = catchAsync(async (req, res) => {
   const { type, street, city, state, pincode } = req.body;
   if (!street || !city || !state || !pincode) {
-    throw new ApiError(400, 'street, city, state and pincode are required');
+    throw new ApiError(400, "street, city, state and pincode are required");
   }
 
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { $push: { addresses: { type, street, city, state, pincode } } },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   res.status(201).json({ success: true, data: sanitizeUser(user) });
@@ -91,9 +99,9 @@ const updateAddress = catchAsync(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   const address = user.addresses.find((a) => a._id.toString() === addressId);
-  if (!address) throw new ApiError(404, 'Address not found');
+  if (!address) throw new ApiError(404, "Address not found");
 
-  const allowed = ['type', 'street', 'city', 'state', 'pincode'];
+  const allowed = ["type", "street", "city", "state", "pincode"];
   for (const field of allowed) {
     if (req.body[field] !== undefined) address[field] = req.body[field];
   }
@@ -109,7 +117,7 @@ const deleteAddress = catchAsync(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { $pull: { addresses: { _id: req.params.addressId } } },
-    { new: true }
+    { new: true },
   );
   res.status(200).json({ success: true, data: sanitizeUser(user) });
 });
@@ -118,7 +126,7 @@ const deleteAddress = catchAsync(async (req, res) => {
  * GET /api/users/me/cart
  */
 const getCart = catchAsync(async (req, res) => {
-  const user = await User.findById(req.user._id).populate('cart.productId');
+  const user = await User.findById(req.user._id).populate("cart.productId");
   res.status(200).json({ success: true, data: user.cart });
 });
 
@@ -128,10 +136,12 @@ const getCart = catchAsync(async (req, res) => {
  */
 const addToCart = catchAsync(async (req, res) => {
   const { productId, quantity = 1 } = req.body;
-  if (!productId) throw new ApiError(400, 'productId is required');
+  if (!productId) throw new ApiError(400, "productId is required");
 
   const user = await User.findById(req.user._id);
-  const existingItem = user.cart.find((item) => item.productId.toString() === productId);
+  const existingItem = user.cart.find(
+    (item) => item.productId.toString() === productId,
+  );
 
   if (existingItem) {
     existingItem.quantity += Number(quantity);
@@ -149,11 +159,14 @@ const addToCart = catchAsync(async (req, res) => {
  */
 const updateCartItem = catchAsync(async (req, res) => {
   const { quantity } = req.body;
-  if (!quantity || quantity < 1) throw new ApiError(400, 'quantity must be at least 1');
+  if (!quantity || quantity < 1)
+    throw new ApiError(400, "quantity must be at least 1");
 
   const user = await User.findById(req.user._id);
-  const item = user.cart.find((i) => i.productId.toString() === req.params.productId);
-  if (!item) throw new ApiError(404, 'Item not found in cart');
+  const item = user.cart.find(
+    (i) => i.productId.toString() === req.params.productId,
+  );
+  if (!item) throw new ApiError(404, "Item not found in cart");
 
   item.quantity = quantity;
   await user.save();
@@ -167,7 +180,7 @@ const removeFromCart = catchAsync(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { $pull: { cart: { productId: req.params.productId } } },
-    { new: true }
+    { new: true },
   );
   res.status(200).json({ success: true, data: user.cart });
 });
@@ -177,7 +190,11 @@ const removeFromCart = catchAsync(async (req, res) => {
  * Clears the entire cart (used post-checkout).
  */
 const clearCart = catchAsync(async (req, res) => {
-  const user = await User.findByIdAndUpdate(req.user._id, { cart: [] }, { new: true });
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { cart: [] },
+    { new: true },
+  );
   res.status(200).json({ success: true, data: user.cart });
 });
 
