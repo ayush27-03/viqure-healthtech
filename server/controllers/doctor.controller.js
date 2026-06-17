@@ -8,8 +8,6 @@ const { sanitizeUser } = require('../utils/helpers');
  * Doctor self-service profile/details update (not approvalStatus/fee-sensitive abuse fields).
  */
 const updateDoctorProfile = catchAsync(async (req, res) => {
-  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only doctors can access this resource');
-
   const { bio, qualifications, yearsOfExperience, consultationFee, isAvailable } = req.body;
   const updates = {};
   if (bio !== undefined) updates['detailsOfHealthCareProfessional.bio'] = bio;
@@ -27,8 +25,6 @@ const updateDoctorProfile = catchAsync(async (req, res) => {
  * Add new time slots. body: { slots: [{ date, startTime, endTime }] }
  */
 const addTimeSlots = catchAsync(async (req, res) => {
-  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only doctors can access this resource');
-
   const { slots } = req.body;
   if (!Array.isArray(slots) || slots.length === 0) {
     throw new ApiError(400, 'slots must be a non-empty array');
@@ -48,8 +44,6 @@ const addTimeSlots = catchAsync(async (req, res) => {
  * Remove a slot that hasn't been booked.
  */
 const removeTimeSlot = catchAsync(async (req, res) => {
-  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only doctors can access this resource');
-
   const user = await User.findById(req.user._id);
   const slot = user.detailsOfHealthCareProfessional.timeSlots.find(
     (s) => s._id.toString() === req.params.slotId
@@ -66,7 +60,6 @@ const removeTimeSlot = catchAsync(async (req, res) => {
  * GET /api/doctors/me/slots
  */
 const getMySlots = catchAsync(async (req, res) => {
-  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only doctors can access this resource');
   res.status(200).json({ success: true, data: req.user.detailsOfHealthCareProfessional.timeSlots });
 });
 
@@ -75,8 +68,6 @@ const getMySlots = catchAsync(async (req, res) => {
  * Doctor's own appointment history/list with optional status filter.
  */
 const getMyAppointments = catchAsync(async (req, res) => {
-  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only doctors can access this resource');
-
   const { status, page = 1, limit = 20 } = req.query;
   const filter = { doctorId: req.user._id };
   if (status) filter.appointmentStatus = status;
@@ -103,8 +94,6 @@ const getMyAppointments = catchAsync(async (req, res) => {
  * Simple earnings dashboard aggregated from PAID/COMPLETED appointments.
  */
 const getEarningsDashboard = catchAsync(async (req, res) => {
-  if (req.user.role !== 'DOCTOR') throw new ApiError(403, 'Only doctors can access this resource');
-
   const result = await Appointment.aggregate([
     {
       $match: {

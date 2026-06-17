@@ -22,8 +22,20 @@ const errorHandler = (err, req, res, next) => {
     message = `Duplicate value for field "${field}"`;
   }
 
+  if (err.name === 'JsonWebTokenError') {
+    statusCode = 401;
+    message = 'Invalid token';
+  }
+
+  if (err.name === 'TokenExpiredError') {
+    statusCode = 401;
+    message = 'Token expired';
+  }
+
   if (!err.isOperational && statusCode === 500) {
-    console.error('UNEXPECTED ERROR:', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('UNEXPECTED ERROR:', err);
+    }
   }
 
   res.status(statusCode).json({
