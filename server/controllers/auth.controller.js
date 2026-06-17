@@ -1,19 +1,9 @@
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { User } = require('../models/index');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
-
-const signToken = (user) =>
-  jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
-
-const sanitizeUser = (userDoc) => {
-  const user = userDoc.toObject ? userDoc.toObject() : userDoc;
-  delete user.passwordHash;
-  return user;
-};
+const { signToken } = require('../utils/jwt.util');
+const { sanitizeUser } = require('../utils/helpers');
 
 /**
  * POST /api/auth/register

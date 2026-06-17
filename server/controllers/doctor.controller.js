@@ -1,12 +1,7 @@
 const { User, Appointment } = require('../models/index');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
-
-const sanitizeUser = (userDoc) => {
-  const user = userDoc.toObject ? userDoc.toObject() : userDoc;
-  delete user.passwordHash;
-  return user;
-};
+const { sanitizeUser } = require('../utils/helpers');
 
 /**
  * PATCH /api/doctors/me/profile
