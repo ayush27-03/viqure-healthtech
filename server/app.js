@@ -59,38 +59,11 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.use("/api", require('./routes/any.route.js'));
+app.use('/api', routes);
 
-// $ Repeat above quite a few times. 2 examples are given above.
-
-// Unmatched routes - Following is the newer version
+// Unmatched routes - new API route fallback
 app.use((req, res, next) => {
   next(new ApiError(404, `Route not found: ${req.originalUrl}`));
-});
-
-/**
- * Lack of appropriate understanding on how to develop the ApiError and catchAsync utility files. Below is the earlier version being used to use the app object.
- */
-
-app.use((req, res) => {
-  return res.status(404).json({
-    success: false,
-    message: "Route not found",
-    data: { path: req.originalUrl },
-  });
-});
-
-app.use((error, req, res, next) => {
-  if (error?.message === "Origin not allowed by CORS") {
-    return res.status(403).json({ success: false, message: error.message, data: {} });
-  }
-
-  console.error("Unhandled server error:", error);
-  return res.status(500).json({
-    success: false,
-    message: "Internal server error",
-    data: {},
-  });
 });
 
 app.use(errorHandler);
