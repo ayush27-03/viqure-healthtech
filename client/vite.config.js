@@ -8,6 +8,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:5500',
+        // Browser will never know that backend is on localhost:5500
         changeOrigin: true,
         secure: false,
       }
