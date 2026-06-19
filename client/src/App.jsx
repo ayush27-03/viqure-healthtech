@@ -48,11 +48,11 @@ function Navigation() {
   
 
   const handleProfileClick = () => {
-    if (role === 'patient') {
+    if (role === 'CUSTOMER') {
       navigate('/patient/profile')
-    } else if (role === 'doctor') {
+    } else if (role === 'DOCTOR') {
       navigate('/doctor/profile')
-    } else if (role === 'admin') {
+    } else if (role === 'ADMIN') {
       navigate('/admin')
     }
     setShowProfileMenu(false)
@@ -64,12 +64,12 @@ function Navigation() {
     setShowProfileMenu(false)
   }
 
-  if (role === 'admin') {
+  if (role === 'ADMIN') {
     return (
       <nav className="bg-blue-600 text-white p-4 shadow-lg">
         <div className="flex justify-between items-center px-6">
           <Link to="/admin" className="font-bold text-xl hover:text-blue-200">
-            🏥 HealthApp Admin
+            🏥 ViQure Admin
           </Link>
           
           <div className="flex items-center gap-4">
@@ -109,10 +109,10 @@ function Navigation() {
         {/* Left side - Logo and links */}
         <div className="flex gap-6 items-center">
           <Link to="/" className="font-bold text-xl hover:text-blue-200">
-            🏥 HealthApp
+            🏥 ViQure
           </Link>
 
-          {(!isAuthenticated || role === 'patient') && (
+          {(!isAuthenticated || role === 'CUSTOMER') && (
               <Link to="/doctors" className="hover:text-blue-200">Find Doctors</Link>
           )}
           <Link to="/shop" className="hover:text-blue-200">Shop</Link>
@@ -137,7 +137,7 @@ function Navigation() {
               >
                 <span className="text-xl">👤</span>
                 <span className="text-sm">
-                  {role === 'doctor' ? `Dr. ${user?.name?.split(' ')[0] || ''}` : user?.name?.split(' ')[0] || 'User'}
+                  {role === 'DOCTOR' ? `Dr. ${user?.profile?.firstName || ''}` : user?.profile?.firstName || 'User'}
                 </span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -194,58 +194,58 @@ function AppRoutes() {
       <Route path="/shop" element={<Shop />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/cart" element={
-        <ProtectedRoute allowedRoles={['patient']}>
+        <ProtectedRoute allowedRoles={['CUSTOMER']}>
           <Cart />
         </ProtectedRoute>
       } />
 
             
       <Route path="/checkout" element={
-        <ProtectedRoute allowedRoles={['patient']}>
+        <ProtectedRoute allowedRoles={['CUSTOMER']}>
           <Checkout />
         </ProtectedRoute>
       } />
 
       <Route path="/orders" element={
-        <ProtectedRoute allowedRoles={['patient']}>
+        <ProtectedRoute allowedRoles={['CUSTOMER']}>
           <Orders />
         </ProtectedRoute>
       } />
 
       <Route path="/orders/:id" element={
-        <ProtectedRoute allowedRoles={['patient']}>
+        <ProtectedRoute allowedRoles={['CUSTOMER']}>
           <OrderDetail />
         </ProtectedRoute>
       } />
       
       {/* Put specific routes BEFORE dynamic routes */}
       <Route path="/doctor/settings" element={
-        <ProtectedRoute allowedRoles={['doctor']}>
+        <ProtectedRoute allowedRoles={['DOCTOR']}>
           <DoctorSettings />
         </ProtectedRoute>
       } />
 
       {/* Protected Routes */}
       <Route path="/patient/profile" element={
-        <ProtectedRoute allowedRoles={['patient']}>
+        <ProtectedRoute allowedRoles={['CUSTOMER']}>
           <PatientProfile />
         </ProtectedRoute>
       } />
       
       <Route path="/doctor/profile" element={
-        <ProtectedRoute allowedRoles={['doctor']}>
+        <ProtectedRoute allowedRoles={['DOCTOR']}>
           <DoctorProfile />
         </ProtectedRoute>
       } />
 
       <Route path="/doctor/:id/book" element={
-        <ProtectedRoute allowedRoles={['patient']}>
+        <ProtectedRoute allowedRoles={['CUSTOMER']}>
           <DoctorBooking />
         </ProtectedRoute>
       } />
       
       <Route path="/admin" element={
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['ADMIN']}>
           <AdminDashboard />
         </ProtectedRoute>
       }>
@@ -260,13 +260,13 @@ function AppRoutes() {
       </Route>
       
       <Route path="/appointments" element={
-        <ProtectedRoute allowedRoles={['patient', 'doctor']}>
+        <ProtectedRoute allowedRoles={['CUSTOMER', 'DOCTOR']}>
           <Appointments />
         </ProtectedRoute>
       } />
 
       <Route path="/documents" element={
-        <ProtectedRoute allowedRoles={['patient', 'doctor', 'admin']}>
+        <ProtectedRoute allowedRoles={['CUSTOMER', 'DOCTOR', 'ADMIN']}>
           <Documents />
         </ProtectedRoute>
       } />
