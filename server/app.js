@@ -42,23 +42,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// Example-1
-app.get("/health", (req, res) =>
-  res.status(200).json({ success: true, status: "OK" }),
-);
-
-// Example-2
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Server is healthy",
-    data: {
-      status: "ok",
-      timestamp: new Date().toISOString(),
-    },
-  });
-});
-
+// * Usage of route aggregator pattern in order to maintain clean code
 app.use('/api', routes);
 
 // Unmatched routes - new API route fallback
@@ -66,6 +50,5 @@ app.use((req, res, next) => {
   next(new ApiError(404, `Route not found: ${req.originalUrl}`));
 });
 
-app.use(errorHandler);
 
 module.exports = app;
