@@ -7,6 +7,13 @@ function AdminProducts() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
+  
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -22,12 +29,20 @@ function AdminProducts() {
   useEffect(() => {
     fetchProducts()
     fetchCategories()
-  }, [])
+  }, [currentPage, itemsPerPage])
 
   const fetchProducts = async () => {
     try {
-      const response = await axiosInstance.get('/admin/products')
-      setProducts(response.data)
+      setLoading(true)
+      const response = await axiosInstance.get('/admin/products', {
+        params: {
+          page: currentPage,
+          limit: itemsPerPage,
+          search: searchTerm
+        }
+      })
+      setProducts(response.data.products || response.data)
+      setTotalItems(response.data.total || response.data.length || 0)
     } catch (error) {
       console.error('Error fetching products:', error)
     } finally {
@@ -95,6 +110,28 @@ function AdminProducts() {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(price)
   }
 
+  // Handle search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm) {
+        setCurrentPage(1) // Reset to first page on search
+        fetchProducts()
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Calculate pagination
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage + 1
+  const endIndex = Math.min(currentPage * itemsPerPage, totalItems)
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -116,6 +153,46 @@ function AdminProducts() {
         >
           + Add Product
         </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search products by name, brand, category, or description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <svg
+            className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          {searchTerm && (
+            <button
+              onClick={() => { setSearchTerm(''); setCurrentPage(1); fetchProducts() }}
+              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <div className="mt-2 text-sm text-gray-500">
+            Found {totalItems} product{totalItems !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Form Modal */}
@@ -279,7 +356,84 @@ function AdminProducts() {
           </table>
         </div>
         {products.length === 0 && (
-          <div className="text-center py-8 text-gray-500">No products found</div>
+          <div className="text-center py-8 text-gray-500">
+            {searchTerm ? 'No products match your search' : 'No products found'}
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {totalItems > 0 && (
+          <div className="px-4 py-3 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="text-sm text-gray-500">
+              Showing {startIndex} to {endIndex} of {totalItems} products
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50'}`}
+              >
+                Previous
+              </button>
+              <div className="flex gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum
+                  if (totalPages <= 5) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    pageNum = currentPage - 2 + i
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`px-3 py-1 rounded border ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-50'}`}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                })}
+                {totalPages > 5 && currentPage < totalPages - 2 && (
+                  <>
+                    <span className="px-2 py-1">...</span>
+                    <button
+                      onClick={() => goToPage(totalPages)}
+                      className="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50'}`}
+              >
+                Next
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-500">Show:</label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+                className="px-2 py-1 border rounded text-sm"
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
         )}
       </div>
     </div>
