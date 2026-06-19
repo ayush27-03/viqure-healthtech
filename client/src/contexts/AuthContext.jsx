@@ -17,6 +17,15 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  
+  const getUserName = () => {
+    if (!user) return ''
+    if (user.profile?.firstName) {
+      return `${user.profile.firstName} ${user.profile.lastName || ''}`.trim()
+    }
+    return user.name || ''
+  }
+
   // Session restoration - runs when app loads
   useEffect(() => {
     const restoreSession = () => {
@@ -56,6 +65,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('role')
   }
 
+
   const value = {
     user,
     token,
@@ -63,7 +73,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    isAuthenticated: !!token
+    isAuthenticated: !!token,
+    getUserName
   }
 
   return (
