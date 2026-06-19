@@ -49,18 +49,27 @@ function PatientRegister() {
     setSuccessMessage('')
     
     try {
-      await axiosInstance.post('/auth/patient/register', {
-        name: formData.name,
+      const nameParts = formData.name.trim().split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
+      
+      const payload = {
         email: formData.email,
-        password: formData.password,
         phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender
-      })
+        password: formData.password,
+        role: 'CUSTOMER',
+        gender: formData.gender.toUpperCase(),
+        dob: formData.dateOfBirth,
+        profile: {
+          firstName: firstName,
+          lastName: lastName
+        }
+      }
+      
+      await axiosInstance.post('/auth/register', payload)
       
       setSuccessMessage('Registration successful! Please login to continue.')
       
-      // Clear form
       setFormData({
         name: '',
         email: '',
@@ -71,7 +80,6 @@ function PatientRegister() {
         gender: ''
       })
       
-      // Redirect to login after 2 seconds
       setTimeout(() => {
         navigate('/login')
       }, 2000)
@@ -114,7 +122,6 @@ function PatientRegister() {
           )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* ... rest of the form fields remain the same ... */}
             <div>
               <label className="block text-gray-700 font-medium mb-2">
                 Full Name *
@@ -156,7 +163,6 @@ function PatientRegister() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="10-digit mobile number"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
