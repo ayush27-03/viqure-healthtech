@@ -1,19 +1,12 @@
 import axios from 'axios'
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5000',  // Your local backend server
+  baseURL: import.meta.env.VITE_APP_API_URL,  // Your local backend server
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 })
-
-/*
-$ PROFESSIONAL PRODUCTION GRADE SETUP
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
-});
-*/
 
 // Request interceptor - Add JWT token
 axiosInstance.interceptors.request.use(
