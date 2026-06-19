@@ -8,6 +8,13 @@ const axiosInstance = axios.create({
   },
 })
 
+/*
+$ PROFESSIONAL PRODUCTION GRADE SETUP
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL
+});
+*/
+
 // Request interceptor - Add JWT token
 axiosInstance.interceptors.request.use(
   (config) => {
