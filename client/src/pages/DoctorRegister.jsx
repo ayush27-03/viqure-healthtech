@@ -70,23 +70,36 @@ function DoctorRegister() {
     setSuccessMessage('')
     
     try {
-      await axiosInstance.post('/auth/doctor/register', {
-        name: formData.name,
+      const nameParts = formData.name.trim().split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
+      
+      const payload = {
         email: formData.email,
-        password: formData.password,
         phone: formData.phone,
-        specialization: formData.specialization,
-        licenseNumber: formData.licenseNumber,
-        experience: parseInt(formData.experience),
-        clinicName: formData.clinicName,
-        clinicAddress: formData.clinicAddress,
-        consultationFee: parseFloat(formData.consultationFee),
-        bio: formData.bio
-      })
+        password: formData.password,
+        role: 'DOCTOR',
+        gender: 'OTHER',
+        dob: '',
+        profile: {
+          firstName: firstName,
+          lastName: lastName
+        },
+        detailsOfHealthCareProfessional: {
+          medicalLicense: formData.licenseNumber,
+          consultationFee: parseFloat(formData.consultationFee),
+          qualifications: [formData.specialization],
+          yearsOfExperience: parseInt(formData.experience) || 0,
+          bio: formData.bio,
+          clinicName: formData.clinicName,
+          clinicAddress: formData.clinicAddress
+        }
+      }
+      
+      await axiosInstance.post('/auth/register', payload)
       
       setSuccessMessage('Registration submitted for admin approval! You will be notified once approved.')
       
-      // Clear form
       setFormData({
         name: '',
         email: '',
@@ -102,7 +115,6 @@ function DoctorRegister() {
         bio: ''
       })
       
-      // Redirect to login after 3 seconds
       setTimeout(() => {
         navigate('/login')
       }, 3000)
@@ -145,7 +157,6 @@ function DoctorRegister() {
           )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Form fields remain the same as your existing code */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
@@ -180,7 +191,6 @@ function DoctorRegister() {
               </div>
             </div>
             
-            {/* ... rest of your form fields remain exactly the same ... */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
