@@ -25,12 +25,14 @@ function Login() {
         password: formData.password
       })
       
-      const { user, token, role } = response.data
-      login(user, token, role)
+      const { data } = response.data
+      const { user, token } = data
       
-      if (role === 'patient') navigate('/patient/profile')
-      else if (role === 'doctor') navigate('/doctor/profile')
-      else if (role === 'admin') navigate('/admin')
+      login(user, token, user.role)
+      
+      if (user.role === 'CUSTOMER') navigate('/patient/profile')
+      else if (user.role === 'DOCTOR') navigate('/doctor/profile')
+      else if (user.role === 'ADMIN') navigate('/admin')
       else navigate('/')
       
     } catch (err) {
@@ -83,12 +85,6 @@ function Login() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
-            </div>
-
-            <div className="text-right">
-              <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                Forgot password?
-              </Link>
             </div>
 
             <button
