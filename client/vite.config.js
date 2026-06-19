@@ -7,8 +7,9 @@ export default defineConfig({
     // defaultPort: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5500',
-        // Browser will never know that backend is on localhost:5500
+        target: 'http://localhost:5000',
+        // Temporary 5000 for backend testing. 
+        // Change to 5500 otherwise browser will never know that backend is on localhost:5500
         changeOrigin: true,
         secure: false,
       }

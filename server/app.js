@@ -42,6 +42,15 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
+// * Temporary root route for server routing status check
+app.get("/", (req,res)=>{
+  res.send("Server Alive");
+});
+
+// app.get("/jsonData", async (req, res)=>{
+//   res.status(200).send({success: true, data: await User.find()});
+// })
+
 // * Usage of route aggregator pattern in order to maintain clean code
 app.use('/api', routes);
 
@@ -49,6 +58,5 @@ app.use('/api', routes);
 app.use((req, res, next) => {
   next(new ApiError(404, `Route not found: ${req.originalUrl}`));
 });
-
 
 module.exports = app;
