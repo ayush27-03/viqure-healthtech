@@ -7,7 +7,7 @@ const { sanitizeUser } = require("../utils/helpers");
 
 /**
  * GET /api/auth/jsonData
- * Gets all MongoDB Data for testing
+ * Gets sample MongoDB Data for testing API run 
  */
 
 const testData = async (req, res) => {
@@ -35,7 +35,7 @@ const register = catchAsync(async (req, res) => {
     profile,
     detailsOfHealthCareProfessional,
   } = req.body;
-
+  console.log(req.body);
   if (!email || !password || !role) {
     throw new ApiError(400, "email, password and role are required");
   }
