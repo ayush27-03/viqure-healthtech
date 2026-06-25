@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   
 
   // CHANGED: Add pending doctor check
-  if (role === 'DOCTOR' && user?.detailsOfHealthCareProfessional?.approvalStatus === 'PENDING') {
+  if (role === 'doctor' && user?.detailsOfHealthCareProfessional?.approvalStatus === 'PENDING') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md p-8 bg-white rounded-xl shadow-lg">
