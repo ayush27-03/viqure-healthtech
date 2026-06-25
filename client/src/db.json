@@ -1,0 +1,1446 @@
+{
+  "patients": [
+    {
+      "_id": "pat_001",
+      "patientName": "Rahul Mehta",
+      "profileIcon": "👤",
+      "dob": "1990-05-15T00:00:00Z",
+      "gender": "MALE",
+      "mobileNumber": "+91 98765 12345",
+      "patientMailId": "rahul@example.com",
+      "patientAddress": "123 Main Street, Mumbai",
+      "emergencyContact": {
+        "name": "Sita Mehta",
+        "relation": "MOTHER",
+        "phone": "+91 98765 54321"
+      },
+      "lastLoginTime": "2024-05-18T10:30:00Z",
+      "documents": [
+        {
+          "docId": "doc_001",
+          "name": "Aadhar Card",
+          "documentType": "PDF",
+          "documentURL": "/uploads/aadhar_rahul.pdf",
+          "uploadedBy": "PATIENT",
+          "doctorId": null,
+          "appointmentId": null,
+          "uploadedAt": "2024-01-15T10:00:00Z"
+        },
+        {
+          "docId": "doc_002",
+          "name": "Medical Report - ECG",
+          "documentType": "PDF",
+          "documentURL": "/uploads/ecg_rahul.pdf",
+          "uploadedBy": "DOCTOR",
+          "doctorId": "doc_001",
+          "appointmentId": "apt_001",
+          "uploadedAt": "2024-05-16T10:00:00Z"
+        }
+      ],
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-05-18T10:30:00Z"
+    }
+  ],
+  "doctors": [
+    {
+      "_id": "doc_001",
+      "doctorName": "Priya Sharma",
+      "profileIcon": "👩‍⚕️",
+      "dob": "1985-03-15",
+      "gender": "female",
+      "mobileNumber": "+91 98765 43210",
+      "city": "Faridabad",
+      "description": "Senior Cardiologist specializing in preventive cardiology and heart failure management.",
+      "licenseNo": "MCI-12345-67890",
+      "yearsOfExperience": 12,
+      "consultationFees": "122",
+      "specializations": [
+        "Cardiologist"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.8,
+        "totalRatings": 342,
+        "totalAppointments": 1850
+      },
+      "documents": [],
+      "profileCreatedAt": "2023-01-15T10:00:00Z",
+      "updatedAt": "2026-06-14T08:26:09.025Z",
+      "clinicAddress": "",
+      "availabilitySettings": {
+        "minAppointmentDuration": 10,
+        "maxAppointmentDuration": 180,
+        "advanceBookingDays": 12,
+        "workingHours": [
+          {
+            "dayOfWeek": 1,
+            "dayName": "Monday",
+            "isWorking": true,
+            "slots": [
+              {
+                "start": "09:00",
+                "end": "13:00"
+              },
+              {
+                "start": "14:00",
+                "end": "18:00"
+              }
+            ]
+          },
+          {
+            "dayOfWeek": 2,
+            "dayName": "Tuesday",
+            "isWorking": true,
+            "slots": [
+              {
+                "start": "09:00",
+                "end": "13:00"
+              },
+              {
+                "start": "14:00",
+                "end": "18:00"
+              }
+            ]
+          },
+          {
+            "dayOfWeek": 3,
+            "dayName": "Wednesday",
+            "isWorking": true,
+            "slots": [
+              {
+                "start": "09:00",
+                "end": "13:00"
+              },
+              {
+                "start": "14:00",
+                "end": "18:00"
+              }
+            ]
+          },
+          {
+            "dayOfWeek": 4,
+            "dayName": "Thursday",
+            "isWorking": true,
+            "slots": [
+              {
+                "start": "09:00",
+                "end": "13:00"
+              },
+              {
+                "start": "14:00",
+                "end": "18:00"
+              }
+            ]
+          },
+          {
+            "dayOfWeek": 5,
+            "dayName": "Friday",
+            "isWorking": true,
+            "slots": [
+              {
+                "start": "09:00",
+                "end": "13:00"
+              },
+              {
+                "start": "14:00",
+                "end": "18:00"
+              }
+            ]
+          },
+          {
+            "dayOfWeek": 6,
+            "dayName": "Saturday",
+            "isWorking": true,
+            "slots": [
+              {
+                "start": "09:00",
+                "end": "14:00"
+              }
+            ]
+          },
+          {
+            "dayOfWeek": 0,
+            "dayName": "Sunday",
+            "isWorking": true,
+            "slots": [
+              {
+                "start": "09:00",
+                "end": "17:00"
+              }
+            ]
+          }
+        ],
+        "leaveDates": [
+          {
+            "date": "2026-05-29",
+            "reason": ""
+          }
+        ]
+      },
+      "actualAvailableSlots": [
+        {
+          "date": "2026-06-13",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "17:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-14",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-15",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-16",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-17",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-18",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-19",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "14:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-20",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "17:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-21",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-22",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-23",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-24",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        },
+        {
+          "date": "2026-06-25",
+          "ranges": [
+            {
+              "start": "09:00",
+              "end": "13:00"
+            },
+            {
+              "start": "14:00",
+              "end": "18:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_id": "doc_002",
+      "doctorName": "Rajesh Kumar",
+      "profileIcon": "👨‍⚕️",
+      "dob": "1978-08-22",
+      "gender": "male",
+      "mobileNumber": "+91 99887 66554",
+      "city": "Delhi",
+      "description": "Interventional Cardiologist expert in angioplasty and stent placement.",
+      "licenseNo": "MCI-54321-09876",
+      "yearsOfExperience": 15,
+      "consultationFees": 1500,
+      "specializations": [
+        "Cardiologist"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.9,
+        "totalRatings": 567,
+        "totalAppointments": 2300
+      },
+      "documents": [],
+      "profileCreatedAt": "2022-06-10T10:00:00Z",
+      "updatedAt": "2024-02-15T11:20:00Z"
+    },
+    {
+      "_id": "doc_003",
+      "doctorName": "Anjali Nair",
+      "profileIcon": "👩‍⚕️",
+      "dob": "1990-12-05",
+      "gender": "female",
+      "mobileNumber": "+91 88997 77665",
+      "city": "Bengaluru",
+      "description": "Cardiologist focused on women's heart health and hypertension management.",
+      "licenseNo": "MCI-67890-12345",
+      "yearsOfExperience": 8,
+      "consultationFees": 1000,
+      "specializations": [
+        "Cardiologist"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.7,
+        "totalRatings": 234,
+        "totalAppointments": 1200
+      },
+      "documents": [],
+      "profileCreatedAt": "2023-03-20T10:00:00Z",
+      "updatedAt": "2024-01-10T09:45:00Z"
+    },
+    {
+      "_id": "doc_004",
+      "doctorName": "Vikram Singh",
+      "profileIcon": "👨‍⚕️",
+      "dob": "1982-04-18",
+      "gender": "male",
+      "mobileNumber": "+91 77665 44332",
+      "city": "Chennai",
+      "description": "Cosmetic Dermatologist expert in laser treatments.",
+      "licenseNo": "MCI-24680-13579",
+      "yearsOfExperience": 14,
+      "consultationFees": 1800,
+      "specializations": [
+        "Dermatologist"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.9,
+        "totalRatings": 421,
+        "totalAppointments": 1950
+      },
+      "documents": [],
+      "profileCreatedAt": "2022-09-05T10:00:00Z",
+      "updatedAt": "2024-02-28T14:15:00Z"
+    },
+    {
+      "_id": "doc_005",
+      "doctorName": "Sneha Reddy",
+      "profileIcon": "👩‍⚕️",
+      "dob": "1988-07-10",
+      "gender": "female",
+      "mobileNumber": "+91 99887 11223",
+      "city": "Hyderabad",
+      "description": "Medical Dermatologist specializing in acne and psoriasis.",
+      "licenseNo": "MCI-11223-33445",
+      "yearsOfExperience": 10,
+      "consultationFees": 1600,
+      "specializations": [
+        "Dermatologist"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.6,
+        "totalRatings": 189,
+        "totalAppointments": 980
+      },
+      "documents": [],
+      "profileCreatedAt": "2023-06-15T10:00:00Z",
+      "updatedAt": "2024-03-10T12:00:00Z"
+    },
+    {
+      "_id": "doc_006",
+      "doctorName": "Amit Patel",
+      "profileIcon": "👨‍⚕️",
+      "dob": "1979-11-20",
+      "gender": "male",
+      "mobileNumber": "+91 77665 55443",
+      "city": "Ahmedabad",
+      "description": "Pediatric Dermatologist for children's skin conditions.",
+      "licenseNo": "MCI-99887-66554",
+      "yearsOfExperience": 11,
+      "consultationFees": 1300,
+      "specializations": [
+        "Dermatologist"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.8,
+        "totalRatings": 312,
+        "totalAppointments": 1650
+      },
+      "documents": [],
+      "profileCreatedAt": "2022-11-20T10:00:00Z",
+      "updatedAt": "2024-01-05T14:30:00Z"
+    },
+    {
+      "_id": "doc_007",
+      "doctorName": "Neha Gupta",
+      "profileIcon": "👩‍⚕️",
+      "dob": "1992-03-25",
+      "gender": "female",
+      "mobileNumber": "+91 88997 44332",
+      "city": "Lucknow",
+      "description": "Child specialist focusing on nutrition and developmental disorders.",
+      "licenseNo": "MCI-33445-55667",
+      "yearsOfExperience": 7,
+      "consultationFees": 1100,
+      "specializations": [
+        "Pediatrician"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.5,
+        "totalRatings": 98,
+        "totalAppointments": 450
+      },
+      "documents": [],
+      "profileCreatedAt": "2023-09-10T10:00:00Z",
+      "updatedAt": "2024-04-15T09:00:00Z"
+    },
+    {
+      "_id": "doc_008",
+      "doctorName": "Sanjay Mehta",
+      "profileIcon": "👨‍⚕️",
+      "dob": "1980-09-15",
+      "gender": "male",
+      "mobileNumber": "+91 99887 22113",
+      "city": "Pune",
+      "description": "Neonatologist specializing in newborn care.",
+      "licenseNo": "MCI-55667-77889",
+      "yearsOfExperience": 9,
+      "consultationFees": 1000,
+      "specializations": [
+        "Pediatrician"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.7,
+        "totalRatings": 156,
+        "totalAppointments": 890
+      },
+      "documents": [],
+      "profileCreatedAt": "2023-02-28T10:00:00Z",
+      "updatedAt": "2024-02-20T11:00:00Z"
+    },
+    {
+      "_id": "doc_009",
+      "doctorName": "Kavita Iyer",
+      "profileIcon": "👩‍⚕️",
+      "dob": "1975-06-08",
+      "gender": "female",
+      "mobileNumber": "+91 77665 99887",
+      "city": "Kolkata",
+      "description": "Pediatric pulmonologist for childhood asthma and respiratory issues.",
+      "licenseNo": "MCI-77889-99001",
+      "yearsOfExperience": 13,
+      "consultationFees": 1400,
+      "specializations": [
+        "Pediatrician"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.9,
+        "totalRatings": 278,
+        "totalAppointments": 1320
+      },
+      "documents": [],
+      "profileCreatedAt": "2021-08-10T10:00:00Z",
+      "updatedAt": "2024-03-25T16:00:00Z"
+    },
+    {
+      "_id": "doc_010",
+      "doctorName": "Arjun Nair",
+      "profileIcon": "👨‍⚕️",
+      "dob": "1988-12-12",
+      "gender": "male",
+      "mobileNumber": "+91 88997 11223",
+      "city": "Chennai",
+      "description": "Orthopedic surgeon specializing in knee and hip replacements.",
+      "licenseNo": "MCI-99001-11223",
+      "yearsOfExperience": 6,
+      "consultationFees": 800,
+      "specializations": [
+        "Orthopedic"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.6,
+        "totalRatings": 145,
+        "totalAppointments": 720
+      },
+      "documents": [],
+      "profileCreatedAt": "2023-10-05T10:00:00Z",
+      "updatedAt": "2024-04-28T10:30:00Z"
+    },
+    {
+      "_id": "doc_011",
+      "doctorName": "Pooja Singh",
+      "profileIcon": "👩‍⚕️",
+      "dob": "1983-04-30",
+      "gender": "female",
+      "mobileNumber": "+91 99887 33445",
+      "city": "Delhi",
+      "description": "Sports medicine specialist and orthopedic surgeon.",
+      "licenseNo": "MCI-11122-33445",
+      "yearsOfExperience": 10,
+      "consultationFees": 900,
+      "specializations": [
+        "Orthopedic"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.8,
+        "totalRatings": 203,
+        "totalAppointments": 1100
+      },
+      "documents": [],
+      "profileCreatedAt": "2022-12-15T10:00:00Z",
+      "updatedAt": "2024-02-10T09:00:00Z"
+    },
+    {
+      "_id": "doc_012",
+      "doctorName": "Rohan Desai",
+      "profileIcon": "👨‍⚕️",
+      "dob": "1990-01-18",
+      "gender": "male",
+      "mobileNumber": "+91 77665 22334",
+      "city": "Mumbai",
+      "description": "Spine surgeon specializing in disc problems and spinal deformities.",
+      "licenseNo": "MCI-22233-44556",
+      "yearsOfExperience": 8,
+      "consultationFees": 700,
+      "specializations": [
+        "Orthopedic"
+      ],
+      "status": "active",
+      "approvalStatus": "approved",
+      "stats": {
+        "rating": 4.4,
+        "totalRatings": 87,
+        "totalAppointments": 340
+      },
+      "documents": [],
+      "profileCreatedAt": "2023-11-20T10:00:00Z",
+      "updatedAt": "2024-05-01T12:00:00Z"
+    }
+  ],
+  "appointments": [
+    {
+      "_id": "apt_002",
+      "patientId": "pat_001",
+      "doctorId": "doc_004",
+      "consultationId": "con_002",
+      "paymentId": "pay_002",
+      "paymentStatus": "PAID",
+      "consultationFees": 1800,
+      "appointmentStartDateTime": "2024-05-22T14:00:00Z",
+      "appointmentEndDateTime": "2024-05-22T14:30:00Z",
+      "consultationType": "CHAT",
+      "appointmentStatus": "completed",
+      "meetingId": null,
+      "documentsShared": [],
+      "doctorRemarks": null,
+      "doctorRemarksMode": null,
+      "Feedback": null,
+      "createdAt": "2024-05-16T10:30:00Z",
+      "updatedAt": "2026-06-14T08:19:40.356Z"
+    },
+    {
+      "_id": "apt_003",
+      "patientId": "pat_001",
+      "doctorId": "doc_007",
+      "consultationId": "con_003",
+      "paymentId": "pay_003",
+      "paymentStatus": "PAID",
+      "consultationFees": 1100,
+      "appointmentStartDateTime": "2024-05-10T09:00:00Z",
+      "appointmentEndDateTime": "2024-05-10T09:20:00Z",
+      "consultationType": "VIDEO",
+      "appointmentStatus": "completed",
+      "meetingId": "meet_def456",
+      "documentsShared": [],
+      "doctorRemarks": "Follow up in 2 weeks",
+      "doctorRemarksMode": "Text",
+      "Feedback": {
+        "rating": 5,
+        "comment": "Excellent doctor!"
+      },
+      "createdAt": "2024-05-05T11:00:00Z",
+      "updatedAt": "2026-06-14T08:19:44.024Z"
+    }
+  ],
+  "users": [
+    {
+      "_id": "usr_001",
+      "email": "rahul@example.com",
+      "password": "password123",
+      "role": "patient",
+      "roleId": "pat_001",
+      "createdAt": "2024-01-15T10:00:00Z"
+    },
+    {
+      "_id": "usr_002",
+      "email": "priya.sharma@example.com",
+      "password": "doctor123",
+      "role": "doctor",
+      "roleId": "doc_001",
+      "createdAt": "2023-01-15T10:00:00Z"
+    },
+    {
+      "_id": "usr_admin",
+      "email": "admin@example.com",
+      "password": "admin123",
+      "role": "admin",
+      "roleId": "adm_001",
+      "createdAt": "2023-01-01T10:00:00Z"
+    }
+  ],
+  "pendingDoctors": [],
+  "admins": [],
+  "appointmentRequests": [
+    {
+      "_id": "req_1779357542758",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "slotId": "slot_1779357298184_0.5160697922483772_357",
+      "date": "2026-05-20",
+      "startTime": "14:40",
+      "endTime": "15:50",
+      "duration": 70,
+      "reason": "Severe headache",
+      "symptoms": "Extra heat",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "createdAt": "2026-05-21T09:59:02.758Z",
+      "suggestedStartTime": "22:05",
+      "suggestedEndTime": "22:09",
+      "suggestedDuration": "4",
+      "suggestedReason": "",
+      "updatedAt": "2026-05-21T12:32:40.129Z",
+      "cancellationReason": "Patient rejected doctor's change request",
+      "cancelledBy": "PATIENT"
+    },
+    {
+      "_id": "req_1779357567798",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "slotId": "slot_1779357361012_0.1660312691116539_969",
+      "date": "2026-05-23",
+      "startTime": "09:10",
+      "endTime": "10:20",
+      "duration": 70,
+      "reason": "",
+      "symptoms": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "createdAt": "2026-05-21T09:59:27.798Z",
+      "cancellationReason": "Rejected by doctor",
+      "cancelledBy": "PATIENT",
+      "updatedAt": "2026-05-21T12:33:59.148Z"
+    },
+    {
+      "_id": "req_1779361239853",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-23",
+      "startTime": "14:00",
+      "endTime": "14:20",
+      "duration": 20,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "createdAt": "2026-05-21T11:00:39.853Z",
+      "cancellationReason": "Rejected by doctor",
+      "cancelledBy": "DOCTOR",
+      "updatedAt": "2026-05-21T13:43:14.448Z"
+    },
+    {
+      "_id": "req_1779361252861",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-23",
+      "startTime": "09:00",
+      "endTime": "09:50",
+      "duration": 50,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "createdAt": "2026-05-21T11:00:52.861Z",
+      "cancellationReason": "Rejected by doctor",
+      "cancelledBy": "DOCTOR",
+      "updatedAt": "2026-05-21T13:42:54.360Z"
+    },
+    {
+      "_id": "req_1779361261393",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-22",
+      "startTime": "09:00",
+      "endTime": "09:50",
+      "duration": 50,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "createdAt": "2026-05-21T11:01:01.393Z",
+      "cancellationReason": "Rejected by doctor",
+      "cancelledBy": "PATIENT",
+      "updatedAt": "2026-05-21T12:34:06.430Z"
+    },
+    {
+      "_id": "req_1779361310246",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-20",
+      "startTime": "11:00",
+      "endTime": "11:50",
+      "duration": 50,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "createdAt": "2026-05-21T11:01:50.246Z",
+      "cancellationReason": "Rejected by doctor",
+      "cancelledBy": "PATIENT",
+      "updatedAt": "2026-05-21T12:34:15.724Z"
+    },
+    {
+      "_id": "req_1779361317518",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-21",
+      "startTime": "11:00",
+      "endTime": "11:40",
+      "duration": 40,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "createdAt": "2026-05-21T11:01:57.519Z",
+      "cancellationReason": "Rejected by doctor",
+      "cancelledBy": "PATIENT",
+      "updatedAt": "2026-05-21T12:34:24.153Z"
+    },
+    {
+      "_id": "req_1779371503063",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-20",
+      "startTime": "11:00",
+      "endTime": "13:00",
+      "duration": 120,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "createdAt": "2026-05-21T13:51:43.063Z",
+      "cancellationReason": "Cancelled by patient",
+      "cancelledBy": "PATIENT",
+      "updatedAt": "2026-05-21T15:46:33.375Z"
+    },
+    {
+      "_id": "req_1779376681321",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-24",
+      "startTime": "12:00",
+      "endTime": "13:00",
+      "duration": 60,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "cost": {
+        "subtotal": 366,
+        "tax": 66,
+        "total": 432,
+        "currency": "INR"
+      },
+      "createdAt": "2026-05-21T15:18:01.321Z",
+      "suggestedStartTime": "23:22",
+      "suggestedEndTime": "23:47",
+      "suggestedDuration": "25",
+      "suggestedReason": "",
+      "updatedAt": "2026-05-22T17:30:32.381Z",
+      "cancellationReason": "Cancelled by patient",
+      "cancelledBy": "PATIENT"
+    },
+    {
+      "_id": "req_1779378329038",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-22",
+      "startTime": "11:00",
+      "endTime": "11:10",
+      "duration": 10,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "cost": {
+        "subtotal": 24,
+        "tax": 4,
+        "total": 29,
+        "currency": "INR"
+      },
+      "createdAt": "2026-05-21T15:45:29.038Z",
+      "cancellationReason": "Cancelled by patient",
+      "cancelledBy": "PATIENT",
+      "updatedAt": "2026-05-22T17:30:42.370Z"
+    },
+    {
+      "_id": "req_1779378408078",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-23",
+      "startTime": "10:10",
+      "endTime": "10:30",
+      "duration": 20,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "cost": {
+        "subtotal": 81,
+        "tax": 15,
+        "total": 96,
+        "currency": "INR"
+      },
+      "createdAt": "2026-05-21T15:46:48.078Z",
+      "cancellationReason": "Cancelled by patient",
+      "cancelledBy": "PATIENT",
+      "updatedAt": "2026-05-22T17:30:44.886Z"
+    },
+    {
+      "_id": "req_1779533103154",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-05-24",
+      "startTime": "15:40",
+      "endTime": "16:10",
+      "duration": 30,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "CANCELLED",
+      "cost": {
+        "subtotal": 122,
+        "tax": 22,
+        "total": 144,
+        "currency": "INR"
+      },
+      "createdAt": "2026-05-23T10:45:03.154Z",
+      "suggestedStartTime": "20:17",
+      "suggestedEndTime": "20:30",
+      "suggestedDuration": "13",
+      "suggestedReason": "",
+      "updatedAt": "2026-06-14T07:40:57.170Z",
+      "cancellationReason": "Cancelled by doctor",
+      "cancelledBy": "DOCTOR"
+    },
+    {
+      "_id": "req_1781436547366",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-06-15",
+      "startTime": "09:00",
+      "endTime": "09:30",
+      "duration": 30,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "PENDING",
+      "cost": {
+        "subtotal": 122,
+        "tax": 22,
+        "total": 144,
+        "currency": "INR"
+      },
+      "createdAt": "2026-06-14T11:29:07.366Z"
+    },
+    {
+      "_id": "req_1781436616894",
+      "doctorId": "doc_001",
+      "patientId": "pat_001",
+      "patientName": "Rahul Mehta",
+      "date": "2026-06-14",
+      "startTime": "17:20",
+      "endTime": "17:30",
+      "duration": 10,
+      "reason": "",
+      "type": "VIDEO",
+      "status": "PENDING",
+      "cost": {
+        "subtotal": 24,
+        "tax": 4,
+        "total": 29,
+        "currency": "INR"
+      },
+      "createdAt": "2026-06-14T11:30:16.894Z"
+    }
+  ],
+  "categories": [
+    {
+      "_id": "cat_001",
+      "name": "Antiseptics",
+      "slug": "antiseptics",
+      "description": "Antiseptic products for wound care and disinfection",
+      "image": "/images/categories/antiseptics.jpg",
+      "bannerImage": "/images/categories/antiseptics-banner.jpg",
+      "productCount": 3,
+      "createdBy": "adm_001",
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "cat_002",
+      "name": "Vitamins",
+      "slug": "vitamins",
+      "description": "Essential vitamins and supplements",
+      "image": "/images/categories/vitamins.jpg",
+      "bannerImage": "/images/categories/vitamins-banner.jpg",
+      "productCount": 4,
+      "createdBy": "adm_001",
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "cat_003",
+      "name": "Pain Relief",
+      "slug": "pain-relief",
+      "description": "Medicines for pain management",
+      "image": "/images/categories/pain-relief.jpg",
+      "bannerImage": "/images/categories/pain-relief-banner.jpg",
+      "productCount": 3,
+      "createdBy": "adm_001",
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "products": [
+    {
+      "_id": "prod_001",
+      "name": "Dettol Antiseptic Liquid",
+      "slug": "dettol-antiseptic-liquid",
+      "description": "Trusted antiseptic liquid for protection against germs. Suitable for minor cuts, wounds, and household disinfection.",
+      "brand": "Dettol",
+      "category": {
+        "categoryID": "cat_001",
+        "name": "Antiseptics"
+      },
+      "images": [
+        "/images/products/dettol-1.jpg",
+        "/images/products/dettol-2.jpg"
+      ],
+      "basecost": 180,
+      "discountfactor": 0.02,
+      "inventory": {
+        "stockQty": 200,
+        "sku": "DET-500-LIQ",
+        "lowStockThreshold": 20
+      },
+      "ratings": {
+        "average": 4.5,
+        "totalReviews": 342
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 3,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_002",
+      "name": "Savlon Antiseptic Cream",
+      "slug": "savlon-antiseptic-cream",
+      "description": "Antiseptic cream for prevention of infection in cuts, scrapes, and burns.",
+      "brand": "Savlon",
+      "category": {
+        "categoryID": "cat_001",
+        "name": "Antiseptics"
+      },
+      "images": [
+        "/images/products/savlon-1.jpg",
+        "/images/products/savlon-2.jpg"
+      ],
+      "basecost": 85,
+      "discountfactor": 0.05,
+      "inventory": {
+        "stockQty": 150,
+        "sku": "SAV-25-CRM",
+        "lowStockThreshold": 15
+      },
+      "ratings": {
+        "average": 4.3,
+        "totalReviews": 278
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 3,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_003",
+      "name": "Betadine Povidone-Iodine",
+      "slug": "betadine-povidone-iodine",
+      "description": "Broad-spectrum antiseptic for infection protection. Effective against bacteria, viruses, and fungi.",
+      "brand": "Betadine",
+      "category": {
+        "categoryID": "cat_001",
+        "name": "Antiseptics"
+      },
+      "images": [
+        "/images/products/betadine-1.jpg",
+        "/images/products/betadine-2.jpg"
+      ],
+      "basecost": 120,
+      "discountfactor": 0.03,
+      "inventory": {
+        "stockQty": 100,
+        "sku": "BET-100-SLN",
+        "lowStockThreshold": 10
+      },
+      "ratings": {
+        "average": 4.7,
+        "totalReviews": 456
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 3,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_004",
+      "name": "Vitamin C Tablets",
+      "slug": "vitamin-c-tablets",
+      "description": "High strength Vitamin C supplement for immunity support. 1000mg per tablet.",
+      "brand": "HealthVit",
+      "category": {
+        "categoryID": "cat_002",
+        "name": "Vitamins"
+      },
+      "images": [
+        "/images/products/vitamin-c-1.jpg",
+        "/images/products/vitamin-c-2.jpg"
+      ],
+      "basecost": 450,
+      "discountfactor": 0.1,
+      "inventory": {
+        "stockQty": 500,
+        "sku": "VTC-1000-TAB",
+        "lowStockThreshold": 50
+      },
+      "ratings": {
+        "average": 4.6,
+        "totalReviews": 567
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 4,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_005",
+      "name": "Vitamin D3 Drops",
+      "slug": "vitamin-d3-drops",
+      "description": "Vitamin D3 supplement for bone health and immunity. Suitable for all ages.",
+      "brand": "HealthVit",
+      "category": {
+        "categoryID": "cat_002",
+        "name": "Vitamins"
+      },
+      "images": [
+        "/images/products/vitamin-d3-1.jpg"
+      ],
+      "basecost": 320,
+      "discountfactor": 0.08,
+      "inventory": {
+        "stockQty": 300,
+        "sku": "VTD-2000-DRP",
+        "lowStockThreshold": 30
+      },
+      "ratings": {
+        "average": 4.4,
+        "totalReviews": 234
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 4,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_006",
+      "name": "Multivitamin Capsules",
+      "slug": "multivitamin-capsules",
+      "description": "Complete multivitamin formula with 23 essential nutrients for daily health.",
+      "brand": "Wellbeing",
+      "category": {
+        "categoryID": "cat_002",
+        "name": "Vitamins"
+      },
+      "images": [
+        "/images/products/multivitamin-1.jpg",
+        "/images/products/multivitamin-2.jpg"
+      ],
+      "basecost": 599,
+      "discountfactor": 0.12,
+      "inventory": {
+        "stockQty": 400,
+        "sku": "MVI-60-CAP",
+        "lowStockThreshold": 40
+      },
+      "ratings": {
+        "average": 4.8,
+        "totalReviews": 789
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 4,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_007",
+      "name": "Calcium + Vitamin D3",
+      "slug": "calcium-vitamin-d3",
+      "description": "Calcium and Vitamin D3 combination for bone strength and joint health.",
+      "brand": "Wellbeing",
+      "category": {
+        "categoryID": "cat_002",
+        "name": "Vitamins"
+      },
+      "images": [
+        "/images/products/calcium-1.jpg"
+      ],
+      "basecost": 380,
+      "discountfactor": 0.07,
+      "inventory": {
+        "stockQty": 250,
+        "sku": "CAL-500-D3",
+        "lowStockThreshold": 25
+      },
+      "ratings": {
+        "average": 4.5,
+        "totalReviews": 345
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 4,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_008",
+      "name": "Paracetamol 500mg",
+      "slug": "paracetamol-500mg",
+      "description": "Effective pain reliever and fever reducer. 500mg tablets.",
+      "brand": "Cipla",
+      "category": {
+        "categoryID": "cat_003",
+        "name": "Pain Relief"
+      },
+      "images": [
+        "/images/products/paracetamol-1.jpg"
+      ],
+      "basecost": 45,
+      "discountfactor": 0.01,
+      "inventory": {
+        "stockQty": 1000,
+        "sku": "PAR-500-TAB",
+        "lowStockThreshold": 100
+      },
+      "ratings": {
+        "average": 4.6,
+        "totalReviews": 1234
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 2,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_009",
+      "name": "Ibuprofen 400mg",
+      "slug": "ibuprofen-400mg",
+      "description": "Anti-inflammatory pain reliever for muscle pain, headache, and fever.",
+      "brand": "Cipla",
+      "category": {
+        "categoryID": "cat_003",
+        "name": "Pain Relief"
+      },
+      "images": [
+        "/images/products/ibuprofen-1.jpg",
+        "/images/products/ibuprofen-2.jpg"
+      ],
+      "basecost": 65,
+      "discountfactor": 0.02,
+      "inventory": {
+        "stockQty": 800,
+        "sku": "IBU-400-TAB",
+        "lowStockThreshold": 80
+      },
+      "ratings": {
+        "average": 4.4,
+        "totalReviews": 890
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 2,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "_id": "prod_010",
+      "name": "Diclofenac Gel",
+      "slug": "diclofenac-gel",
+      "description": "Topical pain relief gel for joint and muscle pain.",
+      "brand": "Volini",
+      "category": {
+        "categoryID": "cat_003",
+        "name": "Pain Relief"
+      },
+      "images": [
+        "/images/products/diclofenac-1.jpg"
+      ],
+      "basecost": 95,
+      "discountfactor": 0.03,
+      "inventory": {
+        "stockQty": 350,
+        "sku": "DIC-30-GEL",
+        "lowStockThreshold": 35
+      },
+      "ratings": {
+        "average": 4.3,
+        "totalReviews": 567
+      },
+      "isAvailable": true,
+      "estimatedDeliveryDays": 3,
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "carts": [
+    {
+      "_id": "cart_001",
+      "patientId": "pat_001",
+      "items": [
+        {
+          "productId": "prod_002",
+          "name": "Savlon Antiseptic Cream",
+          "image": "/images/products/savlon-1.jpg",
+          "price": 85,
+          "quantity": 1,
+          "addedAt": "2026-06-14T07:37:19.021Z",
+          "updatedAt": "2026-06-14T07:37:19.021Z"
+        }
+      ],
+      "couponCode": null,
+      "discountAmount": 0,
+      "subtotal": 85,
+      "taxAmount": 4.25,
+      "shippingAmount": 40,
+      "totalAmount": 129.25,
+      "status": "ACTIVE",
+      "convertedToOrderId": null,
+      "expiresAt": "2024-06-01T10:00:00Z",
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2026-06-14T07:37:19.021Z"
+    }
+  ],
+  "orderItems": [
+    {
+      "_id": "orderItem_1779786544537_prod_004",
+      "orderID": "ord_1779786544537",
+      "productID": "prod_004",
+      "productSnapshot": {
+        "name": "Vitamin C Tablets",
+        "brand": "HealthVit",
+        "image": "/images/products/vitamin-c-1.jpg",
+        "mrp": 450,
+        "sellingPrice": 450
+      },
+      "quantity": 2,
+      "unitPrice": 450,
+      "totalPrice": 900,
+      "discount": 90,
+      "status": "pending",
+      "createdAt": "2026-05-26T09:09:04.537Z",
+      "updatedAt": "2026-05-26T09:09:04.537Z"
+    },
+    {
+      "_id": "orderItem_1779786544537_prod_003",
+      "orderID": "ord_1779786544537",
+      "productID": "prod_003",
+      "productSnapshot": {
+        "name": "Betadine Povidone-Iodine",
+        "brand": "Betadine",
+        "image": "/images/products/betadine-1.jpg",
+        "mrp": 120,
+        "sellingPrice": 120
+      },
+      "quantity": 1,
+      "unitPrice": 120,
+      "totalPrice": 120,
+      "discount": 3.5999999999999996,
+      "status": "pending",
+      "createdAt": "2026-05-26T09:09:04.537Z",
+      "updatedAt": "2026-05-26T09:09:04.537Z"
+    }
+  ],
+  "orders": [
+    {
+      "_id": "ord_1779786544537",
+      "userID": "pat_001",
+      "items": [
+        "orderItem_1779786544537_prod_004",
+        "orderItem_1779786544537_prod_003"
+      ],
+      "status": "pending",
+      "pricing": {
+        "subtotal": 1020,
+        "deliveryCharge": 0,
+        "discount": 0,
+        "taxBreakdown": {
+          "cgst": {
+            "rate": 2.5,
+            "amount": 25.5
+          },
+          "sgst": {
+            "rate": 2.5,
+            "amount": 25.5
+          },
+          "igst": {
+            "rate": 0,
+            "amount": 0
+          },
+          "totalTax": 51
+        },
+        "finalAmount": 1071,
+        "currency": "INR"
+      },
+      "paymentID": null,
+      "deliveryID": null,
+      "shippingAddress": {
+        "fullName": "Test",
+        "phone": "1234567890",
+        "addressLine": "test",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "121002"
+      },
+      "createdAt": "2026-05-26T09:09:04.537Z",
+      "updatedAt": "2026-05-26T09:09:04.537Z"
+    }
+  ],
+  "settings": {
+    "siteName": "HealthApp",
+    "contactEmail": "admin@healthapp.com",
+    "contactPhone": "+91 98765 43210",
+    "address": "",
+    "deliveryCharge": 40,
+    "freeDeliveryMin": 500,
+    "taxRate": 5,
+    "updatedAt": "2026-06-14T08:49:08.353Z"
+  }
+}

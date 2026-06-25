@@ -47,9 +47,9 @@ app.get("/", (req,res)=>{
   res.send("Server Alive");
 });
 
-// app.get("/jsonData", async (req, res)=>{
-//   res.status(200).send({success: true, data: await User.find()});
-// })
+app.get("/jsonData", async (req, res)=>{
+  res.status(200).send({success: true, data: await User.find()});
+})
 
 // * Usage of route aggregator pattern in order to maintain clean code
 app.use('/api', routes);

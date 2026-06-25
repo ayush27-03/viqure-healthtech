@@ -22,7 +22,6 @@ function Login() {
     try {
       const response = await axiosInstance.post('/auth/login', {
         email: formData.email,
-        password: formData.password
       })
       
       const { data } = response.data
@@ -75,7 +74,7 @@ function Login() {
                 required
               />
             </div>
-
+          {
             <div>
               <label className="block text-gray-700 font-medium mb-2">Password</label>
               <input
@@ -85,7 +84,7 @@ function Login() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
-            </div>
+            </div> }
 
             <button
               type="submit"
