@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate  } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
 
 function Homepage() {
-  const navigate = useNavigate() 
-  const { isAuthenticated } = useAuth() 
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [doctors, setDoctors] = useState([])
   const [filteredDoctors, setFilteredDoctors] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,27 +17,41 @@ function Homepage() {
   const [selectedCity, setSelectedCity] = useState('all')
   const [cities, setCities] = useState([])
 
-
   useEffect(() => {
     fetchDoctors()
   }, [])
 
   useEffect(() => {
-  filterAndSortDoctors()
-}, [searchTerm, selectedSpecialty, doctors, sortBy, selectedCity])
+    filterAndSortDoctors()
+  }, [searchTerm, selectedSpecialty, doctors, sortBy, selectedCity])
 
   const fetchDoctors = async () => {
     try {
-      const response = await axiosInstance.get('/doctors')
-      setDoctors(response.data)
-      setFilteredDoctors(response.data)
+      const response = await axiosInstance.get('/users/doctors')
+      const data = response.data.data || []
+      
+      const mappedDoctors = data.map(doc => ({
+        _id: doc._id,
+        firstName: doc.profile?.firstName || '',
+        lastName: doc.profile?.lastName || '',
+        profileIcon: doc.profileIcon || '👨‍⚕️', // YOUR extra field
+        phone: doc.phone || '',
+        addresses: doc.addresses || [],
+        qualifications: doc.detailsOfHealthCareProfessional?.qualifications || [],
+        yearsOfExperience: doc.detailsOfHealthCareProfessional?.yearsOfExperience || 0,
+        consultationFee: doc.detailsOfHealthCareProfessional?.consultationFee || 0,
+        bio: doc.detailsOfHealthCareProfessional?.bio || '',
+        stats: doc.detailsOfHealthCareProfessional?.stats || { rating: 0, totalRatings: 0, totalAppointments: 0 }
+      }))
+      
+      setDoctors(mappedDoctors)
+      setFilteredDoctors(mappedDoctors)
 
-      const allSpecialties = response.data.flatMap(doc => doc.specializations || [])
+      const allSpecialties = mappedDoctors.flatMap(doc => doc.qualifications || [])
       const uniqueSpecialties = [...new Set(allSpecialties)]
       setSpecialties(uniqueSpecialties)
 
-    
-      const allCities = [...new Set(response.data.map(doc => doc.city).filter(Boolean))]
+      const allCities = [...new Set(mappedDoctors.map(doc => doc.addresses?.[0]?.city).filter(Boolean))]
       setCities(allCities)
 
     } catch (error) {
@@ -50,27 +64,24 @@ function Homepage() {
   const filterAndSortDoctors = () => {
     let filtered = [...doctors]
     
-    // Apply specialty filter
     if (selectedSpecialty !== 'all') {
       filtered = filtered.filter(doc => 
-        doc.specializations?.includes(selectedSpecialty)
+        doc.qualifications?.includes(selectedSpecialty)
       )
     }
     
-    // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(doc => 
-        doc.doctorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.specializations?.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        doc.city?.toLowerCase().includes(searchTerm.toLowerCase())
+        `${doc.firstName} ${doc.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.qualifications?.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        doc.addresses?.[0]?.city?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
     
     if (selectedCity !== 'all') {
-      filtered = filtered.filter(doc => doc.city === selectedCity)
+      filtered = filtered.filter(doc => doc.addresses?.[0]?.city === selectedCity)
     }
 
-    // Apply sorting
     switch (sortBy) {
       case 'rating':
         filtered.sort((a, b) => (b.stats?.rating || 0) - (a.stats?.rating || 0))
@@ -79,13 +90,12 @@ function Homepage() {
         filtered.sort((a, b) => (b.yearsOfExperience || 0) - (a.yearsOfExperience || 0))
         break
       case 'fee_low':
-        filtered.sort((a, b) => (a.consultationFees || 0) - (b.consultationFees || 0))
+        filtered.sort((a, b) => (a.consultationFee || 0) - (b.consultationFee || 0))
         break
       case 'fee_high':
-        filtered.sort((a, b) => (b.consultationFees || 0) - (a.consultationFees || 0))
+        filtered.sort((a, b) => (b.consultationFee || 0) - (a.consultationFee || 0))
         break
       default:
-        // Most relevant - keep original order or sort by rating + appointments
         filtered.sort((a, b) => {
           const scoreA = (a.stats?.rating || 0) * (a.stats?.totalAppointments || 0)
           const scoreB = (b.stats?.rating || 0) * (b.stats?.totalAppointments || 0)
@@ -97,12 +107,12 @@ function Homepage() {
   }
 
   const handleViewProfile = (doctorId) => {
-  if (!isAuthenticated) {
-    navigate('/login')
-  } else {
-    navigate(`/doctor/${doctorId}`)
+    if (!isAuthenticated) {
+      navigate('/login')
+    } else {
+      navigate(`/doctor/${doctorId}`)
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -128,7 +138,6 @@ function Homepage() {
               Quality care at your fingertips.
             </p>
             
-            {/* Search Bar */}
             <div className="max-w-2xl mx-auto relative">
               <div className="bg-white rounded-2xl shadow-2xl p-2 flex items-center">
                 <div className="flex-1 relative">
@@ -155,7 +164,6 @@ function Homepage() {
         </div>
       </div>
 
-      {/* Specialty Filters */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-wrap gap-3 justify-center mb-12">
           <button
@@ -183,7 +191,6 @@ function Homepage() {
           ))}
         </div>
           
-
         <select 
           value={selectedCity}
           onChange={(e) => setSelectedCity(e.target.value)}
@@ -195,7 +202,6 @@ function Homepage() {
           ))}
         </select>
 
-        {/* Results Header */}
         <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
           <p className="text-gray-600">
             Found <span className="font-semibold text-blue-600">{filteredDoctors.length}</span> doctors
@@ -213,7 +219,6 @@ function Homepage() {
           </select>
         </div>
 
-        {/* Doctor Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1,2,3,4,5,6].map(i => (
@@ -264,10 +269,10 @@ function Homepage() {
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition">
-                              {doctor.doctorName}
+                              {doctor.firstName} {doctor.lastName}
                             </h3>
                             <p className="text-blue-600 font-medium">
-                              {doctor.specializations?.join(", ") || "General Physician"}
+                              {doctor.qualifications?.join(", ") || "General Physician"}
                             </p>
                           </div>
                           <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-lg">
@@ -288,19 +293,17 @@ function Homepage() {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <span>💰</span>
-                            <span>₹{doctor.consultationFees || 0} consultation fee</span>
+                            <span>₹{doctor.consultationFee || 0} consultation fee</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <span>📍</span>
-                            <span>{doctor.city || "Location not specified"}</span>
+                            <span>{doctor.addresses?.[0]?.city || "Location not specified"}</span>
                           </div>
                         </div>
                         
                         <button onClick={() => handleViewProfile(doctor._id)} className="mt-4 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition shadow-md transform group-hover:scale-105">
                           View Profile & Book
                         </button>
-
-
                       </div>
                     </div>
                   </Link>
