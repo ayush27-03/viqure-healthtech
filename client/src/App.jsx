@@ -48,11 +48,11 @@ function Navigation() {
   
 
   const handleProfileClick = () => {
-    if (role === 'CUSTOMER') {
+    if (role === 'patient') {
       navigate('/patient/profile')
-    } else if (role === 'DOCTOR') {
+    } else if (role === 'doctor') {
       navigate('/doctor/profile')
-    } else if (role === 'ADMIN') {
+    } else if (role === 'admin') {
       navigate('/admin')
     }
     setShowProfileMenu(false)
@@ -64,7 +64,7 @@ function Navigation() {
     setShowProfileMenu(false)
   }
 
-  if (role === 'ADMIN') {
+  if (role === 'admin') {
     return (
       <nav className="bg-blue-600 text-white p-4 shadow-lg">
         <div className="flex justify-between items-center px-6">
@@ -112,7 +112,7 @@ function Navigation() {
             🏥 ViQure
           </Link>
 
-          {(!isAuthenticated || role === 'CUSTOMER') && (
+          {(!isAuthenticated || role === 'patient') && (
               <Link to="/doctors" className="hover:text-blue-200">Find Doctors</Link>
           )}
           <Link to="/shop" className="hover:text-blue-200">Shop</Link>
@@ -137,7 +137,7 @@ function Navigation() {
               >
                 <span className="text-xl">👤</span>
                 <span className="text-sm">
-                  {role === 'DOCTOR' ? `Dr. ${user?.profile?.firstName || ''}` : user?.profile?.firstName || 'User'}
+                  {role === 'doctor' ? `Dr. ${user?.profile?.firstName || ''}` : user?.profile?.firstName || 'User'}
                 </span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -194,58 +194,58 @@ function AppRoutes() {
       <Route path="/shop" element={<Shop />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/cart" element={
-        <ProtectedRoute allowedRoles={['CUSTOMER']}>
+        <ProtectedRoute allowedRoles={['patient']}>
           <Cart />
         </ProtectedRoute>
       } />
 
             
       <Route path="/checkout" element={
-        <ProtectedRoute allowedRoles={['CUSTOMER']}>
+        <ProtectedRoute allowedRoles={['patient']}>
           <Checkout />
         </ProtectedRoute>
       } />
 
       <Route path="/orders" element={
-        <ProtectedRoute allowedRoles={['CUSTOMER']}>
+        <ProtectedRoute allowedRoles={['patient']}>
           <Orders />
         </ProtectedRoute>
       } />
 
       <Route path="/orders/:id" element={
-        <ProtectedRoute allowedRoles={['CUSTOMER']}>
+        <ProtectedRoute allowedRoles={['patient']}>
           <OrderDetail />
         </ProtectedRoute>
       } />
       
       {/* Put specific routes BEFORE dynamic routes */}
       <Route path="/doctor/settings" element={
-        <ProtectedRoute allowedRoles={['DOCTOR']}>
+        <ProtectedRoute allowedRoles={['doctor']}>
           <DoctorSettings />
         </ProtectedRoute>
       } />
 
       {/* Protected Routes */}
       <Route path="/patient/profile" element={
-        <ProtectedRoute allowedRoles={['CUSTOMER']}>
+        <ProtectedRoute allowedRoles={['patient']}>
           <PatientProfile />
         </ProtectedRoute>
       } />
       
       <Route path="/doctor/profile" element={
-        <ProtectedRoute allowedRoles={['DOCTOR']}>
+        <ProtectedRoute allowedRoles={['doctor']}>
           <DoctorProfile />
         </ProtectedRoute>
       } />
 
       <Route path="/doctor/:id/book" element={
-        <ProtectedRoute allowedRoles={['CUSTOMER']}>
+        <ProtectedRoute allowedRoles={['patient']}>
           <DoctorBooking />
         </ProtectedRoute>
       } />
       
       <Route path="/admin" element={
-        <ProtectedRoute allowedRoles={['ADMIN']}>
+        <ProtectedRoute allowedRoles={['admin']}>
           <AdminDashboard />
         </ProtectedRoute>
       }>
@@ -260,13 +260,13 @@ function AppRoutes() {
       </Route>
       
       <Route path="/appointments" element={
-        <ProtectedRoute allowedRoles={['CUSTOMER', 'DOCTOR']}>
+        <ProtectedRoute allowedRoles={['patient', 'doctor']}>
           <Appointments />
         </ProtectedRoute>
       } />
 
       <Route path="/documents" element={
-        <ProtectedRoute allowedRoles={['CUSTOMER', 'DOCTOR', 'ADMIN']}>
+        <ProtectedRoute allowedRoles={['patient', 'doctor', 'admin']}>
           <Documents />
         </ProtectedRoute>
       } />
