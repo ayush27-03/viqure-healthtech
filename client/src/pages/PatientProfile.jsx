@@ -8,15 +8,25 @@ function PatientProfile() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
-    patientName: '',
-    mobileNumber: '',
-    patientAddress: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    addresses: [],
+    profileIcon: '👤', // YOUR extra field
     emergencyContact: {
       name: '',
       relation: '',
       phone: ''
     }
   })
+  const [newAddress, setNewAddress] = useState({
+    type: 'HOME',
+    street: '',
+    city: '',
+    state: '',
+    pincode: ''
+  })
+  const [showAddressForm, setShowAddressForm] = useState(false)
 
   useEffect(() => {
     fetchPatientData()
@@ -24,12 +34,15 @@ function PatientProfile() {
 
   const fetchPatientData = async () => {
     try {
-      const response = await axiosInstance.get(`/patients/${user?.roleId}`)
-      const data = response.data
+      const response = await axiosInstance.get('/auth/me')
+      const data = response.data.data?.user || {}
+      
       setFormData({
-        patientName: data.patientName || '',
-        mobileNumber: data.mobileNumber || '',
-        patientAddress: data.patientAddress || '',
+        firstName: data.profile?.firstName || '',
+        lastName: data.profile?.lastName || '',
+        phone: data.phone || '',
+        addresses: data.addresses || [],
+        profileIcon: data.profileIcon || '👤', // YOUR extra field
         emergencyContact: data.emergencyContact || { name: '', relation: '', phone: '' }
       })
     } catch (error) {
@@ -52,10 +65,52 @@ function PatientProfile() {
     }
   }
 
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target
+    setNewAddress({ ...newAddress, [name]: value })
+  }
+
+  const handleAddAddress = async () => {
+    if (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.pincode) {
+      alert('Please fill all address fields')
+      return
+    }
+    
+    try {
+      await axiosInstance.post('/users/me/addresses', newAddress)
+      setNewAddress({ type: 'HOME', street: '', city: '', state: '', pincode: '' })
+      setShowAddressForm(false)
+      fetchPatientData()
+    } catch (error) {
+      console.error('Error adding address:', error)
+      alert('Failed to add address')
+    }
+  }
+
+  const handleDeleteAddress = async (index) => {
+    if (!window.confirm('Remove this address?')) return
+    
+    try {
+      const updatedAddresses = formData.addresses.filter((_, i) => i !== index)
+      await axiosInstance.patch('/auth/me', { addresses: updatedAddresses })
+      fetchPatientData()
+    } catch (error) {
+      console.error('Error deleting address:', error)
+      alert('Failed to delete address')
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
-      await axiosInstance.put(`/patients/${user?.roleId}`, formData)
+      await axiosInstance.patch('/auth/me', {
+        phone: formData.phone,
+        profile: {
+          firstName: formData.firstName,
+          lastName: formData.lastName
+        },
+        profileIcon: formData.profileIcon // YOUR extra field
+      })
       setIsEditing(false)
     } catch (error) {
       console.error('Error saving profile:', error)
@@ -102,21 +157,122 @@ function PatientProfile() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="text-sm text-gray-500">Full Name</label>
-                      <p className="text-lg font-medium text-gray-800">{formData.patientName || 'Not provided'}</p>
+                      <label className="text-sm text-gray-500">Profile Icon</label>
+                      <div className="text-4xl">{formData.profileIcon || '👤'}</div>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500">First Name</label>
+                      <p className="text-lg font-medium text-gray-800">{formData.firstName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500">Last Name</label>
+                      <p className="text-lg font-medium text-gray-800">{formData.lastName || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-sm text-gray-500">Email</label>
                       <p className="text-lg font-medium text-gray-800">{user?.email || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500">Mobile Number</label>
-                      <p className="text-lg font-medium text-gray-800">{formData.mobileNumber || 'Not provided'}</p>
+                      <label className="text-sm text-gray-500">Phone</label>
+                      <p className="text-lg font-medium text-gray-800">{formData.phone || 'Not provided'}</p>
                     </div>
-                    <div>
-                      <label className="text-sm text-gray-500">Address</label>
-                      <p className="text-lg font-medium text-gray-800">{formData.patientAddress || 'Not provided'}</p>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Addresses</h3>
+                      <button
+                        onClick={() => setShowAddressForm(!showAddressForm)}
+                        className="text-blue-600 hover:text-blue-700 text-sm"
+                      >
+                        + Add Address
+                      </button>
                     </div>
+
+                    {showAddressForm && (
+                      <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <select
+                            name="type"
+                            value={newAddress.type}
+                            onChange={handleAddressChange}
+                            className="px-3 py-2 border rounded-lg"
+                          >
+                            <option value="HOME">Home</option>
+                            <option value="WORK">Work</option>
+                            <option value="OTHER">Other</option>
+                          </select>
+                          <input
+                            type="text"
+                            name="street"
+                            value={newAddress.street}
+                            onChange={handleAddressChange}
+                            placeholder="Street"
+                            className="px-3 py-2 border rounded-lg"
+                          />
+                          <input
+                            type="text"
+                            name="city"
+                            value={newAddress.city}
+                            onChange={handleAddressChange}
+                            placeholder="City"
+                            className="px-3 py-2 border rounded-lg"
+                          />
+                          <input
+                            type="text"
+                            name="state"
+                            value={newAddress.state}
+                            onChange={handleAddressChange}
+                            placeholder="State"
+                            className="px-3 py-2 border rounded-lg"
+                          />
+                          <input
+                            type="text"
+                            name="pincode"
+                            value={newAddress.pincode}
+                            onChange={handleAddressChange}
+                            placeholder="Pincode"
+                            className="px-3 py-2 border rounded-lg"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleAddAddress}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                          >
+                            Save Address
+                          </button>
+                          <button
+                            onClick={() => setShowAddressForm(false)}
+                            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {formData.addresses.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No addresses saved</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {formData.addresses.map((addr, index) => (
+                          <div key={index} className="bg-gray-50 p-3 rounded-lg flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{addr.type}</p>
+                              <p className="text-sm text-gray-600">{addr.street}</p>
+                              <p className="text-sm text-gray-600">{addr.city}, {addr.state} - {addr.pincode}</p>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteAddress(index)}
+                              className="text-red-500 hover:text-red-700 text-sm"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-4 border-t">
@@ -161,32 +317,46 @@ function PatientProfile() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">Full Name</label>
+                    <label className="block text-gray-700 font-medium mb-2">Profile Icon</label>
                     <input
                       type="text"
-                      name="patientName"
-                      value={formData.patientName}
+                      name="profileIcon"
+                      value={formData.profileIcon}
                       onChange={handleChange}
                       className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 👤 or any emoji"
                     />
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-700 font-medium mb-2">First Name</label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 font-medium mb-2">Last Name</label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">Mobile Number</label>
+                    <label className="block text-gray-700 font-medium mb-2">Phone</label>
                     <input
                       type="tel"
-                      name="mobileNumber"
-                      value={formData.mobileNumber}
+                      name="phone"
+                      value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">Address</label>
-                    <textarea
-                      name="patientAddress"
-                      value={formData.patientAddress}
-                      onChange={handleChange}
-                      rows="2"
                       className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
