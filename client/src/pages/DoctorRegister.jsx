@@ -9,6 +9,8 @@ function DoctorRegister() {
     password: '',
     confirmPassword: '',
     phone: '',
+    dateOfBirth: '',
+    gender: '',
     specialization: '',
     licenseNumber: '',
     experience: '',
@@ -47,6 +49,7 @@ function DoctorRegister() {
     if (!formData.specialization) newErrors.specialization = 'Specialization is required'
     if (!formData.licenseNumber) newErrors.licenseNumber = 'License number is required'
     if (!formData.consultationFee) newErrors.consultationFee = 'Consultation fee is required'
+    if (!formData.gender) newErrors.gender = 'Gender is required'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -79,8 +82,8 @@ function DoctorRegister() {
         phone: formData.phone,
         password: formData.password,
         role: 'DOCTOR',
-        gender: 'OTHER',
-        dob: '',
+        gender: formData.gender.toUpperCase(),
+        dob: formData.dateOfBirth,
         profile: {
           firstName: firstName,
           lastName: lastName
@@ -106,6 +109,8 @@ function DoctorRegister() {
         password: '',
         confirmPassword: '',
         phone: '',
+        dateOfBirth: '',
+        gender: '',
         specialization: '',
         licenseNumber: '',
         experience: '',
@@ -223,6 +228,41 @@ function DoctorRegister() {
                   ))}
                 </select>
                 {errors.specialization && <p className="text-red-500 text-sm mt-1">{errors.specialization}</p>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  name="dateOfBirth"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Gender *
+                </label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.gender ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                </select>
+                {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender}</p>}
               </div>
             </div>
             
