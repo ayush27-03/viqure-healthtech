@@ -13,6 +13,7 @@ import PatientProfile from './pages/PatientProfile'
 
 import DoctorProfile from './pages/DoctorProfile'
 import DoctorSettings from './pages/DoctorSettings'
+import DoctorEarnings from './pages/DoctorEarnings'
 
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminDoctors from './pages/admin/AdminDoctors'
@@ -222,6 +223,12 @@ function AppRoutes() {
       <Route path="/doctor/settings" element={
         <ProtectedRoute allowedRoles={['doctor']}>
           <DoctorSettings />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/doctor/earnings" element={
+        <ProtectedRoute allowedRoles={['doctor']}>
+          <DoctorEarnings />
         </ProtectedRoute>
       } />
 
