@@ -29,29 +29,28 @@ function DoctorSettings() {
   }, [])
 
   const fetchSettings = async () => {
-  try {
-    const response = await axiosInstance.get(`/doctors/${user?.roleId}`)
-    const doctor = response.data
-    if (doctor.availabilitySettings) {
-      setSettings(doctor.availabilitySettings)
+    try {
+      const response = await axiosInstance.get(`/users/doctors/${user?._id}`)
+      const doctor = response.data
+      if (doctor.availabilitySettings) {
+        setSettings(doctor.availabilitySettings)
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error)
+    } finally {
+      setLoading(false)
     }
-    // If no settings, keep the default state that is already set
-  } catch (error) {
-    console.error('Error fetching settings:', error)
-  } finally {
-    setLoading(false)
   }
-}
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await axiosInstance.put(`/doctors/${user?.roleId}`, {
+      await axiosInstance.put(`/users/doctors/${user?._id}`, {
         availabilitySettings: settings
       })
       
       try {
-        await axiosInstance.post(`/doctors/${user?.roleId}/generate-slots`)
+        await axiosInstance.post(`/users/doctors/${user?._id}/generate-slots`)
         alert('Settings saved and slots generated successfully')
       } catch (slotError) {
         alert('Settings saved but slot generation failed. Please configure your working hours.')
@@ -143,7 +142,6 @@ function DoctorSettings() {
 
           <div className="p-8 space-y-8">
             
-            {/* General Settings */}
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">General Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -188,7 +186,6 @@ function DoctorSettings() {
               </div>
             </div>
 
-            {/* Working Hours */}
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Working Hours</h3>
               <p className="text-sm text-gray-500 mb-4">Set your available time slots for each day. Leave a day unchecked if you are not working.</p>
@@ -245,7 +242,6 @@ function DoctorSettings() {
               </div>
             </div>
 
-            {/* Leave Dates */}
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Leave Dates</h3>
               <p className="text-sm text-gray-500 mb-4">Add dates when you will not be available for consultations.</p>
@@ -280,7 +276,6 @@ function DoctorSettings() {
               </button>
             </div>
 
-            {/* Info Box */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-semibold text-blue-800 mb-2">How this works</h4>
               <ul className="text-sm text-blue-700 space-y-1">
@@ -292,7 +287,6 @@ function DoctorSettings() {
               </ul>
             </div>
 
-            {/* Save Button */}
             <div className="pt-4 border-t">
               <button
                 onClick={handleSave}
