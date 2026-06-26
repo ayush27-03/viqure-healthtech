@@ -50,51 +50,48 @@ function DoctorBooking() {
 
   const fetchDoctorDetails = async () => {
     try {
-      const response = await axiosInstance.get(`/doctors/${id}`)
-      setDoctor(response.data)
+      const response = await axiosInstance.get(`/users/doctors/${id}`)
+      const data = response.data.data || response.data
+      setDoctor(data)
       
-      const settings = response.data.availabilitySettings
-      if (settings) {
-        const min = settings.minAppointmentDuration || 10
-        const max = settings.maxAppointmentDuration || 180
-        const options = []
-        for (let duration = min; duration <= max; duration += 10) {
-          options.push(duration)
-        }
-        setDurationOptions(options)
-        
-        const dates = []
-        const maxDays = settings.advanceBookingDays || 14
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        
-        for (let i = 0; i <= maxDays; i++) {
-          const date = new Date(today)
-          date.setDate(today.getDate() + i)
-          
-          const dayOfWeek = date.getDay()
-          const daySchedule = settings.workingHours?.find(s => s.dayOfWeek === dayOfWeek)
-          const isWorking = daySchedule?.isWorking || false
-          
-          const year = date.getFullYear()
-          const month = String(date.getMonth() + 1).padStart(2, '0')
-          const day = String(date.getDate()).padStart(2, '0')
-          const dateStr = `${year}-${month}-${day}`
-          
-          const isLeave = settings.leaveDates?.some(ld => ld.date === dateStr) || false
-          const isAvailable = isWorking && !isLeave && date >= today
-          
-          dates.push({
-            date: date,
-            dateStr: dateStr,
-            dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
-            dayNum: date.getDate(),
-            month: date.toLocaleDateString('en-US', { month: 'short' }),
-            isAvailable: isAvailable
-          })
-        }
-        setAvailableDates(dates)
+      const settings = data.availabilitySettings || {}
+      const min = settings.minAppointmentDuration || 10
+      const max = settings.maxAppointmentDuration || 180
+      const maxDays = settings.advanceBookingDays || 14
+      
+      const options = []
+      for (let duration = min; duration <= max; duration += 10) {
+        options.push(duration)
       }
+      setDurationOptions(options)
+      
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const dates = []
+      const actualSlots = data.actualAvailableSlots || []
+      
+      for (let i = 0; i <= maxDays; i++) {
+        const date = new Date(today)
+        date.setDate(today.getDate() + i)
+        
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const dateStr = `${year}-${month}-${day}`
+        
+        const hasSlots = actualSlots.some(slot => slot.date === dateStr && slot.ranges?.length > 0)
+        
+        dates.push({
+          date: date,
+          dateStr: dateStr,
+          dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          dayNum: date.getDate(),
+          month: date.toLocaleDateString('en-US', { month: 'short' }),
+          isAvailable: hasSlots
+        })
+      }
+      setAvailableDates(dates)
+      
     } catch (error) {
       console.error('Error fetching doctor:', error)
     } finally {
@@ -216,32 +213,32 @@ function DoctorBooking() {
   }
 
   const handleProceedToBook = async () => {
-  if (!selectedStartTime) {
-    setBookingError('Please select a start time')
-    return
-  }
-  
-  setFetchingCost(true)
-  try {
-    const response = await axiosInstance.post('/booking/calculate-cost', {
-      doctorId: id,
-      date: selectedDate,
-      startTime: selectedStartTime,
-      endTime: getEndTime(selectedStartTime, selectedDuration),
-      duration: selectedDuration,
-      type: bookingDetails.type
-    })
+    if (!selectedStartTime) {
+      setBookingError('Please select a start time')
+      return
+    }
     
-    setCostData(response.data)
-    setShowConfirmModal(true)
-    setBookingError('')
-    setBookingSuccess(false)
-  } catch (error) {
-    setBookingError(error.response?.data?.message || 'Failed to calculate cost')
-  } finally {
-    setFetchingCost(false)
+    setFetchingCost(true)
+    try {
+      const response = await axiosInstance.post('/booking/calculate-cost', {
+        doctorId: id,
+        date: selectedDate,
+        startTime: selectedStartTime,
+        endTime: getEndTime(selectedStartTime, selectedDuration),
+        duration: selectedDuration,
+        type: bookingDetails.type
+      })
+      
+      setCostData(response.data)
+      setShowConfirmModal(true)
+      setBookingError('')
+      setBookingSuccess(false)
+    } catch (error) {
+      setBookingError(error.response?.data?.message || 'Failed to calculate cost')
+    } finally {
+      setFetchingCost(false)
+    }
   }
-}
 
   const handleConfirmBooking = async () => {
     const endTime = getEndTime(selectedStartTime, selectedDuration)
@@ -249,7 +246,7 @@ function DoctorBooking() {
     try {
       await axiosInstance.post('/appointment-requests', {
         doctorId: id,
-        patientId: user?.roleId,
+        patientId: user?._id,
         date: selectedDate,
         startTime: selectedStartTime,
         endTime: endTime,
@@ -287,6 +284,9 @@ function DoctorBooking() {
   const settings = doctor.availabilitySettings || {}
   const minDuration = settings.minAppointmentDuration || 10
   const maxDuration = settings.maxAppointmentDuration || 180
+  const doctorName = doctor.profile ? 
+    `${doctor.profile.firstName || ''} ${doctor.profile.lastName || ''}`.trim() : 
+    doctor.doctorName || 'Doctor'
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
@@ -302,7 +302,7 @@ function DoctorBooking() {
             </button>
             <div className="flex-1 text-center">
               <h1 className="text-2xl font-bold text-gray-800">Book Appointment</h1>
-              <p className="text-gray-500">with {doctor.doctorName}</p>
+              <p className="text-gray-500">with {doctorName}</p>
             </div>
           </div>
         </div>
@@ -493,7 +493,7 @@ function DoctorBooking() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Doctor:</span>
-                      <span className="font-semibold">{doctor.doctorName}</span>
+                      <span className="font-semibold">{doctorName}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Date:</span>
@@ -508,7 +508,7 @@ function DoctorBooking() {
                       <span className="font-semibold">{selectedDuration} minutes</span>
                     </div>
                     {costData && (
-                      <div className="bg-blue-50 rounded-lg p-3">
+                      <div className="bg-blue-50 rounded-lg p-3 mt-2">
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Consultation Fee:</span>
