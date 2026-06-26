@@ -9,6 +9,7 @@ function Orders() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, pages: 1 })
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -20,23 +21,30 @@ function Orders() {
   const fetchOrders = async () => {
     try {
       const response = await axiosInstance.get('/orders')
-      setOrders(response.data)
+      const data = response.data.data || response.data || []
+      const paginationData = response.data.pagination || { total: data.length, page: 1, limit: 20, pages: 1 }
+      setOrders(data)
+      setPagination(paginationData)
     } catch (error) {
       console.error('Error fetching orders:', error)
+      setOrders([])
     } finally {
       setLoading(false)
     }
   }
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800'
-      case 'shipped': return 'bg-blue-100 text-blue-800'
-      case 'confirmed': return 'bg-purple-100 text-purple-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+    const colors = {
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'confirmed': 'bg-purple-100 text-purple-800',
+      'processing': 'bg-blue-100 text-blue-800',
+      'shipped': 'bg-blue-100 text-blue-800',
+      'delivered': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800',
+      'returned': 'bg-gray-100 text-gray-800',
+      'failed': 'bg-red-100 text-red-800'
     }
+    return colors[status] || 'bg-gray-100 text-gray-800'
   }
 
   const formatPrice = (price) => {
@@ -67,9 +75,9 @@ function Orders() {
     } else if (sortBy === 'oldest') {
       filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
     } else if (sortBy === 'highest') {
-      filtered.sort((a, b) => b.pricing.finalAmount - a.pricing.finalAmount)
+      filtered.sort((a, b) => b.pricing?.finalAmount - a.pricing?.finalAmount)
     } else if (sortBy === 'lowest') {
-      filtered.sort((a, b) => a.pricing.finalAmount - b.pricing.finalAmount)
+      filtered.sort((a, b) => a.pricing?.finalAmount - b.pricing?.finalAmount)
     }
     
     return filtered
@@ -95,7 +103,6 @@ function Orders() {
           </Link>
         </div>
 
-        {/* Filters */}
         <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex gap-2 flex-wrap">
@@ -135,6 +142,12 @@ function Orders() {
               >
                 Cancelled
               </button>
+              <button
+                onClick={() => setStatusFilter('returned')}
+                className={`px-4 py-2 rounded-lg transition ${statusFilter === 'returned' ? 'bg-gray-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                Returned
+              </button>
             </div>
             
             <select
@@ -150,7 +163,12 @@ function Orders() {
           </div>
         </div>
 
-        {/* Orders List */}
+        <div className="flex justify-between items-center mb-4">
+          <p className="text-sm text-gray-500">
+            Showing {filteredOrders.length} of {pagination.total} orders
+          </p>
+        </div>
+
         {filteredOrders.length === 0 ? (
           <div className="bg-white rounded-lg shadow-lg p-12 text-center">
             <div className="text-6xl mb-4">📦</div>
@@ -177,7 +195,7 @@ function Orders() {
                         {order.status.toUpperCase()}
                       </span>
                       <p className="text-lg font-bold text-blue-600 mt-2">
-                        {formatPrice(order.pricing.finalAmount)}
+                        {formatPrice(order.pricing?.finalAmount || 0)}
                       </p>
                     </div>
                   </div>
