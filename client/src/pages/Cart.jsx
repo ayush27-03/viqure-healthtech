@@ -6,9 +6,10 @@ import axiosInstance from '../services/axiosConfig'
 function Cart() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
-  const [cart, setCart] = useState(null)
+  const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState({})
+  const [totals, setTotals] = useState({ subtotal: 0, tax: 0, shipping: 0, total: 0 })
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -20,13 +21,55 @@ function Cart() {
 
   const fetchCart = async () => {
     try {
-      const response = await axiosInstance.get('/cart')
-      setCart(response.data)
+      const response = await axiosInstance.get('/users/me/cart')
+      const data = response.data.data || []
+      
+      // Production returns array of { productId: {...}, quantity }
+      // Your test server returns { items: [...], subtotal... }
+      let items = []
+      let totalsData = { subtotal: 0, tax: 0, shipping: 0, total: 0 }
+      
+      if (Array.isArray(data)) {
+        // Production format: array of { productId: {...}, quantity }
+        items = data.map(item => ({
+          productId: item.productId?._id || item.productId,
+          name: item.productId?.name || 'Product',
+          price: item.productId?.pricing?.finalPrice || 0,
+          image: item.productId?.images?.[0] || '',
+          quantity: item.quantity || 0
+        }))
+        calculateTotals(items)
+      } else if (data.items) {
+        // Test server format: { items: [...], subtotal... }
+        items = data.items || []
+        setCartItems(items)
+        if (data.subtotal !== undefined) {
+          setTotals({
+            subtotal: data.subtotal || 0,
+            tax: data.taxAmount || 0,
+            shipping: data.shippingAmount || 0,
+            total: data.totalAmount || 0
+          })
+        } else {
+          calculateTotals(items)
+        }
+      }
+      
+      setCartItems(items)
     } catch (error) {
       console.error('Error fetching cart:', error)
+      setCartItems([])
     } finally {
       setLoading(false)
     }
+  }
+
+  const calculateTotals = (items) => {
+    const subtotal = items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0)
+    const tax = subtotal * 0.05
+    const shipping = subtotal > 500 ? 0 : 40
+    const total = subtotal + tax + shipping
+    setTotals({ subtotal, tax, shipping, total })
   }
 
   const updateQuantity = async (productId, newQuantity) => {
@@ -37,7 +80,7 @@ function Cart() {
 
     setUpdating({ ...updating, [productId]: true })
     try {
-      await axiosInstance.put(`/cart/items/${productId}`, { quantity: newQuantity })
+      await axiosInstance.patch(`/users/me/cart/${productId}`, { quantity: newQuantity })
       await fetchCart()
     } catch (error) {
       console.error('Error updating quantity:', error)
@@ -52,7 +95,7 @@ function Cart() {
 
     setUpdating({ ...updating, [productId]: true })
     try {
-      await axiosInstance.delete(`/cart/items/${productId}`)
+      await axiosInstance.delete(`/users/me/cart/${productId}`)
       await fetchCart()
     } catch (error) {
       console.error('Error removing item:', error)
@@ -66,7 +109,7 @@ function Cart() {
     if (!window.confirm('Clear entire cart?')) return
 
     try {
-      await axiosInstance.delete('/cart')
+      await axiosInstance.delete('/users/me/cart')
       await fetchCart()
     } catch (error) {
       console.error('Error clearing cart:', error)
@@ -90,7 +133,6 @@ function Cart() {
     )
   }
 
-  const cartItems = cart?.items || []
   const isEmpty = cartItems.length === 0
 
   return (
@@ -122,28 +164,28 @@ function Cart() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {cartItems.map((item) => (
                 <div key={item.productId} className="bg-white rounded-lg shadow-lg p-4">
                   <div className="flex gap-4">
-                    {/* Product Image */}
                     <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <span className="text-3xl">💊</span>
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-3xl">💊</span>
+                      )}
                     </div>
 
-                    {/* Product Details */}
                     <div className="flex-1">
                       <Link to={`/product/${item.productId}`}>
                         <h3 className="font-semibold text-gray-800 hover:text-blue-600 transition">
-                          {item.name}
+                          {item.name || 'Product'}
                         </h3>
                       </Link>
                       <p className="text-blue-600 font-medium mt-1">
-                        {formatPrice(item.price)}
+                        {formatPrice(item.price || 0)}
                       </p>
                       
-                      {/* Quantity Controls */}
                       <div className="flex items-center gap-3 mt-3">
                         <button
                           onClick={() => updateQuantity(item.productId, item.quantity - 1)}
@@ -170,10 +212,9 @@ function Cart() {
                       </div>
                     </div>
 
-                    {/* Item Total */}
                     <div className="text-right">
                       <p className="font-semibold text-gray-800">
-                        {formatPrice(item.price * item.quantity)}
+                        {formatPrice((item.price || 0) * (item.quantity || 0))}
                       </p>
                     </div>
                   </div>
@@ -181,7 +222,6 @@ function Cart() {
               ))}
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-lg p-6 sticky top-4">
                 <h2 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
@@ -189,24 +229,24 @@ function Cart() {
                 <div className="space-y-3 border-b pb-4">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">{formatPrice(cart?.subtotal || 0)}</span>
+                    <span className="font-medium">{formatPrice(totals.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping</span>
                     <span className="font-medium">
-                      {cart?.shippingAmount === 0 ? 'Free' : formatPrice(cart?.shippingAmount || 0)}
+                      {totals.shipping === 0 ? 'Free' : formatPrice(totals.shipping)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax (5%)</span>
-                    <span className="font-medium">{formatPrice(cart?.taxAmount || 0)}</span>
+                    <span className="font-medium">{formatPrice(totals.tax)}</span>
                   </div>
                 </div>
                 
                 <div className="flex justify-between mt-4 pt-2">
                   <span className="text-lg font-bold text-gray-800">Total</span>
                   <span className="text-xl font-bold text-blue-600">
-                    {formatPrice(cart?.totalAmount || 0)}
+                    {formatPrice(totals.total)}
                   </span>
                 </div>
 
