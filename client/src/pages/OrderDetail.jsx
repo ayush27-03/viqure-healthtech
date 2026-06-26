@@ -21,7 +21,8 @@ function OrderDetail() {
   const fetchOrder = async () => {
     try {
       const response = await axiosInstance.get(`/orders/${id}`)
-      setOrder(response.data)
+      const data = response.data.data || response.data
+      setOrder(data)
     } catch (error) {
       console.error('Error fetching order:', error)
       navigate('/orders')
@@ -31,14 +32,17 @@ function OrderDetail() {
   }
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800'
-      case 'shipped': return 'bg-blue-100 text-blue-800'
-      case 'confirmed': return 'bg-purple-100 text-purple-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+    const colors = {
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'confirmed': 'bg-purple-100 text-purple-800',
+      'processing': 'bg-blue-100 text-blue-800',
+      'shipped': 'bg-blue-100 text-blue-800',
+      'delivered': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800',
+      'returned': 'bg-gray-100 text-gray-800',
+      'failed': 'bg-red-100 text-red-800'
     }
+    return colors[status] || 'bg-gray-100 text-gray-800'
   }
 
   const formatPrice = (price) => {
@@ -69,6 +73,8 @@ function OrderDetail() {
 
   if (!order) return null
 
+  const deliveryAddress = order.shipmentDetails?.deliveryAddress || order.shippingAddress || {}
+
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -79,7 +85,6 @@ function OrderDetail() {
           <h1 className="text-3xl font-bold text-gray-800">Order Details</h1>
         </div>
 
-        {/* Order Header */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex justify-between items-start flex-wrap gap-4">
             <div>
@@ -99,17 +104,20 @@ function OrderDetail() {
           </div>
         </div>
 
-        {/* Order Items */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Order Items</h2>
           <div className="space-y-4">
             {order.items?.map((item) => (
-              <div key={item._id} className="flex gap-4 pb-4 border-b last:border-0">
+              <div key={item._id || item.productId} className="flex gap-4 pb-4 border-b last:border-0">
                 <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <span className="text-3xl">💊</span>
+                  {item.productSnapshot?.image ? (
+                    <img src={item.productSnapshot.image} alt={item.productSnapshot.name} className="w-full h-full object-cover rounded-lg" />
+                  ) : (
+                    <span className="text-3xl">💊</span>
+                  )}
                 </div>
                 <div className="flex-1">
-                  <Link to={`/product/${item.productID}`}>
+                  <Link to={`/product/${item.productId}`}>
                     <h3 className="font-semibold text-gray-800 hover:text-blue-600 transition">
                       {item.productSnapshot?.name}
                     </h3>
@@ -131,18 +139,17 @@ function OrderDetail() {
           </div>
         </div>
 
-        {/* Shipping Address & Payment Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Shipping Address</h2>
             <div className="space-y-2">
-              <p className="font-medium">{order.shippingAddress?.fullName}</p>
-              <p className="text-gray-600">{order.shippingAddress?.phone}</p>
-              <p className="text-gray-600">{order.shippingAddress?.addressLine}</p>
+              <p className="font-medium">{deliveryAddress.fullName}</p>
+              <p className="text-gray-600">{deliveryAddress.phone}</p>
+              <p className="text-gray-600">{deliveryAddress.addressLine}</p>
               <p className="text-gray-600">
-                {order.shippingAddress?.city}, {order.shippingAddress?.state}
+                {deliveryAddress.city}, {deliveryAddress.state}
               </p>
-              <p className="text-gray-600">Pincode: {order.shippingAddress?.pincode}</p>
+              <p className="text-gray-600">Pincode: {deliveryAddress.pincode}</p>
             </div>
           </div>
 
