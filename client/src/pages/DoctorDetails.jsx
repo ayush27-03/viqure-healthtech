@@ -9,6 +9,7 @@ function DoctorDetails() {
   const { isAuthenticated } = useAuth()
   const [doctor, setDoctor] = useState(null)
   const [reviews, setReviews] = useState([])
+  const [reviewSummary, setReviewSummary] = useState({ averageRating: 0, totalReviews: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -18,8 +19,23 @@ function DoctorDetails() {
 
   const fetchDoctorDetails = async () => {
     try {
-      const response = await axiosInstance.get(`/doctors/${id}`)
-      setDoctor(response.data)
+      const response = await axiosInstance.get(`/users/doctors/${id}`)
+      const data = response.data.data || response.data
+      
+      const mappedDoctor = {
+        _id: data._id,
+        doctorName: data.profile ? `${data.profile.firstName || ''} ${data.profile.lastName || ''}`.trim() : 'Doctor',
+        profileIcon: data.profileIcon || '👨‍⚕️',
+        specializations: data.detailsOfHealthCareProfessional?.qualifications || [],
+        yearsOfExperience: data.detailsOfHealthCareProfessional?.yearsOfExperience || 0,
+        consultationFees: data.detailsOfHealthCareProfessional?.consultationFee || 0,
+        clinicAddress: data.detailsOfHealthCareProfessional?.clinicAddress || '',
+        city: data.addresses?.[0]?.city || '',
+        description: data.detailsOfHealthCareProfessional?.bio || '',
+        stats: data.detailsOfHealthCareProfessional?.stats || { rating: 0, totalRatings: 0 }
+      }
+      
+      setDoctor(mappedDoctor)
     } catch (error) {
       console.error('Error fetching doctor:', error)
     } finally {
@@ -29,10 +45,24 @@ function DoctorDetails() {
 
   const fetchDoctorReviews = async () => {
     try {
-      const response = await axiosInstance.get(`/doctors/${id}/reviews`)
-      setReviews(response.data)
+      const response = await axiosInstance.get(`/reviews?targetType=DOCTOR&targetId=${id}`)
+      const data = response.data.data || []
+      const summary = response.data.summary || { averageRating: 0, totalReviews: 0 }
+      
+      const mappedReviews = data.map(review => ({
+        patientName: review.reviewerId?.profile ? 
+          `${review.reviewerId.profile.firstName || ''} ${review.reviewerId.profile.lastName || ''}`.trim() : 'Anonymous',
+        rating: review.rating || 0,
+        comment: review.reviewText || '',
+        createdAt: review.createdAt || ''
+      }))
+      
+      setReviews(mappedReviews)
+      setReviewSummary(summary)
     } catch (error) {
       console.error('Error fetching reviews:', error)
+      setReviews([])
+      setReviewSummary({ averageRating: 0, totalReviews: 0 })
     }
   }
 
@@ -66,7 +96,6 @@ function DoctorDetails() {
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         
-        {/* Doctor Info Card */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
           <div className="md:flex">
             <div className="md:w-1/3 bg-gradient-to-r from-blue-600 to-blue-800 p-8 flex flex-col items-center justify-center">
@@ -113,7 +142,6 @@ function DoctorDetails() {
                 </div>
               </div>
 
-              {/* Book Button */}
               <div className="mt-6">
                 <button
                   onClick={handleBookClick}
@@ -128,7 +156,14 @@ function DoctorDetails() {
 
         {/* Reviews Section */}
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Patient Reviews</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-800">Patient Reviews</h3>
+            {reviewSummary.totalReviews > 0 && (
+              <div className="text-sm text-gray-600">
+                ⭐ {reviewSummary.averageRating.toFixed(1)} ({reviewSummary.totalReviews} reviews)
+              </div>
+            )}
+          </div>
           {reviews.length === 0 ? (
             <p className="text-gray-500 text-center py-8">No reviews yet</p>
           ) : (
