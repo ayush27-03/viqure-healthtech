@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom' // Added useNavigate to prevent crash
 import axiosInstance from '../services/axiosConfig'
 
 function DoctorProfile() {
   const { user } = useAuth()
+  const navigate = useNavigate() // Initialized navigate hook
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -13,14 +14,13 @@ function DoctorProfile() {
     lastName: '',
     phone: '',
     addresses: [],
-    profileIcon: '👨‍⚕️', // YOUR extra field
+    profileIcon: '👨‍⚕️',
     qualifications: [],
     yearsOfExperience: '',
     consultationFee: '',
     bio: '',
     clinicAddress: ''
   })
-  const [earnings, setEarnings] = useState({ totalEarnings: 0, totalAppointments: 0, breakdownByStatus: [] })
   const [newAddress, setNewAddress] = useState({
     type: 'CLINIC',
     street: '',
@@ -32,7 +32,6 @@ function DoctorProfile() {
 
   useEffect(() => {
     fetchDoctorData()
-    fetchEarnings()
   }, [])
 
   const fetchDoctorData = async () => {
@@ -45,7 +44,7 @@ function DoctorProfile() {
         lastName: data.profile?.lastName || '',
         phone: data.phone || '',
         addresses: data.addresses || [],
-        profileIcon: data.profileIcon || '👨‍⚕️', // YOUR extra field
+        profileIcon: data.profileIcon || '👨‍⚕️',
         qualifications: data.detailsOfHealthCareProfessional?.qualifications || [],
         yearsOfExperience: data.detailsOfHealthCareProfessional?.yearsOfExperience || '',
         consultationFee: data.detailsOfHealthCareProfessional?.consultationFee || '',
@@ -56,16 +55,6 @@ function DoctorProfile() {
       console.error('Error fetching doctor data:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchEarnings = async () => {
-    try {
-      const response = await axiosInstance.get('/doctors/me/earnings')
-      setEarnings(response.data.data || { totalEarnings: 0, totalAppointments: 0, breakdownByStatus: [] })
-    } catch (error) {
-      console.error('Error fetching earnings:', error)
-      setEarnings({ totalEarnings: 0, totalAppointments: 0, breakdownByStatus: [] })
     }
   }
 
@@ -118,7 +107,7 @@ function DoctorProfile() {
           firstName: formData.firstName,
           lastName: formData.lastName
         },
-        profileIcon: formData.profileIcon, // YOUR extra field
+        profileIcon: formData.profileIcon,
         detailsOfHealthCareProfessional: {
           qualifications: formData.qualifications,
           yearsOfExperience: parseInt(formData.yearsOfExperience) || 0,
@@ -157,20 +146,23 @@ function DoctorProfile() {
             <p className="text-green-100 mt-1">Manage your professional information</p>
           </div>
 
-          <div className="bg-gray-50 px-8 py-4 border-b">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-sm text-gray-500">Total Earnings</p>
-                <p className="text-xl font-bold text-green-600">₹{earnings.totalEarnings || 0}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Appointments</p>
-                <p className="text-xl font-bold text-blue-600">{earnings.totalAppointments || 0}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Status</p>
-                <p className="text-xl font-bold text-yellow-600">{user?.isActive ? 'Active' : 'Inactive'}</p>
-              </div>
+          {/* RE-ALIGNED BANNER SECTION */}
+          <div className="bg-gray-50 px-8 py-4 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-500">Status:</span>
+              <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+                user?.isActive ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+              }`}>
+                {user?.isActive ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <div>
+              <button
+                onClick={() => navigate('/doctor/earnings')}
+                className="w-full sm:w-auto bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
+              >
+                View Full Earnings Report →
+              </button>
             </div>
           </div>
 
@@ -182,13 +174,13 @@ function DoctorProfile() {
                   <div className="flex gap-3">
                     <Link
                       to="/doctor/settings"
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center gap-2"
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center gap-2 text-sm"
                     >
                       ⚙️ Availability Settings
                     </Link>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm"
                     >
                       ✏️ Edit Profile
                     </button>
