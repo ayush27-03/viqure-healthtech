@@ -1,6 +1,14 @@
+// components/ToastNotification.jsx
 import React, { useEffect } from 'react'
+import { notification } from 'antd'
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  WarningOutlined,
+  InfoCircleOutlined
+} from '@ant-design/icons'
 
-function ToastNotification({ message, type = 'success', onClose, duration = 3000 }) {
+const ToastNotification = ({ message, type = 'success', onClose, duration = 3000 }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose()
@@ -8,26 +16,38 @@ function ToastNotification({ message, type = 'success', onClose, duration = 3000
     return () => clearTimeout(timer)
   }, [duration, onClose])
 
-  const typeClasses = {
-    success: 'bg-green-500',
-    error: 'bg-red-500',
-    warning: 'bg-yellow-500',
-    info: 'bg-blue-500'
+  const typeConfigs = {
+    success: {
+      icon: <CheckCircleOutlined className="text-green-500" />,
+      className: 'bg-green-50 border-green-200'
+    },
+    error: {
+      icon: <CloseCircleOutlined className="text-red-500" />,
+      className: 'bg-red-50 border-red-200'
+    },
+    warning: {
+      icon: <WarningOutlined className="text-yellow-500" />,
+      className: 'bg-yellow-50 border-yellow-200'
+    },
+    info: {
+      icon: <InfoCircleOutlined className="text-blue-500" />,
+      className: 'bg-blue-50 border-blue-200'
+    }
   }
 
-  const icons = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ'
-  }
+  const config = typeConfigs[type] || typeConfigs.info
 
   return (
     <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
-      <div className={`${typeClasses[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px]`}>
-        <span className="text-lg">{icons[type]}</span>
-        <span className="flex-1">{message}</span>
-        <button onClick={onClose} className="hover:opacity-75">✕</button>
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] border ${config.className}`}>
+        <span className="text-lg">{config.icon}</span>
+        <span className="flex-1 text-gray-800">{message}</span>
+        <button 
+          onClick={onClose} 
+          className="text-gray-400 hover:text-gray-600 transition"
+        >
+          ✕
+        </button>
       </div>
     </div>
   )

@@ -1,238 +1,380 @@
+// pages/Documents.jsx - Fixed with correct endpoints
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
+import {
+  Card,
+  Typography,
+  Button,
+  Input,
+  Select,
+  Table,
+  Space,
+  message,
+  Spin,
+  Empty,
+  Tag,
+  Row,
+  Col,
+  Tooltip,
+  Popconfirm,
+  Progress
+} from 'antd'
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  UploadOutlined,
+  FilePdfOutlined,
+  FileImageOutlined,
+  FileTextOutlined,
+  EyeOutlined,
+  DownloadOutlined,
+  FileOutlined,
+  ClockCircleOutlined
+} from '@ant-design/icons'
+
+const { Title, Text } = Typography
+const { Option } = Select
+
 function Documents() {
-  const { user, role } = useAuth()  // Remove roleId from here
+  const { user, role } = useAuth()
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const [newDoc, setNewDoc] = useState({ name: '', documentType: 'PDF', documentURL: '' })
+  const [uploadProgress, setUploadProgress] = useState(0)
 
-  const roleId = user?.roleId  // Get roleId from user object
+  const userId = user?._id
 
   useEffect(() => {
-    if (roleId) {
+    if (userId) {
       fetchDocuments()
     } else {
-      console.error('roleId is undefined. User object:', user)
+      console.error('User ID is undefined. User object:', user)
       setLoading(false)
     }
-  }, [roleId])
+  }, [userId])
 
   const fetchDocuments = async () => {
-    if (!roleId) return
+    if (!userId) return
     
     try {
       let response
       if (role === 'patient') {
-        response = await axiosInstance.get(`/patients/${roleId}`)
+        // Correct endpoint for patient
+        response = await axiosInstance.get(`/patients/${userId}`)
         setDocuments(response.data.documents || [])
       } else if (role === 'doctor') {
-        response = await axiosInstance.get(`/doctors/${roleId}`)
-        setDocuments(response.data.documents || [])
+        // FIXED: Use /users/doctors/:id instead of /doctors/:id
+        response = await axiosInstance.get(`/users/doctors/${userId}`)
+        // The doctor data might have documents in a different field
+        setDocuments(response.data.data?.documents || response.data.documents || [])
       } else if (role === 'admin') {
         setDocuments([])
       }
     } catch (error) {
       console.error('Error fetching documents:', error)
+      message.error('Failed to fetch documents')
     } finally {
       setLoading(false)
     }
   }
 
-  // For upload endpoint
   const handleUpload = async () => {
     if (!newDoc.name) {
-      alert('Please provide document name')
+      message.warning('Please provide document name')
       return
     }
 
     setUploading(true)
+    setUploadProgress(0)
     try {
       let endpoint
       if (role === 'patient') {
-        endpoint = `/patients/${roleId}/documents`
+        endpoint = `/patients/${userId}/documents`
       } else if (role === 'doctor') {
-        endpoint = `/doctors/${roleId}/documents`
+        endpoint = `/doctors/${userId}/documents`
       } else {
-        alert('Upload not available for this role')
+        message.error('Upload not available for this role')
         return
       }
+      
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval)
+            return 90
+          }
+          return prev + 10
+        })
+      }, 200)
       
       await axiosInstance.post(endpoint, {
         name: newDoc.name,
         documentType: newDoc.documentType,
         documentURL: newDoc.documentURL || `/uploads/${Date.now()}_${newDoc.name.replace(/\s/g, '_')}.pdf`,
         uploadedBy: role.toUpperCase(),
-        doctorId: role === 'doctor' ? roleId : null,
+        doctorId: role === 'doctor' ? userId : null,
         appointmentId: null
       })
       
-      setShowUpload(false)
-      setNewDoc({ name: '', documentType: 'PDF', documentURL: '' })
-      fetchDocuments()
+      setUploadProgress(100)
+      setTimeout(() => {
+        setShowUpload(false)
+        setNewDoc({ name: '', documentType: 'PDF', documentURL: '' })
+        setUploadProgress(0)
+        fetchDocuments()
+        message.success('Document uploaded successfully')
+      }, 500)
+      
     } catch (error) {
       console.error('Error uploading document:', error)
-      alert('Failed to upload document')
+      message.error('Failed to upload document')
+      setUploadProgress(0)
     } finally {
       setUploading(false)
     }
   }
 
-  // For delete endpoint
   const handleDelete = async (docId) => {
-    if (window.confirm('Are you sure you want to delete this document?')) {
-      try {
-        let endpoint
-        if (role === 'patient') {
-          endpoint = `/patients/${roleId}/documents/${docId}`
-        } else if (role === 'doctor') {
-          endpoint = `/doctors/${roleId}/documents/${docId}`
-        } else {
-          return
-        }
-        
-        await axiosInstance.delete(endpoint)
-        fetchDocuments()
-      } catch (error) {
-        console.error('Error deleting document:', error)
-        alert('Failed to delete document')
+    try {
+      let endpoint
+      if (role === 'patient') {
+        endpoint = `/patients/${userId}/documents/${docId}`
+      } else if (role === 'doctor') {
+        endpoint = `/doctors/${userId}/documents/${docId}`
+      } else {
+        return
       }
+      
+      await axiosInstance.delete(endpoint)
+      fetchDocuments()
+      message.success('Document deleted successfully')
+    } catch (error) {
+      console.error('Error deleting document:', error)
+      message.error('Failed to delete document')
     }
   }
 
   const getFileIcon = (type) => {
     switch (type) {
-      case 'PDF': return '📄'
-      case 'IMAGE': return '🖼️'
-      case 'DOC': return '📝'
-      default: return '📎'
+      case 'PDF': return <FilePdfOutlined className="text-red-500 text-2xl" />
+      case 'IMAGE': return <FileImageOutlined className="text-green-500 text-2xl" />
+      case 'DOC': return <FileTextOutlined className="text-blue-500 text-2xl" />
+      default: return <FileOutlined className="text-gray-500 text-2xl" />
     }
   }
 
+  const columns = [
+    {
+      title: 'Document',
+      key: 'document',
+      render: (_, record) => (
+        <Space>
+          {getFileIcon(record.documentType)}
+          <div>
+            <Text strong>{record.name}</Text>
+            <div className="text-xs text-gray-400">
+              {record.documentType}
+            </div>
+          </div>
+        </Space>
+      )
+    },
+    {
+      title: 'Uploaded By',
+      key: 'uploadedBy',
+      render: (_, record) => (
+        <Tag color={record.uploadedBy === 'DOCTOR' ? 'blue' : 'green'}>
+          {record.uploadedBy === 'DOCTOR' ? '👨‍⚕️ Doctor' : '👤 Patient'}
+        </Tag>
+      )
+    },
+    {
+      title: 'Date',
+      key: 'date',
+      render: (_, record) => (
+        <Space>
+          <ClockCircleOutlined className="text-gray-400" />
+          <Text>{new Date(record.uploadedAt).toLocaleDateString()}</Text>
+        </Space>
+      )
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Space>
+          <Tooltip title="View Document">
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              onClick={() => window.open(record.documentURL, '_blank')}
+            />
+          </Tooltip>
+          <Tooltip title="Download">
+            <Button
+              type="text"
+              icon={<DownloadOutlined />}
+              onClick={() => window.open(record.documentURL, '_blank')}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="Delete Document"
+            description="Are you sure you want to delete this document?"
+            onConfirm={() => handleDelete(record.docId)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      )
+    }
+  ]
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Spin size="large" tip="Loading documents..." />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Documents</h1>
-              <p className="text-gray-500 mt-1">Manage your files and documents</p>
-            </div>
-            <button
-              onClick={() => setShowUpload(!showUpload)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-            >
-              <span>+</span> Upload Document
-            </button>
+        {/* Header */}
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+          <div>
+            <Title level={2} className="mb-1">Documents</Title>
+            <Text type="secondary">Manage your files and documents</Text>
           </div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setShowUpload(!showUpload)}
+            size="large"
+            className="rounded-xl"
+          >
+            Upload Document
+          </Button>
         </div>
 
+        {/* Upload Form */}
         {showUpload && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload New Document</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-gray-700 mb-2">Document Name</label>
-                <input
-                  type="text"
-                  value={newDoc.name}
-                  onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Medical Report - 2024"
-                />
+          <Card className="shadow-lg rounded-2xl border-0 mb-6">
+            <Title level={4} className="mb-4">Upload New Document</Title>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={8}>
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">Document Name</label>
+                  <Input
+                    size="large"
+                    value={newDoc.name}
+                    onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
+                    placeholder="e.g., Medical Report - 2024"
+                    className="rounded-xl"
+                  />
+                </div>
+              </Col>
+              <Col xs={24} md={6}>
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">Document Type</label>
+                  <Select
+                    size="large"
+                    value={newDoc.documentType}
+                    onChange={(value) => setNewDoc({ ...newDoc, documentType: value })}
+                    className="w-full rounded-xl"
+                  >
+                    <Option value="PDF">📄 PDF</Option>
+                    <Option value="IMAGE">🖼️ Image</Option>
+                    <Option value="DOC">📝 Document</Option>
+                  </Select>
+                </div>
+              </Col>
+              <Col xs={24} md={10}>
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">File URL</label>
+                  <Input
+                    size="large"
+                    value={newDoc.documentURL}
+                    onChange={(e) => setNewDoc({ ...newDoc, documentURL: e.target.value })}
+                    placeholder="/uploads/filename.pdf"
+                    className="rounded-xl"
+                  />
+                  <Text type="secondary" className="text-xs">Enter the file path or URL where the document is stored</Text>
+                </div>
+              </Col>
+            </Row>
+
+            {uploading && (
+              <div className="mt-4">
+                <Progress percent={uploadProgress} status={uploadProgress === 100 ? 'success' : 'active'} />
               </div>
-              <div>
-                <label className="block text-gray-700 mb-2">Document Type</label>
-                <select
-                  value={newDoc.documentType}
-                  onChange={(e) => setNewDoc({ ...newDoc, documentType: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="PDF">PDF</option>
-                  <option value="IMAGE">Image</option>
-                  <option value="DOC">Document</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-gray-700 mb-2">File URL (or upload path)</label>
-                <input
-                  type="text"
-                  value={newDoc.documentURL}
-                  onChange={(e) => setNewDoc({ ...newDoc, documentURL: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="/uploads/filename.pdf"
-                />
-                <p className="text-xs text-gray-400 mt-1">Enter the file path or URL where the document is stored</p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-                >
-                  {uploading ? 'Uploading...' : 'Upload'}
-                </button>
-                <button
-                  onClick={() => setShowUpload(false)}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
-                >
-                  Cancel
-                </button>
-              </div>
+            )}
+
+            <div className="flex gap-3 mt-4">
+              <Button
+                type="primary"
+                icon={<UploadOutlined />}
+                onClick={handleUpload}
+                loading={uploading}
+                className="rounded-xl"
+              >
+                {uploading ? 'Uploading...' : 'Upload'}
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowUpload(false)
+                  setNewDoc({ name: '', documentType: 'PDF', documentURL: '' })
+                  setUploadProgress(0)
+                }}
+                className="rounded-xl"
+              >
+                Cancel
+              </Button>
             </div>
-          </div>
+          </Card>
         )}
 
-        {documents.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-            <div className="text-6xl mb-4">📁</div>
-            <h3 className="text-lg font-semibold text-gray-800">No documents yet</h3>
-            <p className="text-gray-500 mt-2">Click "Upload Document" to add your first file</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {documents.map((doc) => (
-              <div key={doc.docId} className="bg-white rounded-lg shadow-lg hover:shadow-xl transition p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl">{getFileIcon(doc.documentType)}</div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800">{doc.name}</h3>
-                      <p className="text-xs text-gray-500">{doc.documentType}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new Date(doc.uploadedAt).toLocaleDateString()}
-                      </p>
-                      {doc.uploadedBy === 'DOCTOR' && (
-                        <p className="text-xs text-blue-500 mt-1">Uploaded by Doctor</p>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(doc.docId)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    🗑️
-                  </button>
+        {/* Documents Table */}
+        <Card className="shadow-lg rounded-2xl border-0">
+          {documents.length === 0 ? (
+            <Empty
+              description={
+                <div>
+                  <Text type="secondary">No documents yet</Text>
+                  <br />
+                  <Text type="secondary" className="text-sm">Click "Upload Document" to add your first file</Text>
                 </div>
-                <div className="mt-3">
-                  <a href={doc.documentURL} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline">
-                    View Document
-                  </a>
-                </div>
+              }
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          ) : (
+            <>
+              <div className="mb-4 flex justify-between items-center">
+                <Text type="secondary">
+                  Total: <Text strong>{documents.length}</Text> document{documents.length > 1 ? 's' : ''}
+                </Text>
+                <Space>
+                  <Tag color="blue">{documents.filter(d => d.uploadedBy === 'DOCTOR').length} Doctor</Tag>
+                  <Tag color="green">{documents.filter(d => d.uploadedBy === 'PATIENT').length} Patient</Tag>
+                </Space>
               </div>
-            ))}
-          </div>
-        )}
+              <Table
+                columns={columns}
+                dataSource={documents}
+                rowKey="docId"
+                pagination={{
+                  pageSize: 10,
+                  showTotal: (total) => `Total ${total} documents`
+                }}
+              />
+            </>
+          )}
+        </Card>
       </div>
     </div>
   )

@@ -11,13 +11,30 @@ export const useAuth = () => {
   return context
 }
 
+const mapRole = (role) => {
+  if (role === 'CUSTOMER') return 'patient'
+  if (role === 'DOCTOR') return 'doctor'
+  if (role === 'ADMIN') return 'admin'
+  return role
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
   const [role, setRole] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Session restoration - runs when app loads
+  const getUserName = () => {
+    if (!user) return ''
+    if (user.profile?.firstName) {
+      return `${user.profile.firstName} ${user.profile.lastName || ''}`.trim()
+    }
+    if (user.patientName) return user.patientName
+    if (user.doctorName) return user.doctorName
+    if (user.name) return user.name
+    return ''
+  }
+
   useEffect(() => {
     const restoreSession = () => {
       const storedToken = localStorage.getItem('token')
@@ -37,13 +54,14 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = (userData, authToken, userRole) => {
+    const mappedRole = mapRole(userRole || userData.role)
     setUser(userData)
     setToken(authToken)
-    setRole(userRole)
+    setRole(mappedRole)
     
     localStorage.setItem('token', authToken)
     localStorage.setItem('user', JSON.stringify(userData))
-    localStorage.setItem('role', userRole)
+    localStorage.setItem('role', mappedRole)
   }
 
   const logout = () => {
@@ -63,7 +81,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    isAuthenticated: !!token
+    isAuthenticated: !!token,
+    getUserName
   }
 
   return (

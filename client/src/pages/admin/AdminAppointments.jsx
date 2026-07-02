@@ -1,5 +1,34 @@
+// pages/admin/AdminAppointments.jsx
 import React, { useState, useEffect } from 'react'
 import axiosInstance from "../../services/axiosConfig"
+import {
+  Card,
+  Typography,
+  Table,
+  Tag,
+  Input,
+  Select,
+  Space,
+  Button,
+  message,
+  Spin,
+  Badge,
+  Avatar,
+  Tooltip,
+  DatePicker
+} from 'antd'
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  UserOutlined
+} from '@ant-design/icons'
+
+const { Title, Text } = Typography
+const { Option } = Select
 
 function AdminAppointments() {
   const [appointments, setAppointments] = useState([])
@@ -17,6 +46,7 @@ function AdminAppointments() {
       setAppointments(response.data)
     } catch (error) {
       console.error('Error fetching appointments:', error)
+      message.error('Failed to fetch appointments')
     } finally {
       setLoading(false)
     }
@@ -26,20 +56,102 @@ function AdminAppointments() {
     try {
       await axiosInstance.put(`/admin/appointments/${id}`, { status })
       fetchAppointments()
+      message.success('Appointment status updated')
     } catch (error) {
       console.error('Error updating appointment:', error)
+      message.error('Failed to update appointment')
     }
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'confirmed': return 'bg-green-100 text-green-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'completed': return 'bg-blue-100 text-blue-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+  const getStatusConfig = (status) => {
+    const configs = {
+      'confirmed': { color: 'success', icon: <CheckCircleOutlined />, label: 'Confirmed' },
+      'pending': { color: 'warning', icon: <ClockCircleOutlined />, label: 'Pending' },
+      'completed': { color: 'processing', icon: <CheckCircleOutlined />, label: 'Completed' },
+      'cancelled': { color: 'error', icon: <CloseCircleOutlined />, label: 'Cancelled' }
     }
+    return configs[status] || { color: 'default', icon: null, label: status }
   }
+
+  const columns = [
+    {
+      title: 'Patient',
+      key: 'patient',
+      render: (_, record) => (
+        <Space>
+          <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
+          <div>
+            <Text strong>{record.patientName || 'N/A'}</Text>
+            <div className="text-xs text-gray-400">Patient</div>
+          </div>
+        </Space>
+      )
+    },
+    {
+      title: 'Doctor',
+      key: 'doctor',
+      render: (_, record) => (
+        <div>
+          <Text>{record.doctorName || 'N/A'}</Text>
+          <div className="text-xs text-gray-400">Doctor</div>
+        </div>
+      )
+    },
+    {
+      title: 'Date & Time',
+      key: 'datetime',
+      render: (_, record) => (
+        <div>
+          <div>{new Date(record.appointmentStartDateTime).toLocaleDateString()}</div>
+          <div className="text-xs text-gray-400">{new Date(record.appointmentStartDateTime).toLocaleTimeString()}</div>
+        </div>
+      )
+    },
+    {
+      title: 'Type',
+      dataIndex: 'consultationType',
+      key: 'type',
+      render: (type) => (
+        <Tag color={type === 'VIDEO' ? 'blue' : 'green'}>
+          {type === 'VIDEO' ? '🎥 Video' : '🏥 In-Clinic'}
+        </Tag>
+      )
+    },
+    {
+      title: 'Fee',
+      dataIndex: 'consultationFees',
+      key: 'fee',
+      render: (fee) => <Text strong className="text-blue-600">₹{fee}</Text>
+    },
+    {
+      title: 'Status',
+      dataIndex: 'appointmentStatus',
+      key: 'status',
+      render: (status) => {
+        const config = getStatusConfig(status)
+        return (
+          <Badge status={config.color} text={config.label} />
+        )
+      }
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Select
+          value={record.appointmentStatus}
+          onChange={(value) => updateStatus(record._id, value)}
+          size="small"
+          className="w-32"
+        >
+          <Option value="pending">Pending</Option>
+          <Option value="confirmed">Confirmed</Option>
+          <Option value="completed">Completed</Option>
+          <Option value="cancelled">Cancelled</Option>
+        </Select>
+      )
+    }
+  ]
 
   const filteredAppointments = appointments.filter(apt => {
     if (filter !== 'all' && apt.appointmentStatus !== filter) return false
@@ -54,7 +166,7 @@ function AdminAppointments() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <Spin size="large" />
       </div>
     )
   }
@@ -62,80 +174,55 @@ function AdminAppointments() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Appointment Management</h2>
-        <p className="text-gray-500">View and manage all appointments across the platform</p>
+        <Title level={2} className="mb-0">Appointment Management</Title>
+        <Text type="secondary">View and manage all appointments across the platform</Text>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setFilter('all')} className={`px-3 py-1 rounded-full text-sm ${filter === 'all' ? 'bg-purple-600 text-white' : 'bg-gray-200'}`}>All</button>
-            <button onClick={() => setFilter('pending')} className={`px-3 py-1 rounded-full text-sm ${filter === 'pending' ? 'bg-yellow-500 text-white' : 'bg-gray-200'}`}>Pending</button>
-            <button onClick={() => setFilter('confirmed')} className={`px-3 py-1 rounded-full text-sm ${filter === 'confirmed' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>Confirmed</button>
-            <button onClick={() => setFilter('completed')} className={`px-3 py-1 rounded-full text-sm ${filter === 'completed' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>Completed</button>
-            <button onClick={() => setFilter('cancelled')} className={`px-3 py-1 rounded-full text-sm ${filter === 'cancelled' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Cancelled</button>
-          </div>
-          <input
-            type="text"
+      <Card className="shadow-sm mb-6">
+        <Space wrap className="w-full" size="middle">
+          <Text strong>Filter:</Text>
+          <Select
+            value={filter}
+            onChange={setFilter}
+            className="w-32"
+          >
+            <Option value="all">All</Option>
+            <Option value="pending">Pending</Option>
+            <Option value="confirmed">Confirmed</Option>
+            <Option value="completed">Completed</Option>
+            <Option value="cancelled">Cancelled</Option>
+          </Select>
+
+          <Input
             placeholder="Search patient or doctor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            prefix={<SearchOutlined className="text-gray-400" />}
+            className="w-64 rounded-xl"
+            allowClear
           />
-        </div>
-      </div>
 
-      {/* Appointments Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left py-3 px-4">Patient</th>
-              <th className="text-left py-3 px-4">Doctor</th>
-              <th className="text-left py-3 px-4">Date & Time</th>
-              <th className="text-left py-3 px-4">Type</th>
-              <th className="text-left py-3 px-4">Fee</th>
-              <th className="text-left py-3 px-4">Status</th>
-              <th className="text-left py-3 px-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAppointments.map((apt) => (
-              <tr key={apt._id} className="border-t hover:bg-gray-50">
-                <td className="py-3 px-4 font-medium">{apt.patientName}</td>
-                <td className="py-3 px-4 text-gray-600">{apt.doctorName}</td>
-                <td className="py-3 px-4 text-gray-600">
-                  {new Date(apt.appointmentStartDateTime).toLocaleDateString()} <br />
-                  <span className="text-xs">{new Date(apt.appointmentStartDateTime).toLocaleTimeString()}</span>
-                </td>
-                <td className="py-3 px-4 text-gray-600">{apt.consultationType}</td>
-                <td className="py-3 px-4 text-gray-600">₹{apt.consultationFees}</td>
-                <td className="py-3 px-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.appointmentStatus)}`}>
-                    {apt.appointmentStatus}
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <select
-                    value={apt.appointmentStatus}
-                    onChange={(e) => updateStatus(apt._id, e.target.value)}
-                    className="text-sm border rounded px-2 py-1"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filteredAppointments.length === 0 && (
-          <div className="text-center py-8 text-gray-500">No appointments found</div>
-        )}
-      </div>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={fetchAppointments}
+          >
+            Refresh
+          </Button>
+        </Space>
+      </Card>
+
+      <Card className="shadow-sm">
+        <Table
+          columns={columns}
+          dataSource={filteredAppointments}
+          rowKey="_id"
+          pagination={{
+            pageSize: 10,
+            showTotal: (total) => `Total ${total} appointments`
+          }}
+          scroll={{ x: true }}
+        />
+      </Card>
     </div>
   )
 }

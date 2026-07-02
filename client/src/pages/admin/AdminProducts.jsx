@@ -1,5 +1,45 @@
-import React, { useState, useEffect } from 'react'
+// pages/admin/AdminProducts.jsx - Fixed with debounce
+import React, { useState, useEffect, useCallback } from 'react'
 import axiosInstance from "../../services/axiosConfig"
+import {
+  Card,
+  Typography,
+  Table,
+  Input,
+  Button,
+  Space,
+  Tag,
+  Modal,
+  Form,
+  Select,
+  InputNumber,
+  message,
+  Spin,
+  Popconfirm,
+  Switch,
+  Avatar,
+  Row,
+  Col,
+  Badge
+} from 'antd'
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  DollarOutlined,
+  TagOutlined,
+  BoxPlotOutlined,
+  CalendarOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined
+} from '@ant-design/icons'
+
+const { Title, Text } = Typography
+const { Option } = Select
+const { TextArea } = Input
 
 function AdminProducts() {
   const [products, setProducts] = useState([])
@@ -7,29 +47,43 @@ function AdminProducts() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [formData, setFormData] = useState({
-    name: '',
-    brand: '',
-    category: '',
-    description: '',
-    basecost: '',
-    discountfactor: '',
-    stockQty: '',
-    estimatedDeliveryDays: '3',
-    images: []
-  })
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
+  const [form] = Form.useForm()
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+      setCurrentPage(1) // Reset to first page on search
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   useEffect(() => {
     fetchProducts()
     fetchCategories()
-  }, [])
+  }, [currentPage, itemsPerPage, debouncedSearchTerm])
 
   const fetchProducts = async () => {
     try {
-      const response = await axiosInstance.get('/admin/products')
-      setProducts(response.data)
+      setLoading(true)
+      const response = await axiosInstance.get('/admin/products', {
+        params: {
+          page: currentPage,
+          limit: itemsPerPage,
+          search: debouncedSearchTerm
+        }
+      })
+      setProducts(response.data.products || response.data)
+      setTotalItems(response.data.total || response.data.length || 0)
     } catch (error) {
       console.error('Error fetching products:', error)
+      message.error('Failed to fetch products')
     } finally {
       setLoading(false)
     }
@@ -44,39 +98,44 @@ function AdminProducts() {
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     try {
+      const values = await form.validateFields()
       if (editing) {
-        await axiosInstance.put(`/admin/products/${editing._id}`, formData)
+        await axiosInstance.put(`/admin/products/${editing._id}`, {
+          ...values,
+          basecost: parseFloat(values.basecost),
+          discountfactor: parseFloat(values.discountfactor) || 0,
+          inventory: { stockQty: parseInt(values.stockQty) }
+        })
+        message.success('Product updated successfully')
       } else {
         await axiosInstance.post('/admin/products', {
-          ...formData,
-          basecost: parseFloat(formData.basecost),
-          discountfactor: parseFloat(formData.discountfactor) || 0,
-          inventory: { stockQty: parseInt(formData.stockQty) }
+          ...values,
+          basecost: parseFloat(values.basecost),
+          discountfactor: parseFloat(values.discountfactor) || 0,
+          inventory: { stockQty: parseInt(values.stockQty) }
         })
+        message.success('Product created successfully')
       }
       setShowForm(false)
       setEditing(null)
-      setFormData({
-        name: '', brand: '', category: '', description: '',
-        basecost: '', discountfactor: '', stockQty: '', estimatedDeliveryDays: '3', images: []
-      })
+      form.resetFields()
       fetchProducts()
     } catch (error) {
       console.error('Error saving product:', error)
+      message.error('Failed to save product')
     }
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm('Delete this product?')) {
-      try {
-        await axiosInstance.delete(`/admin/products/${id}`)
-        fetchProducts()
-      } catch (error) {
-        console.error('Error deleting product:', error)
-      }
+    try {
+      await axiosInstance.delete(`/admin/products/${id}`)
+      fetchProducts()
+      message.success('Product deleted successfully')
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      message.error('Failed to delete product')
     }
   }
 
@@ -86,19 +145,121 @@ function AdminProducts() {
         isAvailable: !product.isAvailable
       })
       fetchProducts()
+      message.success(`Product ${product.isAvailable ? 'deactivated' : 'activated'}`)
     } catch (error) {
       console.error('Error toggling availability:', error)
+      message.error('Failed to update availability')
     }
   }
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(price)
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0
+    }).format(price)
+  }
+
+  const columns = [
+    {
+      title: 'Product',
+      key: 'product',
+      render: (_, record) => (
+        <Space>
+          <Avatar icon={<BoxPlotOutlined />} className="bg-blue-100 text-blue-600" />
+          <div>
+            <Text strong>{record.name}</Text>
+            <div className="text-xs text-gray-400">{record.category?.name || 'No category'}</div>
+          </div>
+        </Space>
+      )
+    },
+    {
+      title: 'Brand',
+      dataIndex: 'brand',
+      key: 'brand',
+      render: (brand) => brand || '-'
+    },
+    {
+      title: 'Price',
+      key: 'price',
+      render: (_, record) => (
+        <div>
+          <Text strong className="text-blue-600">{formatPrice(record.basecost)}</Text>
+          {record.discountfactor > 0 && (
+            <Tag color="green" className="ml-1">{Math.round(record.discountfactor * 100)}% off</Tag>
+          )}
+        </div>
+      )
+    },
+    {
+      title: 'Stock',
+      dataIndex: ['inventory', 'stockQty'],
+      key: 'stock',
+      render: (stock, record) => (
+        <Badge
+          count={stock || 0}
+          style={{
+            backgroundColor: stock < (record.inventory?.lowStockThreshold || 10) ? '#ff4d4f' : '#52c41a'
+          }}
+        />
+      )
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => (
+        <Switch
+          checked={record.isAvailable}
+          onChange={() => toggleAvailability(record)}
+          checkedChildren={<CheckCircleOutlined />}
+          unCheckedChildren={<CloseCircleOutlined />}
+        />
+      )
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setEditing(record)
+              form.setFieldsValue({
+                ...record,
+                stockQty: record.inventory?.stockQty
+              })
+              setShowForm(true)
+            }}
+            className="text-blue-600"
+          />
+          <Popconfirm
+            title="Delete Product"
+            description="Are you sure you want to delete this product?"
+            onConfirm={() => handleDelete(record._id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      )
+    }
+  ]
+
+  // Clear search handler
+  const handleClearSearch = () => {
+    setSearchTerm('')
+    setDebouncedSearchTerm('')
+    setCurrentPage(1)
   }
 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <Spin size="large" />
       </div>
     )
   }
@@ -107,181 +268,190 @@ function AdminProducts() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Product Management</h2>
-          <p className="text-gray-500">Manage your product catalog</p>
+          <Title level={2} className="mb-0">Product Management</Title>
+          <Text type="secondary">Manage your product catalog</Text>
         </div>
-        <button
-          onClick={() => { setShowForm(true); setEditing(null); setFormData({ name: '', brand: '', category: '', description: '', basecost: '', discountfactor: '', stockQty: '', estimatedDeliveryDays: '3', images: [] }) }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            setEditing(null)
+            form.resetFields()
+            setShowForm(true)
+          }}
         >
-          + Add Product
-        </button>
+          Add Product
+        </Button>
       </div>
 
-      {/* Add/Edit Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">{editing ? 'Edit Product' : 'New Product'}</h3>
-                <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
-              </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 mb-2">Product Name *</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">Brand</label>
-                  <input
-                    type="text"
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">Category</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map(cat => (
-                      <option key={cat._id} value={cat._id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows="3"
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-700 mb-2">Base Price (₹)</label>
-                    <input
-                      type="number"
-                      value={formData.basecost}
-                      onChange={(e) => setFormData({ ...formData, basecost: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Discount (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.discountfactor}
-                      onChange={(e) => setFormData({ ...formData, discountfactor: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-700 mb-2">Stock Quantity</label>
-                    <input
-                      type="number"
-                      value={formData.stockQty}
-                      onChange={(e) => setFormData({ ...formData, stockQty: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Delivery Days</label>
-                    <input
-                      type="number"
-                      value={formData.estimatedDeliveryDays}
-                      onChange={(e) => setFormData({ ...formData, estimatedDeliveryDays: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                    {editing ? 'Update' : 'Create'}
-                  </button>
-                  <button type="button" onClick={() => setShowForm(false)} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <Card className="shadow-sm mb-6">
+        <Space wrap className="w-full" size="middle">
+          <Input
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            prefix={<SearchOutlined className="text-gray-400" />}
+            className="w-80 rounded-xl"
+            allowClear
+            onClear={handleClearSearch}
+          />
+          <Button icon={<ReloadOutlined />} onClick={() => {
+            handleClearSearch()
+            fetchProducts()
+          }}>
+            Refresh
+          </Button>
+          {searchTerm && (
+            <Text type="secondary">
+              Found {totalItems} product{totalItems !== 1 ? 's' : ''}
+              <Button type="link" size="small" onClick={handleClearSearch}>
+                Clear
+              </Button>
+            </Text>
+          )}
+        </Space>
+      </Card>
 
-      {/* Products Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left py-3 px-4">Product</th>
-                <th className="text-left py-3 px-4">Brand</th>
-                <th className="text-left py-3 px-4">Price</th>
-                <th className="text-left py-3 px-4">Stock</th>
-                <th className="text-left py-3 px-4">Status</th>
-                <th className="text-left py-3 px-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product._id} className="border-t hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-xs text-gray-500">{product.category?.name}</div>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">{product.brand || '-'}</td>
-                  <td className="py-3 px-4">
-                    <div className="font-medium">{formatPrice(product.basecost)}</div>
-                    {product.discountfactor > 0 && (
-                      <div className="text-xs text-green-600">{Math.round(product.discountfactor * 100)}% off</div>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={product.inventory?.stockQty < (product.inventory?.lowStockThreshold || 10) ? 'text-red-600' : 'text-gray-600'}>
-                      {product.inventory?.stockQty || 0}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => toggleAvailability(product)}
-                      className={`px-2 py-1 rounded-full text-xs ${product.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                    >
-                      {product.isAvailable ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
-                  <td className="py-3 px-4">
-                    <button onClick={() => { setEditing(product); setFormData({ ...product, stockQty: product.inventory?.stockQty }); setShowForm(true) }} className="text-blue-600 hover:text-blue-800 mr-3">
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(product._id)} className="text-red-600 hover:text-red-800">
-                      Delete
-                    </button>
-                  </td>
-                </tr>
+      <Card className="shadow-sm">
+        <Table
+          columns={columns}
+          dataSource={products}
+          rowKey="_id"
+          pagination={{
+            current: currentPage,
+            pageSize: itemsPerPage,
+            total: totalItems,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} products`,
+            onChange: (page, size) => {
+              setCurrentPage(page)
+              setItemsPerPage(size)
+            },
+            pageSizeOptions: ['5', '10', '20', '50']
+          }}
+          scroll={{ x: true }}
+        />
+      </Card>
+
+      <Modal
+        title={editing ? 'Edit Product' : 'New Product'}
+        open={showForm}
+        onCancel={() => {
+          setShowForm(false)
+          setEditing(null)
+          form.resetFields()
+        }}
+        footer={null}
+        width={600}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item
+            name="name"
+            label="Product Name"
+            rules={[{ required: true, message: 'Please enter product name' }]}
+          >
+            <Input size="large" placeholder="Product name" className="rounded-xl" />
+          </Form.Item>
+
+          <Form.Item name="brand" label="Brand">
+            <Input size="large" placeholder="Brand name" className="rounded-xl" />
+          </Form.Item>
+
+          <Form.Item name="category" label="Category">
+            <Select size="large" placeholder="Select category" className="rounded-xl">
+              <Option value="">No Category</Option>
+              {categories.map(cat => (
+                <Option key={cat._id} value={cat._id}>{cat.name}</Option>
               ))}
-            </tbody>
-          </table>
-        </div>
-        {products.length === 0 && (
-          <div className="text-center py-8 text-gray-500">No products found</div>
-        )}
-      </div>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="description" label="Description">
+            <TextArea rows={3} placeholder="Product description" className="rounded-xl" />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="basecost"
+                label="Base Price (₹)"
+                rules={[{ required: true, message: 'Please enter price' }]}
+              >
+                <InputNumber
+                  size="large"
+                  min={0}
+                  step={10}
+                  prefix={<DollarOutlined className="text-gray-400" />}
+                  className="w-full rounded-xl"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="discountfactor"
+                label="Discount (%)"
+              >
+                <InputNumber
+                  size="large"
+                  min={0}
+                  max={100}
+                  step={1}
+                  prefix={<TagOutlined className="text-gray-400" />}
+                  className="w-full rounded-xl"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="stockQty"
+                label="Stock Quantity"
+                rules={[{ required: true, message: 'Please enter stock quantity' }]}
+              >
+                <InputNumber
+                  size="large"
+                  min={0}
+                  step={1}
+                  prefix={<BoxPlotOutlined className="text-gray-400" />}
+                  className="w-full rounded-xl"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="estimatedDeliveryDays"
+                label="Delivery Days"
+              >
+                <InputNumber
+                  size="large"
+                  min={1}
+                  max={30}
+                  step={1}
+                  prefix={<CalendarOutlined className="text-gray-400" />}
+                  className="w-full rounded-xl"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <div className="flex gap-3">
+            <Button type="primary" htmlType="submit" className="bg-green-600">
+              {editing ? 'Update' : 'Create'}
+            </Button>
+            <Button
+              onClick={() => {
+                setShowForm(false)
+                setEditing(null)
+                form.resetFields()
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }
