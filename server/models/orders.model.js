@@ -94,7 +94,7 @@ const orderSchema = new Schema(
       status: {
         type: String,
         enum: ['PENDING', 'DISPATCHED', 'DELIVERED', 'FAILED', 'RETURNED'],
-        default: 'pending',
+        default: 'PENDING',
       },
       courier: {
         name: { type: String, trim: true },
