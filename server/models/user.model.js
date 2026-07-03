@@ -17,8 +17,7 @@ const AddressSchema = new Schema(
     city: { type: String },
     state: { type: String },
     pincode: { type: String },
-  },
-  { _id: false },
+  }
 );
 
 const CartItemSchema = new Schema(
@@ -35,8 +34,7 @@ const TimeSlotSchema = new Schema(
     startTime: { type: String },
     endTime: { type: String },
     isBooked: { type: Boolean, default: false },
-  },
-  { _id: false },
+  }
 );
 
 const DoctorDetailsSchema = new Schema(

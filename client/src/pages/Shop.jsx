@@ -1,7 +1,51 @@
+// pages/Shop.jsx
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
+import {
+  Layout,
+  Row,
+  Col,
+  Card,
+  Input,
+  Select,
+  Button,
+  Space,
+  Typography,
+  Spin,
+  Empty,
+  Badge,
+  Pagination,
+  Tag,
+  Rate,
+  Divider,
+  Slider,
+  Drawer,
+  Grid,
+  Skeleton,
+  message,
+  Tooltip
+} from 'antd'
+import {
+  SearchOutlined,
+  ShoppingCartOutlined,
+  FilterOutlined,
+  SortAscendingOutlined,
+  HeartOutlined,
+  HeartFilled,
+  StarOutlined,
+  StarFilled,
+  DollarOutlined,
+  TagOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined
+} from '@ant-design/icons'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const { Title, Text } = Typography
+const { Option } = Select
+const { useBreakpoint } = Grid
 
 function Shop() {
   const { isAuthenticated } = useAuth()
@@ -11,15 +55,27 @@ function Shop() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+<<<<<<< HEAD
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [debouncedMinPrice, setDebouncedMinPrice] = useState('')
   const [debouncedMaxPrice, setDebouncedMaxPrice] = useState('')
+=======
+  const [minPrice, setMinPrice] = useState(0)
+  const [maxPrice, setMaxPrice] = useState(10000)
+  const [priceRange, setPriceRange] = useState([0, 10000])
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   const [sortBy, setSortBy] = useState('')
   const [cartItemCount, setCartItemCount] = useState(0)
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, pages: 1 })
   const [currentPage, setCurrentPage] = useState(1)
   const [categoriesLoading, setCategoriesLoading] = useState(true)
+<<<<<<< HEAD
+=======
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const screens = useBreakpoint()
+  const [addingToCart, setAddingToCart] = useState({})
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
   // Fetch categories on mount - ONLY ONCE
   useEffect(() => {
@@ -84,15 +140,55 @@ function Shop() {
 
   // Fetch products when filters change
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setCurrentPage(1)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  useEffect(() => {
+    if (selectedCategory) setCurrentPage(1)
+  }, [selectedCategory])
+
+  useEffect(() => {
+    if (sortBy) setCurrentPage(1)
+  }, [sortBy])
+
+  useEffect(() => {
     fetchProducts()
+<<<<<<< HEAD
   }, [debouncedSearch, selectedCategory, debouncedMinPrice, debouncedMaxPrice, sortBy, currentPage])
 
   // Fetch cart count when authenticated
+=======
+  }, [debouncedSearch, selectedCategory, priceRange, sortBy, currentPage])
+
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   useEffect(() => {
     if (isAuthenticated) {
       fetchCartCount()
     }
   }, [isAuthenticated])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axiosInstance.get('/categories')
+      const data = response.data.data || response.data || []
+      const mappedCategories = data.map(cat => ({
+        _id: cat._id,
+        name: cat.name,
+        icon: cat.icon || '',
+        description: cat.description || ''
+      }))
+      setCategories(mappedCategories)
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+      setCategories([])
+    } finally {
+      setCategoriesLoading(false)
+    }
+  }
 
   const fetchProducts = async () => {
     setLoading(true)
@@ -100,8 +196,13 @@ function Shop() {
       const params = new URLSearchParams()
       if (debouncedSearch) params.append('q', debouncedSearch)
       if (selectedCategory) params.append('categoryId', selectedCategory)
+<<<<<<< HEAD
       if (debouncedMinPrice) params.append('minPrice', debouncedMinPrice)
       if (debouncedMaxPrice) params.append('maxPrice', debouncedMaxPrice)
+=======
+      if (priceRange[0] > 0) params.append('minPrice', priceRange[0])
+      if (priceRange[1] < 10000) params.append('maxPrice', priceRange[1])
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       if (sortBy) params.append('sort', sortBy)
       if (currentPage) params.append('page', currentPage)
       params.append('limit', 20)
@@ -156,17 +257,24 @@ function Shop() {
 
   const addToCart = async (productId, quantity = 1) => {
     if (!isAuthenticated) {
-      alert('Please login to add items to cart')
+      message.warning('Please login to add items to cart')
       return
     }
 
+    setAddingToCart(prev => ({ ...prev, [productId]: true }))
     try {
       await axiosInstance.post('/users/me/cart', { productId, quantity })
       await fetchCartCount()
+<<<<<<< HEAD
       alert('Item added to cart')
+=======
+      message.success('Item added to cart')
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     } catch (error) {
       console.error('Error adding to cart:', error)
-      alert(error.response?.data?.message || 'Failed to add to cart')
+      message.error(error.response?.data?.message || 'Failed to add to cart')
+    } finally {
+      setAddingToCart(prev => ({ ...prev, [productId]: false }))
     }
   }
 
@@ -185,33 +293,148 @@ function Shop() {
     }).format(price)
   }
 
+<<<<<<< HEAD
+  if (loading || categoriesLoading) {
+=======
+  const renderProductCard = (product, index) => {
+    const isInStock = product.stockCount > 0 && product.isActive
+    const isAdding = addingToCart[product._id]
+
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
+    return (
+      <motion.div
+        key={product._id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+        whileHover={{ y: -4 }}
+      >
+        <Card
+          className="product-card h-full hover:shadow-xl transition-shadow duration-300"
+          cover={
+            <Link to={`/product/${product._id}`}>
+              <div className="h-52 bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                {product.images && product.images.length > 0 ? (
+                  <img 
+                    src={product.images[0]} 
+                    alt={product.name} 
+                    className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <span className="text-6xl text-gray-300">💊</span>
+                )}
+                {product.discountPercentage > 0 && (
+                  <Tag color="red" className="absolute top-2 right-2">
+                    {Math.round(product.discountPercentage)}% OFF
+                  </Tag>
+                )}
+                {!isInStock && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <Tag color="red" className="text-base font-bold px-4 py-2">
+                      Out of Stock
+                    </Tag>
+                  </div>
+                )}
+              </div>
+            </Link>
+          }
+          actions={[
+            <Button
+              type="primary"
+              block
+              onClick={() => addToCart(product._id)}
+              loading={isAdding}
+              disabled={!isInStock}
+              icon={<ShoppingCartOutlined />}
+              className="rounded-lg"
+            >
+              {isInStock ? 'Add to Cart' : 'Out of Stock'}
+            </Button>
+          ]}
+        >
+          <Link to={`/product/${product._id}`}>
+            <Title level={5} className="mb-0 hover:text-blue-600 transition-colors line-clamp-2">
+              {product.name}
+            </Title>
+          </Link>
+          
+          <Text type="secondary" className="text-sm block">
+            {product.brand || product.category}
+          </Text>
+
+          <div className="mt-2 flex items-center gap-2">
+            <Rate disabled value={product.ratings?.average || 0} className="text-sm" />
+            <Text type="secondary" className="text-xs">
+              ({product.ratings?.totalReviews || 0})
+            </Text>
+          </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            {product.discountPercentage > 0 ? (
+              <>
+                <Text strong className="text-lg text-blue-600">
+                  {formatPrice(product.finalPrice)}
+                </Text>
+                <Text delete type="secondary" className="text-sm">
+                  {formatPrice(product.mrp)}
+                </Text>
+              </>
+            ) : (
+              <Text strong className="text-lg text-blue-600">
+                {formatPrice(product.finalPrice)}
+              </Text>
+            )}
+          </div>
+
+          {isInStock && (
+            <div className="mt-1 flex items-center gap-1">
+              <CheckCircleOutlined className="text-green-500 text-xs" />
+              <Text type="secondary" className="text-xs">
+                {product.stockCount} in stock
+              </Text>
+            </div>
+          )}
+        </Card>
+      </motion.div>
+    )
+  }
+
   if (loading || categoriesLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Spin size="large" tip="Loading products..." />
       </div>
     )
   }
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Health Shop</h1>
+=======
+    <div className="min-h-screen bg-gray-50 py-6 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+          <div>
+            <Title level={2} className="mb-0">Health Shop</Title>
+            <Text type="secondary">Quality healthcare products at your fingertips</Text>
+          </div>
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
           {isAuthenticated && (
-            <Link to="/cart" className="relative">
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                🛒 Cart
-                {cartItemCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </button>
+            <Link to="/cart">
+              <Badge count={cartItemCount} size="default">
+                <Button type="primary" icon={<ShoppingCartOutlined />} size="large">
+                  Cart
+                </Button>
+              </Badge>
             </Link>
           )}
         </div>
 
+<<<<<<< HEAD
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <input
@@ -248,20 +471,209 @@ function Shop() {
                 onChange={(e) => setMaxPrice(e.target.value)}
                 className="w-1/2 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+=======
+        {/* Filters Bar */}
+        <Card className="shadow-sm mb-6">
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} lg={6}>
+              <Input
+                placeholder="Search products..."
+                prefix={<SearchOutlined className="text-gray-400" />}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size="large"
+                allowClear
+                className="rounded-lg"
+              />
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Select
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                placeholder="All Categories"
+                size="large"
+                className="w-full"
+                allowClear
+                loading={categoriesLoading}
+              >
+                <Option value="">All Categories</Option>
+                {categories.map(cat => (
+                  <Option key={cat._id} value={cat._id}>{cat.icon} {cat.name}</Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Select
+                value={sortBy}
+                onChange={setSortBy}
+                placeholder="Sort By"
+                size="large"
+                className="w-full"
+                allowClear
+              >
+                <Option value="">Sort By</Option>
+                <Option value="price_asc">Price: Low to High</Option>
+                <Option value="price_desc">Price: High to Low</Option>
+                <Option value="name_asc">Name: A to Z</Option>
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Button 
+                type="default" 
+                size="large" 
+                icon={<FilterOutlined />}
+                onClick={() => setFilterDrawerOpen(true)}
+                block
+              >
+                Filters
+              </Button>
+            </Col>
+          </Row>
+
+          <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap justify-between items-center gap-2">
+            <Text type="secondary" className="text-sm">
+              Showing <Text strong>{products.length}</Text> of <Text strong>{pagination.total}</Text> products
+            </Text>
+            {searchTerm && (
+              <Tag closable onClose={() => setSearchTerm('')} color="blue">
+                Search: {searchTerm}
+              </Tag>
+            )}
+            {selectedCategory && (
+              <Tag closable onClose={() => setSelectedCategory('')} color="green">
+                {categories.find(c => c._id === selectedCategory)?.name}
+              </Tag>
+            )}
+            {sortBy && (
+              <Tag closable onClose={() => setSortBy('')} color="purple">
+                {sortBy === 'price_asc' ? 'Low to High' : 
+                 sortBy === 'price_desc' ? 'High to Low' : 
+                 'A to Z'}
+              </Tag>
+            )}
+            {(priceRange[0] > 0 || priceRange[1] < 10000) && (
+              <Tag closable onClose={() => setPriceRange([0, 10000])} color="orange">
+                ₹{priceRange[0]} - ₹{priceRange[1]}
+              </Tag>
+            )}
+          </div>
+        </Card>
+
+        {/* Filter Drawer */}
+        <Drawer
+          title="Filters"
+          placement="right"
+          onClose={() => setFilterDrawerOpen(false)}
+          open={filterDrawerOpen}
+          width={screens.xs ? '100%' : 360}
+        >
+          <div className="space-y-6">
+            <div>
+              <Text strong>Price Range</Text>
+              <div className="mt-2">
+                <Slider
+                  range
+                  min={0}
+                  max={10000}
+                  value={priceRange}
+                  onChange={setPriceRange}
+                  tooltip={{ formatter: value => `₹${value}` }}
+                  step={100}
+                />
+                <div className="flex justify-between">
+                  <Text type="secondary">₹{priceRange[0]}</Text>
+                  <Text type="secondary">₹{priceRange[1]}</Text>
+                </div>
+              </div>
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
             </div>
 
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <Divider />
+
+            <div>
+              <Text strong>Categories</Text>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Tag
+                  color={!selectedCategory ? 'blue' : 'default'}
+                  className="cursor-pointer px-3 py-1"
+                  onClick={() => setSelectedCategory('')}
+                >
+                  All
+                </Tag>
+                {categories.map(cat => (
+                  <Tag
+                    key={cat._id}
+                    color={selectedCategory === cat._id ? 'blue' : 'default'}
+                    className="cursor-pointer px-3 py-1"
+                    onClick={() => {
+                      setSelectedCategory(selectedCategory === cat._id ? '' : cat._id)
+                    }}
+                  >
+                    {cat.icon} {cat.name}
+                  </Tag>
+                ))}
+              </div>
+            </div>
+
+            <Divider />
+
+            <div>
+              <Text strong>Sort By</Text>
+              <div className="mt-2 space-y-2">
+                <Button
+                  block
+                  type={sortBy === '' ? 'primary' : 'default'}
+                  onClick={() => setSortBy('')}
+                >
+                  Relevance
+                </Button>
+                <Button
+                  block
+                  type={sortBy === 'price_asc' ? 'primary' : 'default'}
+                  onClick={() => setSortBy('price_asc')}
+                >
+                  Price: Low to High
+                </Button>
+                <Button
+                  block
+                  type={sortBy === 'price_desc' ? 'primary' : 'default'}
+                  onClick={() => setSortBy('price_desc')}
+                >
+                  Price: High to Low
+                </Button>
+                <Button
+                  block
+                  type={sortBy === 'name_asc' ? 'primary' : 'default'}
+                  onClick={() => setSortBy('name_asc')}
+                >
+                  Name: A to Z
+                </Button>
+              </div>
+            </div>
+
+            <Divider />
+
+            <Button 
+              type="primary" 
+              block 
+              size="large"
+              onClick={() => {
+                setFilterDrawerOpen(false)
+                fetchProducts()
+              }}
             >
+<<<<<<< HEAD
               <option value="">Sort By</option>
               <option value="price_asc">Price: Low to High</option>
               <option value="price_desc">Price: High to Low</option>
               <option value="name_asc">Name: A to Z</option>
             </select>
+=======
+              Apply Filters
+            </Button>
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
           </div>
-        </div>
+        </Drawer>
 
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm text-gray-500">
@@ -270,6 +682,7 @@ function Shop() {
         </div>
 
         {products.length === 0 ? (
+<<<<<<< HEAD
           <div className="bg-white rounded-lg shadow-lg p-12 text-center">
             <p className="text-gray-500">No products found</p>
           </div>
@@ -332,10 +745,40 @@ function Shop() {
                   </div>
                 )
               })}
+=======
+          <Card className="shadow-sm py-8">
+            <Empty
+              description={
+                <div>
+                  <Title level={4}>No products found</Title>
+                  <Text type="secondary">Try adjusting your search or filters</Text>
+                  <div className="mt-4">
+                    <Button 
+                      type="primary"
+                      onClick={() => {
+                        setSearchTerm('')
+                        setSelectedCategory('')
+                        setSortBy('')
+                        setPriceRange([0, 10000])
+                      }}
+                    >
+                      Clear All Filters
+                    </Button>
+                  </div>
+                </div>
+              }
+            />
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {products.map((product, index) => renderProductCard(product, index))}
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
             </div>
 
             {/* Pagination */}
             {pagination.pages > 1 && (
+<<<<<<< HEAD
               <div className="flex justify-center items-center gap-2 mt-8">
                 <button
                   onClick={() => goToPage(currentPage - 1)}
@@ -383,6 +826,19 @@ function Shop() {
                 >
                   Next
                 </button>
+=======
+              <div className="mt-8 flex justify-center">
+                <Pagination
+                  current={currentPage}
+                  total={pagination.total}
+                  pageSize={pagination.limit || 20}
+                  onChange={setCurrentPage}
+                  showSizeChanger={false}
+                  showQuickJumper
+                  showTotal={(total) => `Total ${total} products`}
+                  size={screens.xs ? 'small' : 'default'}
+                />
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
               </div>
             )}
           </>

@@ -1,8 +1,28 @@
+// pages/Login.jsx
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { motion } from 'framer-motion'
 import axiosInstance from '../services/axiosConfig'
+import {
+  Card,
+  Typography,
+  Input,
+  Button,
+  Alert,
+  Divider,
+  Space,
+  Form
+} from 'antd'
+import {
+  MailOutlined,
+  LockOutlined,
+  LoginOutlined,
+  UserAddOutlined,
+  HomeOutlined
+} from '@ant-design/icons'
+
+const { Title, Text } = Typography
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -31,7 +51,11 @@ function Login() {
       login(user, token, user.role)
       
       if (user.role === 'CUSTOMER') navigate('/patient/profile')
+<<<<<<< HEAD
       else if (user.role === 'DOCTOR') navigate('/doctor/profile')
+=======
+      else if (user.role === 'DOCTOR') navigate('/doctor/dashboard')
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       else if (user.role === 'ADMIN') navigate('/admin')
       else navigate('/')
       
@@ -47,46 +71,66 @@ function Login() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
       >
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <Card className="shadow-2xl rounded-2xl border-0 overflow-hidden">
+          {/* Header */}
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
               <span className="text-3xl">🏥</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
-            <p className="text-gray-500 mt-2">Sign in to your account</p>
+            <Title level={2} className="mb-1">Welcome Back</Title>
+            <Text type="secondary" className="text-base">Sign in to your account</Text>
           </div>
 
+          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-6">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
+            <Alert
+              message={error}
+              type="error"
+              showIcon
+              className="mb-6 rounded-xl"
+              closable
+              onClose={() => setError('')}
+            />
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
+          {/* Login Form */}
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Email Address
+                </label>
+                <Input
+                  size="large"
+                  type="email"
+                  placeholder="you@example.com"
+                  prefix={<MailOutlined className="text-gray-400" />}
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="rounded-xl"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Password</label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Password
+                </label>
+                <Input.Password
+                  size="large"
+                  placeholder="Enter your password"
+                  prefix={<LockOutlined className="text-gray-400" />}
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className="rounded-xl"
+                  required
+                />
+              </div>
 
+<<<<<<< HEAD
             <button
               type="submit"
               disabled={loading}
@@ -94,17 +138,41 @@ function Login() {
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
+=======
+              <Button
+                type="primary"
+                size="large"
+                block
+                htmlType="submit"
+                loading={loading}
+                icon={<LoginOutlined />}
+                className="h-12 rounded-xl font-semibold mt-2"
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </div>
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
+          <Divider className="my-6">
+            <Text type="secondary" className="text-sm">or</Text>
+          </Divider>
+
+          {/* Footer */}
+          <div className="text-center">
+            <Text type="secondary">
               Don't have an account?{' '}
-              <Link to="/register/patient" className="text-blue-600 font-semibold hover:underline">
+              <Link to="/register/patient" className="text-blue-600 hover:text-blue-700 font-medium">
                 Sign up
               </Link>
-            </p>
+            </Text>
+            <div className="mt-3">
+              <Link to="/" className="text-gray-400 hover:text-blue-600 text-sm">
+                <HomeOutlined className="mr-1" /> Back to Home
+              </Link>
+            </div>
           </div>
-        </div>
+        </Card>
       </motion.div>
     </div>
   )

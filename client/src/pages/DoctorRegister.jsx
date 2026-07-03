@@ -1,6 +1,41 @@
+// pages/DoctorRegister.jsx - Full Revised Code
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axiosInstance from '../services/axiosConfig'
+import {
+  Card,
+  Typography,
+  Input,
+  Button,
+  Select,
+  Alert,
+  Row,
+  Col,
+  Steps,
+  DatePicker,
+  Divider
+} from 'antd'
+import {
+  UserOutlined,
+  MailOutlined,
+  LockOutlined,
+  PhoneOutlined,
+  IdcardOutlined,
+  DollarOutlined,
+  EnvironmentOutlined,
+  ClockCircleOutlined,
+  MedicineBoxOutlined,
+  BankOutlined,
+  CheckCircleOutlined,
+  ArrowRightOutlined,
+  ArrowLeftOutlined
+} from '@ant-design/icons'
+import dayjs from 'dayjs'
+
+const { Title, Text } = Typography
+const { Option } = Select
+const { Step } = Steps
+const { TextArea } = Input
 
 function DoctorRegister() {
   const [formData, setFormData] = useState({
@@ -23,6 +58,7 @@ function DoctorRegister() {
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [currentStep, setCurrentStep] = useState(0)
   const navigate = useNavigate()
 
   const specializations = [
@@ -64,8 +100,19 @@ function DoctorRegister() {
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSelectChange = (name, value) => {
+    setFormData({ ...formData, [name]: value })
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' })
+    }
+  }
+
+  const handleDateChange = (date, dateString) => {
+    setFormData({ ...formData, dateOfBirth: dateString })
+  }
+
+  const handleSubmit = async () => {
+    setErrors({})
     if (!validateForm()) return
     
     setLoading(true)
@@ -131,24 +178,29 @@ function DoctorRegister() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
-            Doctor Registration
-          </h1>
-          <p className="text-gray-600 text-center mb-6">
-            Join our platform and start helping patients
-          </p>
-          
-          <p className="text-center text-gray-600 mb-4">
-            Want to register as a patient?{' '}
-            <Link to="/register/patient" className="text-blue-600 hover:underline">
-              Register here
-            </Link>
-          </p>
+  const nextStep = () => {
+    setErrors({})
+    
+    if (currentStep === 0) {
+      const step1Errors = {}
+      if (!formData.name.trim()) step1Errors.name = 'Name is required'
+      if (!formData.email.trim()) step1Errors.email = 'Email is required'
+      if (!formData.specialization) step1Errors.specialization = 'Specialization is required'
+      if (!formData.licenseNumber) step1Errors.licenseNumber = 'License number is required'
+      if (!formData.consultationFee) step1Errors.consultationFee = 'Consultation fee is required'
+      if (!formData.gender) step1Errors.gender = 'Gender is required'
+      
+      if (Object.keys(step1Errors).length > 0) {
+        setErrors(step1Errors)
+        return
+      }
+      setCurrentStep(1)
+    } else if (currentStep === 1) {
+      setCurrentStep(2)
+    }
+  }
 
+<<<<<<< HEAD
           {successMessage && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
               <p className="text-green-600 text-sm">{successMessage}</p>
@@ -404,7 +456,403 @@ function DoctorRegister() {
               Login here
             </Link>
           </p>
+=======
+  const prevStep = () => {
+    setErrors({})
+    setCurrentStep(currentStep - 1)
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-10 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <MedicineBoxOutlined className="text-3xl text-white" />
+          </div>
+          <Title level={2} className="mb-1">Doctor Registration</Title>
+          <Text type="secondary" className="text-base">Join our platform and start helping patients</Text>
+          <div className="mt-2">
+            <Text type="secondary">
+              Want to register as a patient?{' '}
+              <Link to="/register/patient" className="text-blue-600 hover:text-blue-700 font-medium">
+                Register here
+              </Link>
+            </Text>
+          </div>
+>>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
         </div>
+
+        {/* Messages */}
+        {successMessage && (
+          <Alert
+            message={successMessage}
+            type="success"
+            showIcon
+            icon={<CheckCircleOutlined />}
+            className="mb-6 rounded-xl"
+            closable
+          />
+        )}
+        
+        {serverError && (
+          <Alert
+            message={serverError}
+            type="error"
+            showIcon
+            className="mb-6 rounded-xl"
+            closable
+            onClose={() => setServerError('')}
+          />
+        )}
+
+        {/* Card */}
+        <Card className="shadow-xl rounded-2xl border-0 overflow-hidden">
+          <div className="px-6 pt-6">
+            <Steps current={currentStep} size="default">
+              <Step title="Personal & Professional" icon={<UserOutlined />} />
+              <Step title="Clinic Details" icon={<MedicineBoxOutlined />} />
+              <Step title="Security" icon={<LockOutlined />} />
+            </Steps>
+          </div>
+
+          <Divider className="my-6" />
+
+          <div className="px-6 pb-6">
+            {/* Step 1 */}
+            {currentStep === 0 && (
+              <Row gutter={[24, 16]}>
+                <Col xs={24}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      size="large"
+                      name="name"
+                      placeholder="Dr. Ayush Sharma"
+                      prefix={<UserOutlined className="text-gray-400" />}
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`rounded-xl ${errors.name ? 'border-red-500' : ''}`}
+                    />
+                    {errors.name && <Text type="danger" className="text-sm">{errors.name}</Text>}
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      size="large"
+                      name="email"
+                      type="email"
+                      placeholder="doctor@example.com"
+                      prefix={<MailOutlined className="text-gray-400" />}
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={`rounded-xl ${errors.email ? 'border-red-500' : ''}`}
+                    />
+                    {errors.email && <Text type="danger" className="text-sm">{errors.email}</Text>}
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Phone Number</label>
+                    <Input
+                      size="large"
+                      name="phone"
+                      placeholder="9999999999"
+                      prefix={<PhoneOutlined className="text-gray-400" />}
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="rounded-xl"
+                      maxLength={10}
+                    />
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Specialization <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      size="large"
+                      placeholder="Select Specialization"
+                      value={formData.specialization || undefined}
+                      onChange={(value) => handleSelectChange('specialization', value)}
+                      className={`w-full rounded-xl ${errors.specialization ? 'border-red-500' : ''}`}
+                    >
+                      {specializations.map(spec => (
+                        <Option key={spec} value={spec}>{spec}</Option>
+                      ))}
+                    </Select>
+                    {errors.specialization && <Text type="danger" className="text-sm">{errors.specialization}</Text>}
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Date of Birth</label>
+                    <DatePicker
+                      size="large"
+                      className="w-full rounded-xl"
+                      placeholder="Select date"
+                      onChange={handleDateChange}
+                      disabledDate={(current) => current && current > dayjs().endOf('day')}
+                    />
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Gender <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      size="large"
+                      placeholder="Select Gender"
+                      value={formData.gender || undefined}
+                      onChange={(value) => handleSelectChange('gender', value)}
+                      className={`w-full rounded-xl ${errors.gender ? 'border-red-500' : ''}`}
+                    >
+                      <Option value="MALE">Male</Option>
+                      <Option value="FEMALE">Female</Option>
+                      <Option value="OTHER">Other</Option>
+                    </Select>
+                    {errors.gender && <Text type="danger" className="text-sm">{errors.gender}</Text>}
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      License Number <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      size="large"
+                      name="licenseNumber"
+                      placeholder="LIC-1234-5678"
+                      prefix={<IdcardOutlined className="text-gray-400" />}
+                      value={formData.licenseNumber}
+                      onChange={handleChange}
+                      className={`rounded-xl ${errors.licenseNumber ? 'border-red-500' : ''}`}
+                    />
+                    {errors.licenseNumber && <Text type="danger" className="text-sm">{errors.licenseNumber}</Text>}
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Years of Experience</label>
+                    <Input
+                      size="large"
+                      name="experience"
+                      type="number"
+                      placeholder="0"
+                      prefix={<ClockCircleOutlined className="text-gray-400" />}
+                      value={formData.experience}
+                      onChange={handleChange}
+                      className="rounded-xl"
+                      min={0}
+                    />
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Consultation Fee (₹) <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      size="large"
+                      name="consultationFee"
+                      type="number"
+                      placeholder="500"
+                      prefix={<DollarOutlined className="text-gray-400" />}
+                      value={formData.consultationFee}
+                      onChange={handleChange}
+                      className={`rounded-xl ${errors.consultationFee ? 'border-red-500' : ''}`}
+                      min={0}
+                    />
+                    {errors.consultationFee && <Text type="danger" className="text-sm">{errors.consultationFee}</Text>}
+                  </div>
+                </Col>
+              </Row>
+            )}
+
+            {/* Step 2 */}
+            {currentStep === 1 && (
+              <Row gutter={[24, 16]}>
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Clinic Name</label>
+                    <Input
+                      size="large"
+                      name="clinicName"
+                      placeholder="Your Clinic Name"
+                      prefix={<BankOutlined className="text-gray-400" />}
+                      value={formData.clinicName}
+                      onChange={handleChange}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Clinic Address</label>
+                    <Input
+                      size="large"
+                      name="clinicAddress"
+                      placeholder="Address, City, State"
+                      prefix={<EnvironmentOutlined className="text-gray-400" />}
+                      value={formData.clinicAddress}
+                      onChange={handleChange}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </Col>
+
+                <Col xs={24}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Bio / About</label>
+                    <TextArea
+                      name="bio"
+                      rows={4}
+                      placeholder="Tell patients about your experience, expertise, and approach to healthcare..."
+                      value={formData.bio}
+                      onChange={handleChange}
+                      className="rounded-xl"
+                      maxLength={500}
+                      showCount
+                    />
+                  </div>
+                </Col>
+
+                <Col xs={24}>
+                  <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                    <div className="flex items-start gap-3">
+                      <CheckCircleOutlined className="text-blue-500 text-xl mt-0.5" />
+                      <div>
+                        <Text strong className="text-blue-700 text-base">Important Information</Text>
+                        <ul className="text-sm text-blue-600 mt-2 space-y-1.5 list-disc pl-4">
+                          <li>Your registration will be reviewed by our admin team</li>
+                          <li>You will receive a confirmation email once approved</li>
+                          <li>Make sure all details are accurate before submitting</li>
+                          <li>You can update your profile after approval</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            )}
+
+            {/* Step 3 */}
+            {currentStep === 2 && (
+              <Row gutter={[24, 16]}>
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <Input.Password
+                      size="large"
+                      name="password"
+                      placeholder="Enter password"
+                      prefix={<LockOutlined className="text-gray-400" />}
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`rounded-xl ${errors.password ? 'border-red-500' : ''}`}
+                    />
+                    {errors.password && <Text type="danger" className="text-sm">{errors.password}</Text>}
+                  </div>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Confirm Password <span className="text-red-500">*</span>
+                    </label>
+                    <Input.Password
+                      size="large"
+                      name="confirmPassword"
+                      placeholder="Confirm password"
+                      prefix={<LockOutlined className="text-gray-400" />}
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={`rounded-xl ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                    />
+                    {errors.confirmPassword && <Text type="danger" className="text-sm">{errors.confirmPassword}</Text>}
+                  </div>
+                </Col>
+
+                <Col xs={24}>
+                  <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                    <Text strong className="text-blue-700 text-base">Password Requirements:</Text>
+                    <ul className="text-sm text-blue-600 mt-2 space-y-1.5 list-disc pl-4">
+                      <li>At least 6 characters long</li>
+                      <li>At least one uppercase letter (A-Z)</li>
+                      <li>At least one lowercase letter (a-z)</li>
+                      <li>At least one number (0-9)</li>
+                    </ul>
+                  </div>
+                </Col>
+              </Row>
+            )}
+
+            {/* Navigation Buttons - FIXED */}
+            <div className="flex gap-4 mt-8">
+              {currentStep > 0 && (
+                <Button
+                  onClick={prevStep}
+                  icon={<ArrowLeftOutlined />}
+                  size="large"
+                  className="flex-1 h-12 rounded-xl"
+                >
+                  Back
+                </Button>
+              )}
+              {currentStep < 2 ? (
+                <Button
+                  type="primary"
+                  onClick={nextStep}
+                  icon={<ArrowRightOutlined />}
+                  size="large"
+                  className="flex-1 h-12 rounded-xl font-semibold"
+                >
+                  Continue
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  onClick={handleSubmit}
+                  loading={loading}
+                  size="large"
+                  className="flex-1 h-12 rounded-xl font-semibold"
+                >
+                  {loading ? 'Submitting...' : 'Register as Doctor'}
+                </Button>
+              )}
+            </div>
+
+            <Divider className="my-6" />
+
+            <div className="text-center">
+              <Text type="secondary">
+                Already have an account?{' '}
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                  Login here
+                </Link>
+              </Text>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   )

@@ -1,14 +1,18 @@
+// components/NotificationBell.jsx
 import React, { useState, useEffect } from 'react'
+import { Badge, Dropdown, Button, Typography, Space, Divider, Empty } from 'antd'
+import { BellOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import axiosInstance from '../services/axiosConfig'
+
+const { Text } = Typography
 
 function NotificationBell() {
   const [notifications, setNotifications] = useState([])
-  const [showDropdown, setShowDropdown] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
   useEffect(() => {
     fetchNotifications()
-    // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [])
@@ -16,8 +20,8 @@ function NotificationBell() {
   const fetchNotifications = async () => {
     try {
       const response = await axiosInstance.get('/admin/notifications')
-      setNotifications(response.data)
-      setUnreadCount(response.data.filter(n => !n.read).length)
+      setNotifications(response.data || [])
+      setUnreadCount((response.data || []).filter(n => !n.read).length)
     } catch (error) {
       console.error('Error fetching notifications:', error)
     }
@@ -50,55 +54,101 @@ function NotificationBell() {
     }
   }
 
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setShowDropdown(!showDropdown)}
-        className="relative p-2 hover:bg-purple-600 rounded-full transition"
-      >
-        <span className="text-xl">🔔</span>
-        {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
-
-      {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
-          <div className="flex justify-between items-center p-3 border-b">
-            <h3 className="font-semibold">Notifications</h3>
-            {unreadCount > 0 && (
-              <button onClick={markAllAsRead} className="text-xs text-purple-600 hover:underline">
-                Mark all as read
-              </button>
-            )}
+  const menuItems = [
+    {
+      key: 'header',
+      label: (
+        <div className="flex justify-between items-center py-1 px-2">
+          <Text strong>Notifications</Text>
+          {unreadCount > 0 && (
+            <Button 
+              type="link" 
+              size="small" 
+              onClick={(e) => {
+                e.stopPropagation()
+                markAllAsRead()
+              }}
+              className="text-blue-500"
+            >
+              Mark all read
+            </Button>
+          )}
+        </div>
+      ),
+      disabled: true
+    },
+    { type: 'divider' },
+    ...(notifications.length === 0 ? [
+      {
+        key: 'empty',
+        label: (
+          <div className="py-8 text-center">
+            <Text type="secondary">No notifications</Text>
           </div>
-          <div className="max-h-96 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No notifications</div>
-            ) : (
-              notifications.map((notif) => (
-                <div
-                  key={notif._id}
-                  className={`p-3 border-b hover:bg-gray-50 cursor-pointer ${!notif.read ? 'bg-purple-50' : ''}`}
-                  onClick={() => markAsRead(notif._id)}
-                >
-                  <div className="flex gap-3">
-                    <div className="text-2xl">{getNotificationIcon(notif.type)}</div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{notif.title}</p>
-                      <p className="text-xs text-gray-500">{notif.message}</p>
-                      <p className="text-xs text-gray-400 mt-1">{new Date(notif.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    {!notif.read && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
-                  </div>
-                </div>
-              ))
-            )}
+        ),
+        disabled: true
+      }
+    ] : notifications.slice(0, 10).map(notif => ({
+      key: notif._id,
+      label: (
+        <div 
+          className={`flex gap-3 py-2 px-1 ${!notif.read ? 'bg-blue-50 rounded-lg' : ''}`}
+          onClick={() => markAsRead(notif._id)}
+        >
+          <div className="text-2xl">{getNotificationIcon(notif.type)}</div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Text strong className="text-sm">{notif.title}</Text>
+              {!notif.read && (
+                <Badge status="processing" className="flex-shrink-0" />
+              )}
+            </div>
+            <Text type="secondary" className="text-xs block truncate">{notif.message}</Text>
+            <Text type="secondary" className="text-xs block mt-1">
+              {new Date(notif.createdAt).toLocaleDateString()}
+            </Text>
           </div>
         </div>
-      )}
+      ),
+      onClick: () => markAsRead(notif._id)
+    }))),
+    ...(notifications.length > 10 ? [
+      { type: 'divider' },
+      {
+        key: 'view-all',
+        label: (
+          <div className="text-center">
+            <Button type="link" size="small">View all ({notifications.length})</Button>
+          </div>
+        )
+      }
+    ] : [])
+  ]
+
+  return (
+    <div className="inline-flex items-center">
+      <Dropdown
+        menu={{ items: menuItems }}
+        placement="bottomRight"
+        trigger={['click']}
+        overlayStyle={{ maxWidth: 360, width: 340 }}
+        // Note: You can keep state tracking here if you use it elsewhere, 
+        // but let Antd trigger it natively by removing the manual onClick below!
+      >
+        <div 
+          className="notification-btn cursor-pointer flex items-center justify-center"
+          // REMOVED: onClick and e.stopPropagation() entirely!
+          role="button"
+          tabIndex={0}
+        >
+          <BellOutlined className="bell-icon text-gray-600 hover:text-blue-600 transition-colors" />
+          {unreadCount > 0 && (
+            <span className="notification-badge">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </div>
+      </Dropdown>
     </div>
   )
 }

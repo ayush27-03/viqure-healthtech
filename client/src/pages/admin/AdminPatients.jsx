@@ -1,5 +1,35 @@
+// pages/admin/AdminPatients.jsx
 import React, { useState, useEffect } from 'react'
 import axiosInstance from "../../services/axiosConfig"
+import {
+  Card,
+  Typography,
+  Table,
+  Input,
+  Button,
+  Space,
+  Avatar,
+  Tag,
+  Modal,
+  Descriptions,
+  message,
+  Spin,
+  Tooltip,
+  Badge
+} from 'antd'
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  UserOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  EnvironmentOutlined,
+  CalendarOutlined,
+  EyeOutlined,
+  PlusOutlined
+} from '@ant-design/icons'
+
+const { Title, Text } = Typography
 
 function AdminPatients() {
   const [patients, setPatients] = useState([])
@@ -18,10 +48,81 @@ function AdminPatients() {
       setPatients(response.data)
     } catch (error) {
       console.error('Error fetching patients:', error)
+      message.error('Failed to fetch patients')
     } finally {
       setLoading(false)
     }
   }
+
+  const formatDate = (date) => {
+    if (!date) return 'N/A'
+    return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  const columns = [
+    {
+      title: 'Patient',
+      key: 'patient',
+      render: (_, record) => (
+        <Space>
+          <Avatar icon={<UserOutlined />} className="bg-purple-100 text-purple-600" />
+          <div>
+            <Text strong>{record.patientName || 'N/A'}</Text>
+            <div className="text-xs text-gray-400">
+              {record.gender || 'N/A'} • {record.dob ? new Date(record.dob).getFullYear() : 'N/A'}
+            </div>
+          </div>
+        </Space>
+      )
+    },
+    {
+      title: 'Contact',
+      key: 'contact',
+      render: (_, record) => (
+        <div>
+          <div><PhoneOutlined className="mr-1" /> {record.mobileNumber || 'N/A'}</div>
+          {record.emergencyContact?.name && (
+            <div className="text-xs text-gray-400">Emergency: {record.emergencyContact.name}</div>
+          )}
+        </div>
+      )
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      render: (email) => email || 'N/A'
+    },
+    {
+      title: 'City',
+      dataIndex: 'city',
+      key: 'city',
+      render: (city) => city || 'N/A'
+    },
+    {
+      title: 'Joined',
+      dataIndex: 'createdAt',
+      key: 'joined',
+      render: (date) => formatDate(date)
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Button
+          type="text"
+          icon={<EyeOutlined />}
+          onClick={() => {
+            setSelectedPatient(record)
+            setShowDetailsModal(true)
+          }}
+          className="text-purple-600"
+        >
+          View Details
+        </Button>
+      )
+    }
+  ]
 
   const filteredPatients = patients.filter(patient => {
     const searchLower = searchTerm.toLowerCase()
@@ -30,15 +131,10 @@ function AdminPatients() {
            patient.mobileNumber?.includes(searchTerm)
   })
 
-  const formatDate = (date) => {
-    if (!date) return 'N/A'
-    return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
-
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <Spin size="large" />
       </div>
     )
   }
@@ -46,198 +142,102 @@ function AdminPatients() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Patient Management</h2>
-        <p className="text-gray-500">View and manage all registered patients</p>
+        <Title level={2} className="mb-0">Patient Management</Title>
+        <Text type="secondary">View and manage all registered patients</Text>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search by name, email, or phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-          <button
+      <Card className="shadow-sm mb-6">
+        <Space wrap className="w-full" size="middle">
+          <Input
+            placeholder="Search by name, email, or phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            prefix={<SearchOutlined className="text-gray-400" />}
+            className="w-80 rounded-xl"
+            allowClear
+          />
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
             onClick={fetchPatients}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
           >
             Refresh
-          </button>
-        </div>
-      </div>
+          </Button>
+          <Button
+            icon={<PlusOutlined />}
+            className="ml-auto"
+          >
+            Export Data
+          </Button>
+        </Space>
+      </Card>
 
-      {/* Patients Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left py-3 px-4">Patient</th>
-                <th className="text-left py-3 px-4">Contact</th>
-                <th className="text-left py-3 px-4">Email</th>
-                <th className="text-left py-3 px-4">City</th>
-                <th className="text-left py-3 px-4">Joined</th>
-                <th className="text-left py-3 px-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPatients.map((patient) => (
-                <tr key={patient._id} className="border-t hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <span className="text-lg">👤</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-800">{patient.patientName || 'N/A'}</div>
-                        <div className="text-xs text-gray-500">
-                          {patient.gender || 'N/A'} • {patient.dob ? new Date(patient.dob).getFullYear() : 'N/A'}
-                        </div>
-                      </div>
-                    </div>
-                   </td>
-                  <td className="py-3 px-4">
-                    <div className="text-gray-600">{patient.mobileNumber || 'N/A'}</div>
-                    {patient.emergencyContact?.name && (
-                      <div className="text-xs text-gray-400">Emergency: {patient.emergencyContact.name}</div>
-                    )}
-                   </td>
-                  <td className="py-3 px-4 text-gray-600">{patient.email || 'N/A'} </td>
-                  <td className="py-3 px-4 text-gray-600">{patient.city || 'N/A'} </td>
-                  <td className="py-3 px-4 text-gray-600">{formatDate(patient.createdAt)}</td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => {
-                        setSelectedPatient(patient)
-                        setShowDetailsModal(true)
-                      }}
-                      className="text-purple-600 hover:text-purple-800"
-                    >
-                      View Details
-                    </button>
-                   </td>
-                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filteredPatients.length === 0 && (
-          <div className="text-center py-8 text-gray-500">No patients found</div>
-        )}
-      </div>
+      <Card className="shadow-sm">
+        <Table
+          columns={columns}
+          dataSource={filteredPatients}
+          rowKey="_id"
+          pagination={{
+            pageSize: 10,
+            showTotal: (total) => `Total ${total} patients`
+          }}
+          scroll={{ x: true }}
+        />
+      </Card>
 
-      {/* Patient Details Modal */}
-      {showDetailsModal && selectedPatient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-800">Patient Details</h3>
-                <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {/* Basic Info */}
-                <div className="border-b pb-3">
-                  <h4 className="font-semibold text-gray-700 mb-2">Basic Information</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Full Name</p>
-                      <p className="font-medium">{selectedPatient.patientName || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Gender</p>
-                      <p className="font-medium">{selectedPatient.gender || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Date of Birth</p>
-                      <p className="font-medium">{formatDate(selectedPatient.dob)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">City</p>
-                      <p className="font-medium">{selectedPatient.city || 'N/A'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Info */}
-                <div className="border-b pb-3">
-                  <h4 className="font-semibold text-gray-700 mb-2">Contact Information</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Mobile Number</p>
-                      <p className="font-medium">{selectedPatient.mobileNumber || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Email</p>
-                      <p className="font-medium">{selectedPatient.email || 'N/A'}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-sm text-gray-500">Address</p>
-                      <p className="font-medium">{selectedPatient.patientAddress || 'N/A'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Emergency Contact */}
-                {selectedPatient.emergencyContact && (
-                  <div className="border-b pb-3">
-                    <h4 className="font-semibold text-gray-700 mb-2">Emergency Contact</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500">Name</p>
-                        <p className="font-medium">{selectedPatient.emergencyContact.name || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Relation</p>
-                        <p className="font-medium">{selectedPatient.emergencyContact.relation || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Phone</p>
-                        <p className="font-medium">{selectedPatient.emergencyContact.phone || 'N/A'}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Account Info */}
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Account Information</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Registered On</p>
-                      <p className="font-medium">{formatDate(selectedPatient.createdAt)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Last Login</p>
-                      <p className="font-medium">{formatDate(selectedPatient.lastLoginTime)}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  Close
-                </button>
+      <Modal
+        title="Patient Details"
+        open={showDetailsModal}
+        onCancel={() => {
+          setShowDetailsModal(false)
+          setSelectedPatient(null)
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setShowDetailsModal(false)
+            setSelectedPatient(null)
+          }}>
+            Close
+          </Button>
+        ]}
+        width={600}
+      >
+        {selectedPatient && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <Avatar size={64} icon={<UserOutlined />} className="bg-purple-100 text-purple-600" />
+              <div>
+                <Title level={4} className="mb-0">{selectedPatient.patientName || 'N/A'}</Title>
+                <Text type="secondary">{selectedPatient.email || 'N/A'}</Text>
               </div>
             </div>
+
+            <Descriptions column={2} bordered size="small">
+              <Descriptions.Item label="Gender">{selectedPatient.gender || 'N/A'}</Descriptions.Item>
+              <Descriptions.Item label="Date of Birth">{formatDate(selectedPatient.dob)}</Descriptions.Item>
+              <Descriptions.Item label="Mobile">{selectedPatient.mobileNumber || 'N/A'}</Descriptions.Item>
+              <Descriptions.Item label="City">{selectedPatient.city || 'N/A'}</Descriptions.Item>
+              <Descriptions.Item label="Address" span={2}>{selectedPatient.patientAddress || 'N/A'}</Descriptions.Item>
+            </Descriptions>
+
+            {selectedPatient.emergencyContact && (
+              <>
+                <Title level={5}>Emergency Contact</Title>
+                <Descriptions column={2} bordered size="small">
+                  <Descriptions.Item label="Name">{selectedPatient.emergencyContact.name || 'N/A'}</Descriptions.Item>
+                  <Descriptions.Item label="Relation">{selectedPatient.emergencyContact.relation || 'N/A'}</Descriptions.Item>
+                  <Descriptions.Item label="Phone" span={2}>{selectedPatient.emergencyContact.phone || 'N/A'}</Descriptions.Item>
+                </Descriptions>
+              </>
+            )}
+
+            <Descriptions column={2} bordered size="small">
+              <Descriptions.Item label="Registered On">{formatDate(selectedPatient.createdAt)}</Descriptions.Item>
+              <Descriptions.Item label="Last Login">{formatDate(selectedPatient.lastLoginTime)}</Descriptions.Item>
+            </Descriptions>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   )
 }
