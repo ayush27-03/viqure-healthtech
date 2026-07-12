@@ -140,18 +140,31 @@ const getMe = catchAsync(async (req, res) => {
  * Update own profile (not role, password, or doctor approval fields).
  */
 const updateMe = catchAsync(async (req, res) => {
-  const allowedFields = [
-    "phone",
-    "gender",
-    "dob",
-    "profile",
-    "addresses",
-    "avatar",
-    "fcmToken",
-  ];
+  // Addresses have dedicated endpoints with append/edit/delete semantics.
+  // Accepting them here caused whole-array replacement (the "can't add
+  // multiple addresses" bug), so we reject explicitly instead of silently.
+  if (req.body.addresses !== undefined) {
+    throw new ApiError(
+      400,
+      "Use POST/PATCH/DELETE /api/users/me/addresses to manage addresses",
+    );
+  }
+
   const updates = {};
-  for (const field of allowedFields) {
+
+  // Simple scalar fields — safe to set directly
+  for (const field of ["phone", "gender", "dob", "avatar", "fcmToken"]) {
     if (req.body[field] !== undefined) updates[field] = req.body[field];
+  }
+
+  // profile: MERGE sub-fields with dot-notation instead of replacing the
+  // whole object (previously { profile: { firstName: "X" } } wiped lastName).
+  if (req.body.profile && typeof req.body.profile === "object") {
+    for (const key of ["firstName", "lastName"]) {
+      if (req.body.profile[key] !== undefined) {
+        updates[`profile.${key}`] = req.body.profile[key];
+      }
+    }
   }
 
   const updatedUser = await User.findByIdAndUpdate(req.user._id, updates, {
