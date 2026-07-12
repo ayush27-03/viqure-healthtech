@@ -1,10 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
 // pages/Homepage.jsx
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-<<<<<<< HEAD
-import { motion, AnimatePresence } from 'framer-motion'
-=======
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
 import {
@@ -56,11 +54,8 @@ const { useBreakpoint } = Grid
 function Homepage() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
-<<<<<<< HEAD
-=======
   const screens = useBreakpoint()
   
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   const [doctors, setDoctors] = useState([])
   const [filteredDoctors, setFilteredDoctors] = useState([])
   const [loading, setLoading] = useState(true)
@@ -70,13 +65,10 @@ function Homepage() {
   const [sortBy, setSortBy] = useState('relevant')
   const [selectedCity, setSelectedCity] = useState('all')
   const [cities, setCities] = useState([])
-<<<<<<< HEAD
-=======
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [priceRange, setPriceRange] = useState([0, 2000])
   const [minRating, setMinRating] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
   useEffect(() => {
     fetchDoctors()
@@ -84,11 +76,7 @@ function Homepage() {
 
   useEffect(() => {
     filterAndSortDoctors()
-<<<<<<< HEAD
-  }, [searchTerm, selectedSpecialty, doctors, sortBy, selectedCity])
-=======
   }, [searchTerm, selectedSpecialty, doctors, sortBy, selectedCity, priceRange, minRating])
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
   const fetchDoctors = async () => {
     try {
@@ -99,20 +87,13 @@ function Homepage() {
         _id: doc._id,
         firstName: doc.profile?.firstName || '',
         lastName: doc.profile?.lastName || '',
-<<<<<<< HEAD
-        profileIcon: doc.profileIcon || '👨‍⚕️', // YOUR extra field
-=======
         profileIcon: doc.profileIcon || '👨‍⚕️',
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
         phone: doc.phone || '',
         addresses: doc.addresses || [],
         qualifications: doc.detailsOfHealthCareProfessional?.qualifications || [],
         yearsOfExperience: doc.detailsOfHealthCareProfessional?.yearsOfExperience || 0,
         consultationFee: doc.detailsOfHealthCareProfessional?.consultationFee || 0,
         bio: doc.detailsOfHealthCareProfessional?.bio || '',
-<<<<<<< HEAD
-        stats: doc.detailsOfHealthCareProfessional?.stats || { rating: 0, totalRatings: 0, totalAppointments: 0 }
-=======
         stats: doc.detailsOfHealthCareProfessional?.stats || { 
           rating: 0, 
           totalRatings: 0, 
@@ -123,7 +104,6 @@ function Homepage() {
           maxAppointmentDuration: 180,
           advanceBookingDays: 14
         }
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       }))
       
       setDoctors(mappedDoctors)
@@ -150,20 +130,14 @@ function Homepage() {
   const filterAndSortDoctors = () => {
     let filtered = [...doctors]
     
-<<<<<<< HEAD
-=======
     // Filter by specialty
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     if (selectedSpecialty !== 'all') {
       filtered = filtered.filter(doc => 
         doc.qualifications?.includes(selectedSpecialty)
       )
     }
     
-<<<<<<< HEAD
-=======
     // Filter by search term
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     if (searchTerm) {
       filtered = filtered.filter(doc => 
         `${doc.firstName} ${doc.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -177,8 +151,6 @@ function Homepage() {
       filtered = filtered.filter(doc => doc.addresses?.[0]?.city === selectedCity)
     }
 
-<<<<<<< HEAD
-=======
     // Filter by price range
     filtered = filtered.filter(doc => 
       (doc.consultationFee || 0) >= priceRange[0] && 
@@ -191,7 +163,6 @@ function Homepage() {
     }
 
     // Sort
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     switch (sortBy) {
       case 'rating':
         filtered.sort((a, b) => (b.stats?.rating || 0) - (a.stats?.rating || 0))
@@ -223,8 +194,6 @@ function Homepage() {
       navigate(`/doctor/${doctorId}`)
     }
   }
-<<<<<<< HEAD
-=======
 
   const renderDoctorCard = (doctor, index) => (
     <motion.div
@@ -307,7 +276,6 @@ function Homepage() {
       </Card>
     </motion.div>
   )
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -328,31 +296,6 @@ function Homepage() {
             <Paragraph className="text-center text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
               Book appointments with trusted healthcare professionals. 
               Quality care at your fingertips.
-<<<<<<< HEAD
-            </p>
-            
-            <div className="max-w-2xl mx-auto relative">
-              <div className="bg-white rounded-2xl shadow-2xl p-2 flex items-center">
-                <div className="flex-1 relative">
-                  <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search by doctor name, specialty, or city..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 text-gray-800 rounded-xl focus:outline-none"
-                  />
-                </div>
-                <button 
-                  onClick={() => filterAndSortDoctors()}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition shadow-lg"
-                >
-                  Search
-                </button>
-              </div>
-=======
             </Paragraph>
 
             <div className="max-w-3xl mx-auto">
@@ -368,83 +311,11 @@ function Homepage() {
                 }
                 className="shadow-2xl rounded-lg overflow-hidden"
               />
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
             </div>
           </motion.div>
         </div>
       </div>
 
-<<<<<<< HEAD
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="flex flex-wrap gap-3 justify-center mb-12">
-          <button
-            onClick={() => setSelectedSpecialty('all')}
-            className={`px-6 py-2 rounded-full font-medium transition-all transform hover:scale-105 ${
-              selectedSpecialty === 'all'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-white text-gray-700 hover:bg-gray-100 shadow'
-            }`}
-          >
-            All Doctors
-          </button>
-          {specialties.map(specialty => (
-            <button
-              key={specialty}
-              onClick={() => setSelectedSpecialty(specialty)}
-              className={`px-6 py-2 rounded-full font-medium transition-all transform hover:scale-105 ${
-                selectedSpecialty === specialty
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 shadow'
-              }`}
-            >
-              {specialty}
-            </button>
-          ))}
-        </div>
-          
-        <select 
-          value={selectedCity}
-          onChange={(e) => setSelectedCity(e.target.value)}
-          className="px-4 py-2 rounded-full border"
-        >
-          <option value="all">All Cities</option>
-          {cities.map(city => (
-            <option key={city} value={city}>{city}</option>
-          ))}
-        </select>
-
-        <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-          <p className="text-gray-600">
-            Found <span className="font-semibold text-blue-600">{filteredDoctors.length}</span> doctors
-          </p>
-          <select 
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white text-gray-700"
-          >
-            <option value="relevant">Most Relevant</option>
-            <option value="rating">Highest Rated</option>
-            <option value="experience">Most Experienced</option>
-            <option value="fee_low">Lowest Fee</option>
-            <option value="fee_high">Highest Fee</option>
-          </select>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded w-full"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                    </div>
-                  </div>
-                  <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
-=======
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Filters Bar */}
@@ -545,7 +416,6 @@ function Homepage() {
                 <div className="flex justify-between">
                   <Text type="secondary">₹{priceRange[0]}</Text>
                   <Text type="secondary">₹{priceRange[1]}</Text>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                 </div>
               </div>
             </div>
@@ -620,80 +490,6 @@ function Homepage() {
             {filteredDoctors.map((doctor, index) => renderDoctorCard(doctor, index))}
           </div>
         ) : (
-<<<<<<< HEAD
-          <motion.div 
-            layout
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            <AnimatePresence>
-              {filteredDoctors.map((doctor, index) => (
-                <motion.div
-                  key={doctor._id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ y: -8 }}
-                  className="group"
-                >
-                  <Link to={`/doctor/${doctor._id}`}>
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
-                      <div className="relative">
-                        <div className="h-32 bg-gradient-to-r from-blue-400 to-blue-600"></div>
-                        <div className="absolute -bottom-8 left-6">
-                          <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-white">
-                            <span className="text-3xl">{doctor.profileIcon || "👨‍⚕️"}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="p-6 pt-10">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition">
-                              {doctor.firstName} {doctor.lastName}
-                            </h3>
-                            <p className="text-blue-600 font-medium">
-                              {doctor.qualifications?.join(", ") || "General Physician"}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-lg">
-                            <span className="text-yellow-500">⭐</span>
-                            <span className="font-semibold text-gray-700">
-                              {doctor.stats?.rating || "N/A"}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              ({doctor.stats?.totalRatings || 0})
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2 mt-3">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <span>💼</span>
-                            <span>{doctor.yearsOfExperience || 0} years experience</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <span>💰</span>
-                            <span>₹{doctor.consultationFee || 0} consultation fee</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <span>📍</span>
-                            <span>{doctor.addresses?.[0]?.city || "Location not specified"}</span>
-                          </div>
-                        </div>
-                        
-                        <button onClick={() => handleViewProfile(doctor._id)} className="mt-4 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition shadow-md transform group-hover:scale-105">
-                          View Profile & Book
-                        </button>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-=======
           <div className="py-16">
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -720,7 +516,6 @@ function Homepage() {
               }
             />
           </div>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
         )}
 
         {/* Pagination */}

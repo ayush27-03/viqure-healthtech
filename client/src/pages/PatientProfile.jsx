@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // pages/PatientProfile.jsx - Fixed with emergency contacts as array
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
@@ -48,17 +49,8 @@ function PatientProfile() {
     lastName: '',
     phone: '',
     addresses: [],
-<<<<<<< HEAD
-    profileIcon: '👤', // YOUR extra field
-    emergencyContact: {
-      name: '',
-      relation: '',
-      phone: ''
-    }
-=======
     profileIcon: '👤',
     emergencyContacts: [] // Changed to array
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   })
   const [newAddress, setNewAddress] = useState({
     type: 'HOME',
@@ -67,9 +59,6 @@ function PatientProfile() {
     state: '',
     pincode: ''
   })
-<<<<<<< HEAD
-  const [showAddressForm, setShowAddressForm] = useState(false)
-=======
   const [newEmergencyContact, setNewEmergencyContact] = useState({
     name: '',
     relation: '',
@@ -78,7 +67,6 @@ function PatientProfile() {
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [showEmergencyForm, setShowEmergencyForm] = useState(false)
   const [editingEmergencyIndex, setEditingEmergencyIndex] = useState(null)
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
   useEffect(() => {
     fetchPatientData()
@@ -94,13 +82,8 @@ function PatientProfile() {
         lastName: data.profile?.lastName || '',
         phone: data.phone || '',
         addresses: data.addresses || [],
-<<<<<<< HEAD
-        profileIcon: data.profileIcon || '👤', // YOUR extra field
-        emergencyContact: data.emergencyContact || { name: '', relation: '', phone: '' }
-=======
         profileIcon: data.profileIcon || '👤',
         emergencyContacts: data.emergencyContacts || []
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       })
     } catch (error) {
       console.error('Error fetching patient data:', error)
@@ -144,43 +127,6 @@ function PatientProfile() {
     }
   }
 
-<<<<<<< HEAD
-  const handleAddressChange = (e) => {
-    const { name, value } = e.target
-    setNewAddress({ ...newAddress, [name]: value })
-  }
-
-  const handleAddAddress = async () => {
-    if (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.pincode) {
-      alert('Please fill all address fields')
-      return
-    }
-    
-    try {
-      await axiosInstance.post('/users/me/addresses', newAddress)
-      setNewAddress({ type: 'HOME', street: '', city: '', state: '', pincode: '' })
-      setShowAddressForm(false)
-      fetchPatientData()
-    } catch (error) {
-      console.error('Error adding address:', error)
-      alert('Failed to add address')
-    }
-  }
-
-  const handleDeleteAddress = async (index) => {
-    if (!window.confirm('Remove this address?')) return
-    
-    try {
-      const updatedAddresses = formData.addresses.filter((_, i) => i !== index)
-      await axiosInstance.patch('/auth/me', { addresses: updatedAddresses })
-      fetchPatientData()
-    } catch (error) {
-      console.error('Error deleting address:', error)
-      alert('Failed to delete address')
-    }
-  }
-
-=======
   const handleDeleteAddress = async (index) => {
     Modal.confirm({
       title: 'Remove Address',
@@ -242,7 +188,6 @@ function PatientProfile() {
   }
 
   // ===== PROFILE FUNCTIONS =====
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   const handleSave = async () => {
     setSaving(true)
     try {
@@ -252,12 +197,8 @@ function PatientProfile() {
           firstName: formData.firstName,
           lastName: formData.lastName
         },
-<<<<<<< HEAD
-        profileIcon: formData.profileIcon // YOUR extra field
-=======
         profileIcon: formData.profileIcon,
         emergencyContacts: formData.emergencyContacts // ← ADD THIS
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       })
       setIsEditing(false)
       message.success('Profile updated successfully')
@@ -333,43 +274,14 @@ function PatientProfile() {
                   <Title level={5} className="text-gray-500 mb-4">Personal Information</Title>
                   <div className="space-y-4">
                     <div>
-<<<<<<< HEAD
-                      <label className="text-sm text-gray-500">Profile Icon</label>
-                      <div className="text-4xl">{formData.profileIcon || '👤'}</div>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500">First Name</label>
-                      <p className="text-lg font-medium text-gray-800">{formData.firstName || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500">Last Name</label>
-                      <p className="text-lg font-medium text-gray-800">{formData.lastName || 'Not provided'}</p>
-=======
                       <Text type="secondary" className="text-sm">First Name</Text>
                       <div className="text-lg font-medium">{formData.firstName || 'Not provided'}</div>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                     </div>
                     <div>
                       <Text type="secondary" className="text-sm">Last Name</Text>
                       <div className="text-lg font-medium">{formData.lastName || 'Not provided'}</div>
                     </div>
                     <div>
-<<<<<<< HEAD
-                      <label className="text-sm text-gray-500">Phone</label>
-                      <p className="text-lg font-medium text-gray-800">{formData.phone || 'Not provided'}</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold text-gray-800">Addresses</h3>
-                      <button
-                        onClick={() => setShowAddressForm(!showAddressForm)}
-                        className="text-blue-600 hover:text-blue-700 text-sm"
-                      >
-                        + Add Address
-                      </button>
-=======
                       <Text type="secondary" className="text-sm">Email</Text>
                       <div className="text-lg font-medium">{user?.email || 'Not provided'}</div>
                     </div>
@@ -380,7 +292,6 @@ function PatientProfile() {
                     <div>
                       <Text type="secondary" className="text-sm">Profile Icon</Text>
                       <div className="text-4xl mt-1">{formData.profileIcon || '👤'}</div>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                     </div>
 
                     {showAddressForm && (
@@ -592,112 +503,6 @@ function PatientProfile() {
                 
               </Row>
             ) : (
-<<<<<<< HEAD
-              <div className="space-y-6">
-                <div className="flex justify-between items-center pb-4 border-b">
-                  <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleCancel}
-                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-                    >
-                      {saving ? 'Saving...' : 'Save Changes'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">Profile Icon</label>
-                    <input
-                      type="text"
-                      name="profileIcon"
-                      value={formData.profileIcon}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., 👤 or any emoji"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">First Name</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">Last Name</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Emergency Contact</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-gray-700 mb-2">Name</label>
-                        <input
-                          type="text"
-                          name="emergency.name"
-                          value={formData.emergencyContact?.name || ''}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 mb-2">Relation</label>
-                        <select
-                          name="emergency.relation"
-                          value={formData.emergencyContact?.relation || ''}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Select</option>
-                          <option value="SPOUSE">Spouse</option>
-                          <option value="PARENT">Parent</option>
-                          <option value="SIBLING">Sibling</option>
-                          <option value="FRIEND">Friend</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 mb-2">Phone</label>
-                        <input
-                          type="tel"
-                          name="emergency.phone"
-                          value={formData.emergencyContact?.phone || ''}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-=======
               // ===== EDIT MODE =====
               <div className="space-y-4">
                 <Row gutter={[16, 16]}>
@@ -712,7 +517,6 @@ function PatientProfile() {
                         placeholder="Enter first name"
                         className="rounded-xl"
                       />
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                     </div>
                   </Col>
                   <Col xs={24} sm={12}>

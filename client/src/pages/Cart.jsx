@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
 // pages/Cart.jsx
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -58,19 +60,10 @@ function Cart() {
       const response = await axiosInstance.get('/users/me/cart')
       const data = response.data.data || []
       
-<<<<<<< HEAD
-      // Production returns array of { productId: {...}, quantity }
-      // Your test server returns { items: [...], subtotal... }
-=======
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       let items = []
       let totalsData = { subtotal: 0, tax: 0, shipping: 0, total: 0 }
       
       if (Array.isArray(data)) {
-<<<<<<< HEAD
-        // Production format: array of { productId: {...}, quantity }
-=======
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
         items = data.map(item => ({
           productId: item.productId?._id || item.productId,
           name: item.productId?.name || 'Product',
@@ -80,10 +73,6 @@ function Cart() {
         }))
         calculateTotals(items)
       } else if (data.items) {
-<<<<<<< HEAD
-        // Test server format: { items: [...], subtotal... }
-=======
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
         items = data.items || []
         setCartItems(items)
         if (data.subtotal !== undefined) {
@@ -102,10 +91,7 @@ function Cart() {
     } catch (error) {
       console.error('Error fetching cart:', error)
       setCartItems([])
-<<<<<<< HEAD
-=======
       message.error('Failed to load cart')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     } finally {
       setLoading(false)
     }
@@ -304,74 +290,6 @@ function Cart() {
         </div>
 
         {isEmpty ? (
-<<<<<<< HEAD
-          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-            <div className="text-6xl mb-4">🛒</div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">Your cart is empty</h2>
-            <p className="text-gray-500 mb-6">Looks like you haven't added any items yet</p>
-            <Link
-              to="/shop"
-              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              Continue Shopping
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              {cartItems.map((item) => (
-                <div key={item.productId} className="bg-white rounded-lg shadow-lg p-4">
-                  <div className="flex gap-4">
-                    <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-                      {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-3xl">💊</span>
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <Link to={`/product/${item.productId}`}>
-                        <h3 className="font-semibold text-gray-800 hover:text-blue-600 transition">
-                          {item.name || 'Product'}
-                        </h3>
-                      </Link>
-                      <p className="text-blue-600 font-medium mt-1">
-                        {formatPrice(item.price || 0)}
-                      </p>
-                      
-                      <div className="flex items-center gap-3 mt-3">
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          disabled={updating[item.productId]}
-                          className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          disabled={updating[item.productId]}
-                          className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
-                        >
-                          +
-                        </button>
-                        <button
-                          onClick={() => removeItem(item.productId)}
-                          disabled={updating[item.productId]}
-                          className="ml-4 text-red-500 hover:text-red-700 text-sm disabled:opacity-50"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-800">
-                        {formatPrice((item.price || 0) * (item.quantity || 0))}
-                      </p>
-                    </div>
-=======
           <Card className="shadow-sm py-8">
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -388,7 +306,6 @@ function Cart() {
                     >
                       Start Shopping
                     </Button>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                   </div>
                 </div>
               }
@@ -421,35 +338,6 @@ function Cart() {
               </div>
             </Col>
 
-<<<<<<< HEAD
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-lg p-6 sticky top-4">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
-                
-                <div className="space-y-3 border-b pb-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">{formatPrice(totals.subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium">
-                      {totals.shipping === 0 ? 'Free' : formatPrice(totals.shipping)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax (5%)</span>
-                    <span className="font-medium">{formatPrice(totals.tax)}</span>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between mt-4 pt-2">
-                  <span className="text-lg font-bold text-gray-800">Total</span>
-                  <span className="text-xl font-bold text-blue-600">
-                    {formatPrice(totals.total)}
-                  </span>
-                </div>
-=======
             {/* Order Summary */}
             <Col xs={24} lg={8}>
               <Card className="shadow-sm sticky top-4" title="Order Summary">
@@ -479,7 +367,6 @@ function Cart() {
                     <Text strong>{formatPrice(totals.tax)}</Text>
                   </div>
                 </div>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
                 <Divider />
 

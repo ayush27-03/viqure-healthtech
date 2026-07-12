@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // pages/DoctorSettings.jsx - Fixed with proper defaults for new doctors
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -69,14 +70,6 @@ function DoctorSettings() {
   const fetchSettings = async () => {
     try {
       const response = await axiosInstance.get(`/users/doctors/${user?._id}`)
-<<<<<<< HEAD
-      const doctor = response.data
-      if (doctor.availabilitySettings) {
-        setSettings(doctor.availabilitySettings)
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error)
-=======
       const doctor = response.data.data || response.data
       
       if (doctor.availabilitySettings) {
@@ -99,19 +92,15 @@ function DoctorSettings() {
       // Use defaults on error
       setSettings(DEFAULT_SETTINGS)
       setOriginalSettings(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)))
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     } finally {
       setLoading(false)
     }
   }
-<<<<<<< HEAD
-=======
 
   const hasSettingsChanged = () => {
     if (!originalSettings) return true
     return JSON.stringify(settings) !== JSON.stringify(originalSettings)
   }
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
   const handleSave = async () => {
     if (!hasSettingsChanged()) {
@@ -121,25 +110,12 @@ function DoctorSettings() {
 
     setSaving(true)
     try {
-<<<<<<< HEAD
-      await axiosInstance.put(`/users/doctors/${user?._id}`, {
-        availabilitySettings: settings
-      })
-      
-      try {
-        await axiosInstance.post(`/users/doctors/${user?._id}/generate-slots`)
-        alert('Settings saved and slots generated successfully')
-      } catch (slotError) {
-        alert('Settings saved but slot generation failed. Please configure your working hours.')
-      }
-=======
       await axiosInstance.patch('/doctors/me/availability', {
         availabilitySettings: settings
       })
       
       message.success('Settings saved  successfully')
       setOriginalSettings(JSON.parse(JSON.stringify(settings)))
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       
     } catch (error) {
       console.error('Error saving settings:', error)
@@ -304,70 +280,6 @@ function DoctorSettings() {
             </Row>
           </div>
 
-<<<<<<< HEAD
-          <div className="p-8 space-y-8">
-            
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">General Settings</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">Min Appointment Duration (minutes)</label>
-                  <input
-                    type="number"
-                    value={settings.minAppointmentDuration}
-                    onChange={(e) => setSettings({...settings, minAppointmentDuration: parseInt(e.target.value)})}
-                    min="10"
-                    max="180"
-                    step="5"
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Minimum 10 minutes</p>
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">Max Appointment Duration (minutes)</label>
-                  <input
-                    type="number"
-                    value={settings.maxAppointmentDuration}
-                    onChange={(e) => setSettings({...settings, maxAppointmentDuration: parseInt(e.target.value)})}
-                    min="10"
-                    max="180"
-                    step="5"
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Maximum 180 minutes (3 hours)</p>
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">Advance Booking (days)</label>
-                  <input
-                    type="number"
-                    value={settings.advanceBookingDays}
-                    onChange={(e) => setSettings({...settings, advanceBookingDays: parseInt(e.target.value)})}
-                    min="1"
-                    max="30"
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">How many days patients can book in advance</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Working Hours</h3>
-              <p className="text-sm text-gray-500 mb-4">Set your available time slots for each day. Leave a day unchecked if you are not working.</p>
-              <div className="space-y-4">
-                {settings.workingHours.map((day, dayIndex) => (
-                  <div key={day.dayOfWeek} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={day.isWorking}
-                          onChange={() => toggleWorkingDay(dayIndex)}
-                          className="w-5 h-5 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <span className="font-semibold text-gray-700">{day.dayName}</span>
-                      </div>
-=======
           <Divider />
 
           {/* Working Hours */}
@@ -401,7 +313,6 @@ function DoctorSettings() {
                       {!day.isWorking && (
                         <Tag color="red" className="text-xs">Off</Tag>
                       )}
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                     </div>
                   }
                 >
@@ -497,62 +408,6 @@ function DoctorSettings() {
               </div>
             )}
 
-<<<<<<< HEAD
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Leave Dates</h3>
-              <p className="text-sm text-gray-500 mb-4">Add dates when you will not be available for consultations.</p>
-              {settings.leaveDates.map((leave, index) => (
-                <div key={index} className="flex items-center gap-3 mb-3">
-                  <input
-                    type="date"
-                    value={leave.date}
-                    onChange={(e) => updateLeaveDate(index, 'date', e.target.value)}
-                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    value={leave.reason}
-                    onChange={(e) => updateLeaveDate(index, 'reason', e.target.value)}
-                    placeholder="Reason (optional)"
-                    className="px-3 py-2 border rounded-lg flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    onClick={() => removeLeaveDate(index)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={addLeaveDate}
-                className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
-              >
-                + Add Leave Date
-              </button>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">How this works</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Patients can book appointments only within your working hours</li>
-                <li>• Appointment duration can be chosen by patients between min and max limits</li>
-                <li>• A 10 minute buffer is automatically added between appointments</li>
-                <li>• Leave dates make you completely unavailable on those days</li>
-                <li>• Click Save to update your settings and regenerate available slots</li>
-              </ul>
-            </div>
-
-            <div className="pt-4 border-t">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
-              >
-                {saving ? 'Saving and Generating Slots...' : 'Save Settings'}
-              </button>
-            </div>
-=======
             <Button
               type="dashed"
               icon={<PlusOutlined />}
@@ -561,7 +416,6 @@ function DoctorSettings() {
             >
               Add Leave Date
             </Button>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
           </div>
 
           <Divider />

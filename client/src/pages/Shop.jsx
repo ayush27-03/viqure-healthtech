@@ -55,27 +55,17 @@ function Shop() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
-<<<<<<< HEAD
-  const [minPrice, setMinPrice] = useState('')
-  const [maxPrice, setMaxPrice] = useState('')
-  const [debouncedMinPrice, setDebouncedMinPrice] = useState('')
-  const [debouncedMaxPrice, setDebouncedMaxPrice] = useState('')
-=======
   const [minPrice, setMinPrice] = useState(0)
   const [maxPrice, setMaxPrice] = useState(10000)
   const [priceRange, setPriceRange] = useState([0, 10000])
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   const [sortBy, setSortBy] = useState('')
   const [cartItemCount, setCartItemCount] = useState(0)
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, pages: 1 })
   const [currentPage, setCurrentPage] = useState(1)
   const [categoriesLoading, setCategoriesLoading] = useState(true)
-<<<<<<< HEAD
-=======
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const screens = useBreakpoint()
   const [addingToCart, setAddingToCart] = useState({})
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
   // Fetch categories on mount - ONLY ONCE
   useEffect(() => {
@@ -157,14 +147,8 @@ function Shop() {
 
   useEffect(() => {
     fetchProducts()
-<<<<<<< HEAD
-  }, [debouncedSearch, selectedCategory, debouncedMinPrice, debouncedMaxPrice, sortBy, currentPage])
-
-  // Fetch cart count when authenticated
-=======
   }, [debouncedSearch, selectedCategory, priceRange, sortBy, currentPage])
 
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   useEffect(() => {
     if (isAuthenticated) {
       fetchCartCount()
@@ -196,13 +180,8 @@ function Shop() {
       const params = new URLSearchParams()
       if (debouncedSearch) params.append('q', debouncedSearch)
       if (selectedCategory) params.append('categoryId', selectedCategory)
-<<<<<<< HEAD
-      if (debouncedMinPrice) params.append('minPrice', debouncedMinPrice)
-      if (debouncedMaxPrice) params.append('maxPrice', debouncedMaxPrice)
-=======
       if (priceRange[0] > 0) params.append('minPrice', priceRange[0])
       if (priceRange[1] < 10000) params.append('maxPrice', priceRange[1])
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       if (sortBy) params.append('sort', sortBy)
       if (currentPage) params.append('page', currentPage)
       params.append('limit', 20)
@@ -265,11 +244,7 @@ function Shop() {
     try {
       await axiosInstance.post('/users/me/cart', { productId, quantity })
       await fetchCartCount()
-<<<<<<< HEAD
-      alert('Item added to cart')
-=======
       message.success('Item added to cart')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     } catch (error) {
       console.error('Error adding to cart:', error)
       message.error(error.response?.data?.message || 'Failed to add to cart')
@@ -293,14 +268,10 @@ function Shop() {
     }).format(price)
   }
 
-<<<<<<< HEAD
-  if (loading || categoriesLoading) {
-=======
   const renderProductCard = (product, index) => {
     const isInStock = product.stockCount > 0 && product.isActive
     const isAdding = addingToCart[product._id]
 
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     return (
       <motion.div
         key={product._id}
@@ -408,12 +379,6 @@ function Shop() {
   }
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Health Shop</h1>
-=======
     <div className="min-h-screen bg-gray-50 py-6 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -422,7 +387,6 @@ function Shop() {
             <Title level={2} className="mb-0">Health Shop</Title>
             <Text type="secondary">Quality healthcare products at your fingertips</Text>
           </div>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
           {isAuthenticated && (
             <Link to="/cart">
               <Badge count={cartItemCount} size="default">
@@ -434,44 +398,6 @@ function Shop() {
           )}
         </div>
 
-<<<<<<< HEAD
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat._id} value={cat._id}>{cat.name}</option>
-              ))}
-            </select>
-
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Min Price"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="w-1/2 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="number"
-                placeholder="Max Price"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-1/2 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-=======
         {/* Filters Bar */}
         <Card className="shadow-sm mb-6">
           <Row gutter={[16, 16]}>
@@ -585,7 +511,6 @@ function Shop() {
                   <Text type="secondary">₹{priceRange[1]}</Text>
                 </div>
               </div>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
             </div>
 
             <Divider />
@@ -662,16 +587,8 @@ function Shop() {
                 fetchProducts()
               }}
             >
-<<<<<<< HEAD
-              <option value="">Sort By</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="name_asc">Name: A to Z</option>
-            </select>
-=======
               Apply Filters
             </Button>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
           </div>
         </Drawer>
 
@@ -682,70 +599,6 @@ function Shop() {
         </div>
 
         {products.length === 0 ? (
-<<<<<<< HEAD
-          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-            <p className="text-gray-500">No products found</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map(product => {
-                const isInStock = product.stockCount > 0 && product.isActive
-
-                return (
-                  <div key={product._id} className="bg-white rounded-lg shadow-lg hover:shadow-xl transition overflow-hidden">
-                    <Link to={`/product/${product._id}`}>
-                      <div className="h-48 bg-gray-200 flex items-center justify-center">
-                        {product.images && product.images.length > 0 ? (
-                          <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-4xl">💊</span>
-                        )}
-                      </div>
-                    </Link>
-                    <div className="p-4">
-                      <Link to={`/product/${product._id}`}>
-                        <h3 className="font-semibold text-gray-800 hover:text-blue-600 transition">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      <p className="text-sm text-gray-500">{product.brand || product.category}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-yellow-500">⭐</span>
-                        <span className="text-sm font-medium">{product.ratings?.average || 'N/A'}</span>
-                        <span className="text-xs text-gray-400">({product.ratings?.totalReviews || 0})</span>
-                      </div>
-                      <div className="mt-2">
-                        {product.discountPercentage > 0 ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg font-bold text-blue-600">
-                              {formatPrice(product.finalPrice)}
-                            </span>
-                            <span className="text-sm text-gray-400 line-through">
-                              {formatPrice(product.mrp)}
-                            </span>
-                            <span className="text-xs text-green-600">
-                              {Math.round(product.discountPercentage)}% off
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-lg font-bold text-blue-600">
-                            {formatPrice(product.finalPrice)}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => addToCart(product._id)}
-                        disabled={!isInStock}
-                        className="w-full mt-3 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                      >
-                        {isInStock ? 'Add to Cart' : 'Out of Stock'}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-=======
           <Card className="shadow-sm py-8">
             <Empty
               description={
@@ -773,60 +626,10 @@ function Shop() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
               {products.map((product, index) => renderProductCard(product, index))}
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
             </div>
 
             {/* Pagination */}
             {pagination.pages > 1 && (
-<<<<<<< HEAD
-              <div className="flex justify-center items-center gap-2 mt-8">
-                <button
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                
-                {[...Array(pagination.pages).keys()].map((_, index) => {
-                  const pageNum = index + 1
-                  if (
-                    pageNum === 1 ||
-                    pageNum === pagination.pages ||
-                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                  ) {
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => goToPage(pageNum)}
-                        className={`px-4 py-2 border rounded-lg ${
-                          currentPage === pageNum
-                            ? 'bg-blue-600 text-white'
-                            : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    )
-                  } else if (
-                    pageNum === currentPage - 2 ||
-                    pageNum === currentPage + 2
-                  ) {
-                    return (
-                      <span key={pageNum} className="px-2 text-gray-400">...</span>
-                    )
-                  }
-                  return null
-                })}
-                
-                <button
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === pagination.pages}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-=======
               <div className="mt-8 flex justify-center">
                 <Pagination
                   current={currentPage}
@@ -838,7 +641,6 @@ function Shop() {
                   showTotal={(total) => `Total ${total} products`}
                   size={screens.xs ? 'small' : 'default'}
                 />
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
               </div>
             )}
           </>

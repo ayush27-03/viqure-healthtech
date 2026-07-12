@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // pages/DoctorBooking.jsx
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -263,11 +264,7 @@ function DoctorBooking() {
 
   const handleProceedToBook = async () => {
     if (!selectedStartTime) {
-<<<<<<< HEAD
-      setBookingError('Please select a start time')
-=======
       message.error('Please select a start time')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       return
     }
     
@@ -287,11 +284,7 @@ function DoctorBooking() {
       setBookingError('')
       setBookingSuccess(false)
     } catch (error) {
-<<<<<<< HEAD
-      setBookingError(error.response?.data?.message || 'Failed to calculate cost')
-=======
       message.error(error.response?.data?.message || 'Failed to calculate cost')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     } finally {
       setFetchingCost(false)
     }
@@ -353,31 +346,6 @@ function DoctorBooking() {
   }
 
   const settings = doctor.availabilitySettings || {}
-<<<<<<< HEAD
-  const minDuration = settings.minAppointmentDuration || 10
-  const maxDuration = settings.maxAppointmentDuration || 180
-  const doctorName = doctor.profile ? 
-    `${doctor.profile.firstName || ''} ${doctor.profile.lastName || ''}`.trim() : 
-    doctor.doctorName || 'Doctor'
-
-  return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(`/doctor/${id}`)}
-              className="text-blue-600 hover:text-blue-700"
-            >
-              ← Back to Doctor Profile
-            </button>
-            <div className="flex-1 text-center">
-              <h1 className="text-2xl font-bold text-gray-800">Book Appointment</h1>
-              <p className="text-gray-500">with {doctorName}</p>
-            </div>
-          </div>
-=======
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4 md:px-8">
@@ -408,7 +376,6 @@ function DoctorBooking() {
               </Col>
             </Row>
           </Card>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
         </div>
 
         {/* Steps */}
@@ -486,42 +453,6 @@ function DoctorBooking() {
                 <>
                   <Divider />
 
-<<<<<<< HEAD
-                <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Doctor:</span>
-                      <span className="font-semibold">{doctorName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Date:</span>
-                      <span className="font-semibold">{new Date(selectedDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Time:</span>
-                      <span className="font-semibold">{selectedStartTime} to {getEndTime(selectedStartTime, selectedDuration)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Duration:</span>
-                      <span className="font-semibold">{selectedDuration} minutes</span>
-                    </div>
-                    {costData && (
-                      <div className="bg-blue-50 rounded-lg p-3 mt-2">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Consultation Fee:</span>
-                            <span className="font-semibold">₹{costData.subtotal}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">GST (18%):</span>
-                            <span className="font-semibold">₹{costData.tax}</span>
-                          </div>
-                          <div className="flex justify-between pt-2 border-t border-blue-200">
-                            <span className="font-semibold text-gray-800">Total Amount:</span>
-                            <span className="font-bold text-blue-600 text-lg">₹{costData.total}</span>
-                          </div>
-                        </div>
-=======
                   {/* Step 3 - Select Time */}
                   <div className="mb-6">
                     <Title level={5}>Select Start Time</Title>
@@ -558,7 +489,6 @@ function DoctorBooking() {
                             Try a different duration or date
                           </Text>
                         </Empty>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                       </div>
                     )}
                   </div>

@@ -1,11 +1,7 @@
 // pages/DoctorProfile.jsx
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-<<<<<<< HEAD
-import { Link, useNavigate } from 'react-router-dom' // Added useNavigate to prevent crash
-=======
 import { Link, useNavigate } from 'react-router-dom'
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 import axiosInstance from '../services/axiosConfig'
 import {
   Card,
@@ -56,11 +52,7 @@ const { TabPane } = Tabs
 
 function DoctorProfile() {
   const { user } = useAuth()
-<<<<<<< HEAD
-  const navigate = useNavigate() // Initialized navigate hook
-=======
   const navigate = useNavigate()
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -126,11 +118,7 @@ function DoctorProfile() {
 
   const handleAddAddress = async () => {
     if (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.pincode) {
-<<<<<<< HEAD
-      alert('Please fill all address fields')
-=======
       message.warning('Please fill all address fields')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       return
     }
     
@@ -139,32 +127,14 @@ function DoctorProfile() {
       setNewAddress({ type: 'CLINIC', street: '', city: '', state: '', pincode: '' })
       setShowAddressForm(false)
       fetchDoctorData()
-<<<<<<< HEAD
-    } catch (error) {
-      console.error('Error adding address:', error)
-      alert('Failed to add address')
-=======
       message.success('Address added successfully')
     } catch (error) {
       console.error('Error adding address:', error)
       message.error('Failed to add address')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     }
   }
 
   const handleDeleteAddress = async (index) => {
-<<<<<<< HEAD
-    if (!window.confirm('Remove this address?')) return
-    
-    try {
-      const updatedAddresses = formData.addresses.filter((_, i) => i !== index)
-      await axiosInstance.patch('/auth/me', { addresses: updatedAddresses })
-      fetchDoctorData()
-    } catch (error) {
-      console.error('Error deleting address:', error)
-      alert('Failed to delete address')
-    }
-=======
     Modal.confirm({
       title: 'Remove Address',
       content: 'Are you sure you want to remove this address?',
@@ -182,7 +152,6 @@ function DoctorProfile() {
         }
       }
     })
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   }
 
   const handleSave = async () => {
@@ -242,43 +211,6 @@ function DoctorProfile() {
           <Text type="secondary">Manage your professional information</Text>
         </div>
 
-<<<<<<< HEAD
-          {/* RE-ALIGNED BANNER SECTION */}
-          <div className="bg-gray-50 px-8 py-4 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-500">Status:</span>
-              <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                user?.isActive ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-              }`}>
-                {user?.isActive ? 'Active' : 'Inactive'}
-              </span>
-            </div>
-            <div>
-              <button
-                onClick={() => navigate('/doctor/earnings')}
-                className="w-full sm:w-auto bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
-              >
-                View Full Earnings Report →
-              </button>
-            </div>
-          </div>
-
-          <div className="p-8">
-            {!isEditing ? (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center pb-4 border-b">
-                  <h2 className="text-xl font-semibold text-gray-800">Professional Information</h2>
-                  <div className="flex gap-3">
-                    <Link
-                      to="/doctor/settings"
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center gap-2 text-sm"
-                    >
-                      ⚙️ Availability Settings
-                    </Link>
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm"
-=======
         <Card className="shadow-lg rounded-2xl border-0 overflow-hidden">
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-green-600 to-green-800 -mx-6 -mt-6 px-8 py-6 rounded-t-2xl">
@@ -304,7 +236,6 @@ function DoctorProfile() {
                       icon={<EditOutlined />}
                       onClick={() => setIsEditing(true)}
                       className="bg-white/20 border-white/30 hover:bg-white/30"
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                     >
                       Edit Profile
                     </Button>
@@ -321,149 +252,6 @@ function DoctorProfile() {
             </Row>
           </div>
 
-<<<<<<< HEAD
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-sm text-gray-500">Profile Icon</label>
-                    <div className="text-4xl">{formData.profileIcon || '👨‍⚕️'}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">First Name</label>
-                    <p className="text-lg font-medium text-gray-800">{formData.firstName || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Last Name</label>
-                    <p className="text-lg font-medium text-gray-800">{formData.lastName || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Email</label>
-                    <p className="text-lg font-medium text-gray-800">{user?.email || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Phone</label>
-                    <p className="text-lg font-medium text-gray-800">{formData.phone || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Qualifications</label>
-                    <p className="text-lg font-medium text-gray-800">{formData.qualifications?.join(', ') || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Years of Experience</label>
-                    <p className="text-lg font-medium text-gray-800">{formData.yearsOfExperience || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Consultation Fee</label>
-                    <p className="text-lg font-medium text-gray-800">₹{formData.consultationFee || 'Not provided'}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="text-sm text-gray-500">Clinic Address</label>
-                    <p className="text-lg font-medium text-gray-800">{formData.clinicAddress || 'Not provided'}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="text-sm text-gray-500">Bio</label>
-                    <p className="text-gray-800">{formData.bio || 'Not provided'}</p>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800">Addresses</h3>
-                    <button
-                      onClick={() => setShowAddressForm(!showAddressForm)}
-                      className="text-blue-600 hover:text-blue-700 text-sm"
-                    >
-                      + Add Address
-                    </button>
-                  </div>
-
-                  {showAddressForm && (
-                    <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <select
-                          name="type"
-                          value={newAddress.type}
-                          onChange={handleAddressChange}
-                          className="px-3 py-2 border rounded-lg"
-                        >
-                          <option value="CLINIC">Clinic</option>
-                          <option value="HOME">Home</option>
-                          <option value="WORK">Work</option>
-                          <option value="OTHER">Other</option>
-                        </select>
-                        <input
-                          type="text"
-                          name="street"
-                          value={newAddress.street}
-                          onChange={handleAddressChange}
-                          placeholder="Street"
-                          className="px-3 py-2 border rounded-lg"
-                        />
-                        <input
-                          type="text"
-                          name="city"
-                          value={newAddress.city}
-                          onChange={handleAddressChange}
-                          placeholder="City"
-                          className="px-3 py-2 border rounded-lg"
-                        />
-                        <input
-                          type="text"
-                          name="state"
-                          value={newAddress.state}
-                          onChange={handleAddressChange}
-                          placeholder="State"
-                          className="px-3 py-2 border rounded-lg"
-                        />
-                        <input
-                          type="text"
-                          name="pincode"
-                          value={newAddress.pincode}
-                          onChange={handleAddressChange}
-                          placeholder="Pincode"
-                          className="px-3 py-2 border rounded-lg"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleAddAddress}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                        >
-                          Save Address
-                        </button>
-                        <button
-                          onClick={() => setShowAddressForm(false)}
-                          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {formData.addresses.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No addresses saved</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {formData.addresses.map((addr, index) => (
-                        <div key={index} className="bg-gray-50 p-3 rounded-lg flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">{addr.type}</p>
-                            <p className="text-sm text-gray-600">{addr.street}</p>
-                            <p className="text-sm text-gray-600">{addr.city}, {addr.state} - {addr.pincode}</p>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteAddress(index)}
-                            className="text-red-500 hover:text-red-700 text-sm"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-=======
           {/* Status Bar */}
           <div className="bg-gray-50 px-6 py-3 border-b flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-4">
@@ -725,7 +513,6 @@ function DoctorProfile() {
                   </TabPane>
                 </Tabs>
               </>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
             ) : (
               // ===== EDIT MODE =====
               <div className="space-y-4">
@@ -833,111 +620,6 @@ function DoctorProfile() {
                   />
                 </div>
 
-<<<<<<< HEAD
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">Profile Icon</label>
-                    <input
-                      type="text"
-                      name="profileIcon"
-                      value={formData.profileIcon}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., 👨‍⚕️ or any emoji"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">First Name</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">Last Name</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">Qualifications</label>
-                    <input
-                      type="text"
-                      name="qualifications"
-                      value={formData.qualifications?.join(', ')}
-                      onChange={(e) => setFormData({ ...formData, qualifications: e.target.value.split(',').map(s => s.trim()) })}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter qualifications separated by commas"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">Years of Experience</label>
-                      <input
-                        type="number"
-                        name="yearsOfExperience"
-                        value={formData.yearsOfExperience}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">Consultation Fee (₹)</label>
-                      <input
-                        type="number"
-                        name="consultationFee"
-                        value={formData.consultationFee}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">Clinic Address</label>
-                    <textarea
-                      name="clinicAddress"
-                      value={formData.clinicAddress}
-                      onChange={handleChange}
-                      rows="2"
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">Bio</label>
-                    <textarea
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleChange}
-                      rows="4"
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-=======
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">Clinic Address</label>
                   <Input
@@ -949,7 +631,6 @@ function DoctorProfile() {
                     prefix={<EnvironmentOutlined className="text-gray-400" />}
                     className="rounded-xl"
                   />
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                 </div>
 
                 <div>

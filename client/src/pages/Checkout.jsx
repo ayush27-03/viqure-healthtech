@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
 // pages/Checkout.jsx
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -46,30 +48,15 @@ const { TextArea } = Input
 function Checkout() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-=======
   const [form] = Form.useForm()
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
   const [cartItems, setCartItems] = useState([])
   const [cartTotals, setCartTotals] = useState({ subtotal: 0, tax: 0, shipping: 0, total: 0 })
   const [loading, setLoading] = useState(true)
   const [placingOrder, setPlacingOrder] = useState(false)
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-  const [deliveryAddress, setDeliveryAddress] = useState({
-    fullName: '',
-    phone: '',
-    addressLine: '',
-    city: '',
-    state: '',
-    pincode: ''
-  })
-  const [paymentMethod, setPaymentMethod] = useState('COD')
-=======
   const [paymentMethod, setPaymentMethod] = useState('COD')
   const [currentStep, setCurrentStep] = useState(0)
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [orderId, setOrderId] = useState('')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -87,27 +74,16 @@ function Checkout() {
       let items = []
       
       if (Array.isArray(data)) {
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-        // Production format: array of { productId: {...}, quantity }
-=======
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
         items = data.map(item => ({
           productId: item.productId?._id || item.productId,
           name: item.productId?.name || 'Product',
           price: item.productId?.pricing?.finalPrice || 0,
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-          quantity: item.quantity || 0
-        }))
-        
-        if (items.length === 0) {
-=======
           quantity: item.quantity || 0,
           image: item.productId?.images?.[0] || ''
         }))
         
         if (items.length === 0) {
           message.warning('Your cart is empty')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
           navigate('/cart')
           return
         }
@@ -119,10 +95,6 @@ function Checkout() {
         setCartTotals({ subtotal, tax, shipping, total })
         
       } else if (data.items) {
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-        // Test server format
-=======
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
         items = data.items || []
         if (items.length === 0) {
           navigate('/cart')
@@ -137,10 +109,7 @@ function Checkout() {
       }
       
       setCartItems(items)
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-=======
       setCurrentStep(0)
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
     } catch (error) {
       console.error('Error fetching cart:', error)
       message.error('Failed to load cart')
@@ -150,32 +119,6 @@ function Checkout() {
     }
   }
 
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-  const handleAddressChange = (e) => {
-    setDeliveryAddress({
-      ...deliveryAddress,
-      [e.target.name]: e.target.value
-    })
-  }
-
-  const validateForm = () => {
-    const required = ['fullName', 'phone', 'addressLine', 'city', 'state', 'pincode']
-    for (const field of required) {
-      if (!deliveryAddress[field]) {
-        alert(`Please enter ${field}`)
-        return false
-      }
-    }
-    if (deliveryAddress.phone.length !== 10) {
-      alert('Please enter a valid 10-digit phone number')
-      return false
-    }
-    if (deliveryAddress.pincode.length !== 6) {
-      alert('Please enter a valid 6-digit pincode')
-      return false
-    }
-    return true
-=======
   const validateForm = async () => {
     try {
       await form.validateFields()
@@ -184,7 +127,6 @@ function Checkout() {
       message.error('Please fill in all required fields')
       return false
     }
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
   }
 
   const placeOrder = async () => {
@@ -192,10 +134,6 @@ function Checkout() {
 
     setPlacingOrder(true)
     try {
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-      const response = await axiosInstance.post('/orders/checkout', {
-        deliveryAddress,
-=======
       const values = form.getFieldsValue()
       const response = await axiosInstance.post('/orders/checkout', {
         deliveryAddress: {
@@ -206,7 +144,6 @@ function Checkout() {
           state: values.state,
           pincode: values.pincode
         },
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
         paymentMethod
       })
       
@@ -338,145 +275,6 @@ function Checkout() {
           <Title level={2} className="mb-0">Checkout</Title>
         </div>
 
-<<<<<<< HEAD:client/src/pages/Checkout.jsx
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Shipping Address</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 mb-2">Full Name *</label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={deliveryAddress.fullName}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ayush Sharma"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">Phone Number *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={deliveryAddress.phone}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="9999999999"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">Address Line *</label>
-                  <input
-                    type="text"
-                    name="addressLine"
-                    value={deliveryAddress.addressLine}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="B-42, Sector 62"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-700 mb-2">City *</label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={deliveryAddress.city}
-                      onChange={handleAddressChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Noida"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">State *</label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={deliveryAddress.state}
-                      onChange={handleAddressChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Uttar Pradesh"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">Pincode *</label>
-                  <input
-                    type="text"
-                    name="pincode"
-                    value={deliveryAddress.pincode}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="201301"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Payment Method</h2>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="COD">Cash on Delivery</option>
-                <option value="UPI">UPI</option>
-                <option value="CARD">Credit/Debit Card</option>
-              </select>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Order Items</h2>
-              <div className="space-y-3">
-                {cartItems.map((item) => (
-                  <div key={item.productId} className="flex gap-3 pb-3 border-b">
-                    <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                      <span className="text-xl">💊</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{item.name || 'Product'}</p>
-                      <p className="text-sm text-gray-500">
-                        {formatPrice(item.price || 0)} × {item.quantity}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatPrice((item.price || 0) * (item.quantity || 0))}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-lg p-6 sticky top-4">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
-              
-              <div className="space-y-3 border-b pb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span>{formatPrice(cartTotals.subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span>{cartTotals.shipping === 0 ? 'Free' : formatPrice(cartTotals.shipping)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tax (5%)</span>
-                  <span>{formatPrice(cartTotals.tax)}</span>
-                </div>
-              </div>
-              
-              <div className="flex justify-between mt-4 pt-2 border-t">
-                <span className="text-lg font-bold text-gray-800">Total</span>
-                <span className="text-xl font-bold text-blue-600">
-                  {formatPrice(cartTotals.total)}
-                </span>
-              </div>
-=======
         {/* Steps */}
         <Card className="mb-6 shadow-sm">
           <Steps current={currentStep}>
@@ -675,7 +473,6 @@ function Checkout() {
                   <Text>{formatPrice(cartTotals.tax)}</Text>
                 </div>
               </div>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450:client/src/pages/checkout.jsx
 
               <Divider />
 

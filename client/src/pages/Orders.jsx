@@ -55,10 +55,7 @@ function Orders() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, pages: 1 })
-<<<<<<< HEAD
-=======
   const [searchTerm, setSearchTerm] = useState('')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -82,20 +79,6 @@ function Orders() {
     }
   }
 
-<<<<<<< HEAD
-  const getStatusColor = (status) => {
-    const colors = {
-      'pending': 'bg-yellow-100 text-yellow-800',
-      'confirmed': 'bg-purple-100 text-purple-800',
-      'processing': 'bg-blue-100 text-blue-800',
-      'shipped': 'bg-blue-100 text-blue-800',
-      'delivered': 'bg-green-100 text-green-800',
-      'cancelled': 'bg-red-100 text-red-800',
-      'returned': 'bg-gray-100 text-gray-800',
-      'failed': 'bg-red-100 text-red-800'
-    }
-    return colors[status] || 'bg-gray-100 text-gray-800'
-=======
   const getStatusConfig = (status) => {
     const configs = {
       'pending': { color: 'gold', icon: <ClockCircleOutlined />, label: 'Pending' },
@@ -108,7 +91,6 @@ function Orders() {
       'failed': { color: 'red', icon: <CloseCircleOutlined />, label: 'Failed' }
     }
     return configs[status] || { color: 'default', icon: <ExclamationCircleOutlined />, label: status }
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
   }
 
   const formatPrice = (price) => {
@@ -146,15 +128,9 @@ function Orders() {
     } else if (sortBy === 'oldest') {
       filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
     } else if (sortBy === 'highest') {
-<<<<<<< HEAD
-      filtered.sort((a, b) => b.pricing?.finalAmount - a.pricing?.finalAmount)
-    } else if (sortBy === 'lowest') {
-      filtered.sort((a, b) => a.pricing?.finalAmount - b.pricing?.finalAmount)
-=======
       filtered.sort((a, b) => (b.pricing?.finalAmount || 0) - (a.pricing?.finalAmount || 0))
     } else if (sortBy === 'lowest') {
       filtered.sort((a, b) => (a.pricing?.finalAmount || 0) - (b.pricing?.finalAmount || 0))
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
     }
     
     return filtered
@@ -268,106 +244,6 @@ function Orders() {
           </Link>
         </div>
 
-<<<<<<< HEAD
-        <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
-          <div className="flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setStatusFilter('all')}
-                className={`px-4 py-2 rounded-lg transition ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setStatusFilter('pending')}
-                className={`px-4 py-2 rounded-lg transition ${statusFilter === 'pending' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Pending
-              </button>
-              <button
-                onClick={() => setStatusFilter('confirmed')}
-                className={`px-4 py-2 rounded-lg transition ${statusFilter === 'confirmed' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Confirmed
-              </button>
-              <button
-                onClick={() => setStatusFilter('shipped')}
-                className={`px-4 py-2 rounded-lg transition ${statusFilter === 'shipped' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Shipped
-              </button>
-              <button
-                onClick={() => setStatusFilter('delivered')}
-                className={`px-4 py-2 rounded-lg transition ${statusFilter === 'delivered' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Delivered
-              </button>
-              <button
-                onClick={() => setStatusFilter('cancelled')}
-                className={`px-4 py-2 rounded-lg transition ${statusFilter === 'cancelled' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Cancelled
-              </button>
-              <button
-                onClick={() => setStatusFilter('returned')}
-                className={`px-4 py-2 rounded-lg transition ${statusFilter === 'returned' ? 'bg-gray-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Returned
-              </button>
-            </div>
-            
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border rounded-lg bg-white"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="highest">Highest Amount</option>
-              <option value="lowest">Lowest Amount</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center mb-4">
-          <p className="text-sm text-gray-500">
-            Showing {filteredOrders.length} of {pagination.total} orders
-          </p>
-        </div>
-
-        {filteredOrders.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-            <div className="text-6xl mb-4">📦</div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">No orders found</h2>
-            <p className="text-gray-500 mb-6">
-              {statusFilter !== 'all' ? `No ${statusFilter} orders` : "You haven't placed any orders yet"}
-            </p>
-            <Link to="/shop" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-              Start Shopping
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredOrders.map((order) => (
-              <Link to={`/orders/${order._id}`} key={order._id}>
-                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition">
-                  <div className="flex justify-between items-start flex-wrap gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Order #{order._id.slice(-8)}</p>
-                      <p className="text-sm text-gray-500 mt-1">{formatDate(order.createdAt)}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                        {order.status.toUpperCase()}
-                      </span>
-                      <p className="text-lg font-bold text-blue-600 mt-2">
-                        {formatPrice(order.pricing?.finalAmount || 0)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-3 border-t text-right">
-                    <span className="text-blue-600 text-sm">View Details →</span>
-=======
         {/* Stats Cards */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={12} sm={6}>
@@ -493,7 +369,6 @@ function Orders() {
                         Start Shopping
                       </Button>
                     </Link>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
                   </div>
                 </div>
               }

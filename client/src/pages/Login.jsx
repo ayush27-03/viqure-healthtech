@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // pages/Login.jsx
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
@@ -51,11 +52,7 @@ function Login() {
       login(user, token, user.role)
       
       if (user.role === 'CUSTOMER') navigate('/patient/profile')
-<<<<<<< HEAD
-      else if (user.role === 'DOCTOR') navigate('/doctor/profile')
-=======
       else if (user.role === 'DOCTOR') navigate('/doctor/dashboard')
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       else if (user.role === 'ADMIN') navigate('/admin')
       else navigate('/')
       
@@ -130,15 +127,6 @@ function Login() {
                 />
               </div>
 
-<<<<<<< HEAD
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-lg disabled:opacity-50 mt-6"
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-=======
               <Button
                 type="primary"
                 size="large"
@@ -151,7 +139,6 @@ function Login() {
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>
             </div>
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
           </form>
 
           <Divider className="my-6">

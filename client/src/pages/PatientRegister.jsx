@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // pages/PatientRegister.jsx
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
@@ -54,30 +55,9 @@ function PatientRegister() {
     setSuccessMessage('')
     
     try {
-<<<<<<< HEAD
-      const nameParts = formData.name.trim().split(' ')
-      const firstName = nameParts[0] || ''
-      const lastName = nameParts.slice(1).join(' ') || ''
-      
-      const payload = {
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        role: 'CUSTOMER',
-        gender: formData.gender.toUpperCase(),
-        dob: formData.dateOfBirth,
-        profile: {
-          firstName: firstName,
-          lastName: lastName
-        }
-      }
-      
-      await axiosInstance.post('/auth/register', payload)
-=======
       const nameParts = values.name.trim().split(' ')
       const firstName = nameParts[0] || ''
       const lastName = nameParts.slice(1).join(' ') || ''
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       
       const payload = {
         email: values.email,
@@ -92,17 +72,6 @@ function PatientRegister() {
         }
       }
       
-<<<<<<< HEAD
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        phone: '',
-        dateOfBirth: '',
-        gender: ''
-      })
-=======
       await axiosInstance.post('/auth/register', payload)
       
       message.success('Registration successful! Please login to continue.')
@@ -110,7 +79,6 @@ function PatientRegister() {
       
       form.resetFields()
       setCurrentStep(0)
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       
       setTimeout(() => {
         navigate('/login')
@@ -132,88 +100,6 @@ function PatientRegister() {
     }
   }
 
-<<<<<<< HEAD
-          {successMessage && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <p className="text-green-600 text-sm">{successMessage}</p>
-            </div>
-          )}
-          
-          {serverError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-red-600 text-sm">{serverError}</p>
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Email *
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Date of Birth
-              </label>
-              <input
-                type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Gender
-              </label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-=======
   const onFinishFailed = (errorInfo) => {
     message.error('Please fill in all required fields correctly')
   }
@@ -278,7 +164,6 @@ function PatientRegister() {
               <Form.Item
                 name="dob"
                 label="Date of Birth"
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
               >
                 <DatePicker 
                   style={{ width: '100%' }} 
