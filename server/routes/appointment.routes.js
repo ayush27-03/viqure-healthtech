@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const appointmentController = require('../controllers/appointment.controller');
-const { protect } = require('../middlewares/auth.middleware');
+const { protect, restrictTo } = require('../middlewares/auth.middleware');
 
 router.use(protect);
 
@@ -18,6 +18,6 @@ router.patch('/:id/payment', appointmentController.recordPayment);
 router.post('/:id/documents', appointmentController.shareDocument);
 router.post('/:id/feedback', appointmentController.leaveFeedback);
 router.post('/:id/report-issue', appointmentController.reportIssue);
-router.patch('/:id/resolve-issue', appointmentController.resolveIssue);
+router.patch('/:id/resolve-issue', restrictTo('ADMIN'), appointmentController.resolveIssue);
 
 module.exports = router;
