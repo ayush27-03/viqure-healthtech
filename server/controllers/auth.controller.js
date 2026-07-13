@@ -35,7 +35,6 @@ const register = catchAsync(async (req, res) => {
     profile,
     detailsOfHealthCareProfessional,
   } = req.body;
-  console.log(req.body);
   if (!email || !password || !role) {
     throw new ApiError(400, "email, password and role are required");
   }
