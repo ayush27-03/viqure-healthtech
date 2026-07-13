@@ -1,6 +1,7 @@
 const { Product, Category } = require('../models/index');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
+const { escapeRegex } = require('../utils/helpers')
 
 /**
  * GET /api/products
@@ -12,7 +13,7 @@ const listProducts = catchAsync(async (req, res) => {
 
   const filter = { isActive: true };
   if (categoryId) filter.categoryId = categoryId;
-  if (q) filter.name = { $regex: q, $options: 'i' };
+  if (q) filter.name = { $regex: escapeRegex(q), $options: 'i' };
   if (minPrice || maxPrice) {
     filter['pricing.finalPrice'] = {};
     if (minPrice) filter['pricing.finalPrice'].$gte = Number(minPrice);

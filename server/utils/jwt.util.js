@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
 
-const secret = process.env.JWT_SECRET || 'dev-only-secret';
-const defaultExpiry = process.env.JWT_EXPIRES_IN || '7d';
+const secret = process.env.JWT_SECRET;
+if (!secret) throw new Error("JWT_SECRET is not set — check .env and dotenv load order");
+
+const defaultExpiry = process.env.JWT_EXPIRES_IN;
 
 /**
  * Signs a JWT containing the user's _id and role.
