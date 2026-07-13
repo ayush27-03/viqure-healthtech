@@ -135,8 +135,8 @@ function PatientProfile() {
       cancelText: 'No',
       onOk: async () => {
         try {
-          const updatedAddresses = formData.addresses.filter((_, i) => i !== index)
-          await axiosInstance.delete('/users/me/addresses/${index}', { addresses: updatedAddresses })
+          // const updatedAddresses = formData.addresses.filter((_, i) => i !== index)
+          await axiosInstance.delete(`/users/me/addresses/${index}`)
           fetchPatientData()
           message.success('Address removed')
         } catch (error) {
