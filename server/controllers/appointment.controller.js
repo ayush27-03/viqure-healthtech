@@ -35,6 +35,7 @@ const bookAppointment = catchAsync(async (req, res) => {
   const [startH, startM] = (slot.startTime || '00:00').split(':').map(Number);
   const [endH, endM] = (slot.endTime || '00:00').split(':').map(Number);
   const startDateTime = new Date(slot.date);
+  if (startDateTime < new Date()) throw new ApiError(400, 'Cannot book a slot in the past');
   startDateTime.setHours(startH, startM, 0, 0);
   const endDateTime = new Date(slot.date);
   endDateTime.setHours(endH, endM, 0, 0);
@@ -366,6 +367,10 @@ const recordPayment = catchAsync(async (req, res) => {
   if (appointment.patientId.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'You can only pay for your own appointments');
   }
+  
+  if (!['BOOKED','CONFIRMED'].includes(appointment.appointmentStatus)) throw new ApiError(400, `Cannot record payment for a ${appointment.appointmentStatus} appointment`);
+
+  if (appointment.paymentDetails.status === 'PAID') throw new ApiError(409, 'Appointment already paid');
 
   appointment.paymentDetails = {
     transactionId,
