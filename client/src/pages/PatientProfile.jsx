@@ -136,7 +136,7 @@ function PatientProfile() {
       onOk: async () => {
         try {
           const updatedAddresses = formData.addresses.filter((_, i) => i !== index)
-          await axiosInstance.patch('/auth/me', { addresses: updatedAddresses })
+          await axiosInstance.delete('/users/me/addresses/${index}', { addresses: updatedAddresses })
           fetchPatientData()
           message.success('Address removed')
         } catch (error) {
