@@ -104,7 +104,8 @@ const listOrders = catchAsync(async (req, res) => {
   const { status, page = 1, limit = 20 } = req.query;
   const filter = {};
 
-  if (req.user.role === 'CUSTOMER') filter.userId = req.user._id;
+  // if (req.user.role === 'CUSTOMER') filter.userId = req.user._id;
+  if (req.user.role === 'ADMIN') filter.userId = req.user._id;
   if (status) filter.status = status;
 
   const skip = (Number(page) - 1) * Number(limit);
