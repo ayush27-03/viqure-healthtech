@@ -369,7 +369,7 @@ function PatientProfile() {
                               <p className="text-sm text-gray-600">{addr.city}, {addr.state} - {addr.pincode}</p>
                             </div>
                             <button
-                              onClick={() => handleDeleteAddress(index)}
+                              onClick={() => handleDeleteAddress(addr._id)}
                               className="text-red-500 hover:text-red-700 text-sm"
                             >
                               Remove
@@ -704,7 +704,7 @@ function PatientProfile() {
                           type="text"
                           danger
                           icon={<DeleteOutlined />}
-                          onClick={() => handleDeleteAddress(index)}
+                          onClick={() => handleDeleteAddress(addr._id)}
                         >
                           Remove
                         </Button>
