@@ -10,6 +10,8 @@ const ApiError = require("./utils/ApiError");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 const allowedOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((value) => value.trim())
@@ -35,21 +37,19 @@ app.use(express.urlencoded({ extended: true }));
 
 if (process.env.NODE_ENV !== "test") app.use(morgan("dev"));
 
+/*
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
 });
+*/
 
-app.use(limiter);
+// app.use(limiter);
 
 // * Temporary root route for server routing status check
 app.get("/", (req,res)=>{
   res.send("Server Alive");
 });
-
-app.get("/jsonData", async (req, res)=>{
-  res.status(200).send({success: true, data: await User.find()});
-})
 
 // * Usage of route aggregator pattern in order to maintain clean code
 app.use('/api', routes);
