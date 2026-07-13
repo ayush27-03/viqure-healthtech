@@ -1,7 +1,7 @@
 const { User, Appointment, Order, Product, Review } = require('../models/index');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
-const { sanitizeUser } = require('../utils/helpers');
+const { sanitizeUser, escapeRegex } = require('../utils/helpers');
 
 /**
  * GET /api/admin/doctors/pending
@@ -60,7 +60,7 @@ const listUsers = catchAsync(async (req, res) => {
   const filter = {};
   if (role) filter.role = role;
   if (isActive !== undefined) filter.isActive = isActive === 'true';
-  if (q) filter.email = { $regex: q, $options: 'i' };
+  if (q) filter.email = { $regex: escapeRegex(q), $options: 'i' };
 
   const skip = (Number(page) - 1) * Number(limit);
   const [users, total] = await Promise.all([

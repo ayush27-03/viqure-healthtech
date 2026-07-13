@@ -11,4 +11,7 @@ const sanitizeUser = (userDoc) => {
   return user;
 };
 
-module.exports = { sanitizeUser };
+const escapeRegex = (str = "") => String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+module.exports = { sanitizeUser, escapeRegex };
+
