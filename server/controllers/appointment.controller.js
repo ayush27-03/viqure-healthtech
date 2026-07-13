@@ -35,7 +35,6 @@ const bookAppointment = catchAsync(async (req, res) => {
   const [startH, startM] = (slot.startTime || '00:00').split(':').map(Number);
   const [endH, endM] = (slot.endTime || '00:00').split(':').map(Number);
   const startDateTime = new Date(slot.date);
-  if (startDateTime < new Date()) throw new ApiError(400, 'Cannot book a slot in the past');
   startDateTime.setHours(startH, startM, 0, 0);
   const endDateTime = new Date(slot.date);
   endDateTime.setHours(endH, endM, 0, 0);
