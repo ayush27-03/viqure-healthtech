@@ -1,7 +1,7 @@
 const { User } = require("../models/index");
 const catchAsync = require("../utils/catchAsync");
 const ApiError = require("../utils/ApiError");
-const { sanitizeUser } = require("../utils/helpers");
+const { sanitizeUser, escapeRegex } = require("../utils/helpers");
 
 /**
  * GET /api/users/doctors
@@ -18,7 +18,7 @@ const listDoctors = catchAsync(async (req, res) => {
   };
 
   if (city) {
-    filter["addresses.city"] = { $regex: city, $options: "i" };
+    filter["addresses.city"] = { $regex: escapeRegex(city), $options: "i" };
   }
   if (minRating) {
     filter["detailsOfHealthCareProfessional.averageRating"] = {
@@ -131,17 +131,28 @@ const getCart = catchAsync(async (req, res) => {
  */
 const addToCart = catchAsync(async (req, res) => {
   const { productId, quantity = 1 } = req.body;
-  if (!productId) throw new ApiError(400, "productId is required");
 
   const user = await User.findById(req.user._id);
+
+  const product = await Product.findOne({ _id: productId, isActive: true });
+
+  if (!product) throw new ApiError(404, "Product not found or unavailable");
+
+  const qty = Number(quantity);
+  if (!Number.isInteger(qty) || qty < 1)
+    throw new ApiError(400, "quantity must be a positive integer");
+
   const existingItem = user.cart.find(
     (item) => item.productId.toString() === productId,
   );
 
-  if (existingItem) {
-    existingItem.quantity += Number(quantity);
-  } else {
-    user.cart.push({ productId, quantity });
+  const newQty = (existingItem ? existingItem.quantity : 0) + qty;
+
+  if (newQty > product.inventory.stockCount) {
+    throw new ApiError(
+      409,
+      `Only ${product.inventory.stockCount} left in stock`,
+    );
   }
 
   await user.save();
