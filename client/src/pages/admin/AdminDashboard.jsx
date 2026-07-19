@@ -34,7 +34,8 @@ import {
   PlusOutlined,
   BellOutlined,
   AppstoreOutlined,
-  MedicineBoxOutlined
+  MedicineBoxOutlined,
+  AlertOutlined 
 } from '@ant-design/icons'
 
 const { Header, Sider, Content } = Layout
@@ -80,6 +81,7 @@ function AdminDashboard() {
     { key: '/admin/products', label: 'Products', icon: <MedicineBoxOutlined /> },
     { key: '/admin/orders', label: 'Orders', icon: <ShoppingCartOutlined /> },
     { key: '/admin/categories', label: 'Categories', icon: <AppstoreOutlined /> },
+    { key: '/admin/issues', label: 'Issue Reports', icon: <AlertOutlined /> },
     { key: '/admin/settings', label: 'Settings', icon: <SettingOutlined /> }
   ]
 
@@ -136,25 +138,6 @@ function AdminDashboard() {
         />
       </Sider>
 
-      <Layout>
-        <Header className="bg-white shadow-sm px-6 flex items-center justify-between border-b" style={{ height: 64 }}>
-          <Space>
-            <Button
-              type="text"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
-            />
-            <Title level={4} className="mb-0">Dashboard</Title>
-          </Space>
-          <Space>
-            <Badge count={stats.pendingApprovals} size="small">
-              <Button type="text" icon={<BellOutlined />} />
-            </Badge>
-            <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>
-              Logout
-            </Button>
-          </Space>
-        </Header>
 
         <Content className="p-6 bg-gray-50">
           {location.pathname === '/admin' ? (
@@ -262,7 +245,6 @@ function AdminDashboard() {
             <Outlet />
           )}
         </Content>
-      </Layout>
     </Layout>
   )
 }

@@ -1,10 +1,10 @@
-// pages/Homepage.jsx
-import React, { useState, useEffect } from 'react'
+// pages/Homepage.jsx - Fixed import
+import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
+import Fuse from 'fuse.js'
 import {
-  Layout,
   Row,
   Col,
   Card,
@@ -18,41 +18,30 @@ import {
   Empty,
   Avatar,
   Badge,
-  Statistic,
   Rate,
   Divider,
-  Segmented,
   Slider,
-  Checkbox,
   Drawer,
-  Grid,
   Pagination
 } from 'antd'
 import {
   SearchOutlined,
-  HeartOutlined,
-  HeartFilled,
-  StarOutlined,
   UserOutlined,
   EnvironmentOutlined,
   DollarOutlined,
   ClockCircleOutlined,
-  FilterOutlined,
-  SortAscendingOutlined,
-  PlusOutlined,
-  MinusOutlined
+  FilterOutlined
 } from '@ant-design/icons'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
+// FIX: Import both Title, Text, AND Paragraph
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
 const { Option } = Select
-const { useBreakpoint } = Grid
 
 function Homepage() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
-  const screens = useBreakpoint()
   
   const [doctors, setDoctors] = useState([])
   const [filteredDoctors, setFilteredDoctors] = useState([])
@@ -66,15 +55,28 @@ function Homepage() {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [priceRange, setPriceRange] = useState([0, 2000])
   const [minRating, setMinRating] = useState(0)
-  const [showFilters, setShowFilters] = useState(false)
 
+  // ============ FUSE.JS INSTANCE ============
+  const fuse = useMemo(() => {
+    return new Fuse(doctors, {
+      keys: [
+        { name: 'firstName', weight: 1.5 },
+        { name: 'lastName', weight: 1.5 },
+        { name: 'qualifications', weight: 1 },
+        { name: 'addresses.city', weight: 0.8 },
+        { name: 'bio', weight: 0.3 }
+      ],
+      threshold: 0.3,
+      includeScore: true,
+      minMatchCharLength: 2,
+      useExtendedSearch: true
+    })
+  }, [doctors])
+
+  // ============ FETCH DOCTORS ============
   useEffect(() => {
     fetchDoctors()
   }, [])
-
-  useEffect(() => {
-    filterAndSortDoctors()
-  }, [searchTerm, selectedSpecialty, doctors, sortBy, selectedCity, priceRange, minRating])
 
   const fetchDoctors = async () => {
     try {
@@ -96,25 +98,21 @@ function Homepage() {
           rating: 0, 
           totalRatings: 0, 
           totalAppointments: 0 
-        },
-        availabilitySettings: doc.availabilitySettings || {
-          minAppointmentDuration: 10,
-          maxAppointmentDuration: 180,
-          advanceBookingDays: 14
         }
       }))
       
       setDoctors(mappedDoctors)
       setFilteredDoctors(mappedDoctors)
 
+      // Extract specialties
       const allSpecialties = mappedDoctors.flatMap(doc => doc.qualifications || [])
-      const uniqueSpecialties = [...new Set(allSpecialties)]
-      setSpecialties(uniqueSpecialties)
+      setSpecialties([...new Set(allSpecialties)])
 
+      // Extract cities
       const allCities = [...new Set(mappedDoctors.map(doc => doc.addresses?.[0]?.city).filter(Boolean))]
       setCities(allCities)
 
-      // Set max price for range
+      // Set max price
       const maxPrice = Math.max(...mappedDoctors.map(d => d.consultationFee || 0), 500)
       setPriceRange([0, maxPrice])
 
@@ -125,22 +123,25 @@ function Homepage() {
     }
   }
 
-  const filterAndSortDoctors = () => {
-    let filtered = [...doctors]
+  // ============ APPLY FILTERS + FUSE SEARCH ============
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      applyFilters(doctors)
+      return
+    }
+
+    const results = fuse.search(searchTerm)
+    const matchedDoctors = results.map(result => result.item)
+    applyFilters(matchedDoctors)
+  }, [searchTerm, selectedSpecialty, selectedCity, priceRange, minRating, sortBy, doctors])
+
+  const applyFilters = (doctorsList) => {
+    let filtered = [...doctorsList]
     
     // Filter by specialty
     if (selectedSpecialty !== 'all') {
       filtered = filtered.filter(doc => 
         doc.qualifications?.includes(selectedSpecialty)
-      )
-    }
-    
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(doc => 
-        `${doc.firstName} ${doc.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.qualifications?.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        doc.addresses?.[0]?.city?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
     
@@ -185,6 +186,7 @@ function Homepage() {
     setFilteredDoctors(filtered)
   }
 
+  // ============ HANDLERS ============
   const handleViewProfile = (doctorId) => {
     if (!isAuthenticated) {
       navigate('/login')
@@ -193,6 +195,16 @@ function Homepage() {
     }
   }
 
+  const clearAllFilters = () => {
+    setSearchTerm('')
+    setSelectedSpecialty('all')
+    setSelectedCity('all')
+    setSortBy('relevant')
+    setPriceRange([0, 2000])
+    setMinRating(0)
+  }
+
+  // ============ RENDER DOCTOR CARD ============
   const renderDoctorCard = (doctor, index) => (
     <motion.div
       key={doctor._id}
@@ -275,6 +287,16 @@ function Homepage() {
     </motion.div>
   )
 
+  // ============ LOADING STATE ============
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spin size="large" tip="Loading doctors..." />
+      </div>
+    )
+  }
+
+  // ============ MAIN RENDER ============
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -309,6 +331,11 @@ function Homepage() {
                 }
                 className="shadow-2xl rounded-lg overflow-hidden"
               />
+              {searchTerm && (
+                <div className="text-center text-blue-200 text-sm mt-2">
+                  Found {filteredDoctors.length} doctor{filteredDoctors.length !== 1 ? 's' : ''}
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -468,7 +495,6 @@ function Homepage() {
               size="large"
               onClick={() => {
                 setFilterDrawerOpen(false)
-                filterAndSortDoctors()
               }}
             >
               Apply Filters
@@ -477,13 +503,7 @@ function Homepage() {
         </Drawer>
 
         {/* Doctor Cards */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-              <Card key={i} loading className="h-80" />
-            ))}
-          </div>
-        ) : filteredDoctors.length > 0 ? (
+        {filteredDoctors.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredDoctors.map((doctor, index) => renderDoctorCard(doctor, index))}
           </div>
@@ -498,14 +518,7 @@ function Homepage() {
                   <div className="mt-4">
                     <Button 
                       type="primary"
-                      onClick={() => {
-                        setSearchTerm('')
-                        setSelectedSpecialty('all')
-                        setSelectedCity('all')
-                        setSortBy('relevant')
-                        setPriceRange([0, 2000])
-                        setMinRating(0)
-                      }}
+                      onClick={clearAllFilters}
                     >
                       Clear All Filters
                     </Button>

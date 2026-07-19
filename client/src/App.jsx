@@ -18,15 +18,20 @@ import {
   HomeOutlined,
   SettingOutlined,
   DollarOutlined,
-  DownOutlined
+  DownOutlined,
+  AlertOutlined 
 } from '@ant-design/icons'
 import RatingModalManager from './components/RatingModalManager'
 import NotificationBell from './components/NotificationBell'
 
 // Auth Pages
 import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword'
+import VerifyOTP from './pages/VerifyOTP'
+import ResetPassword from './pages/ResetPassword'
 import PatientRegister from './pages/PatientRegister'
 import DoctorRegister from './pages/DoctorRegister'
+
 
 // Profile Pages
 import PatientProfile from './pages/PatientProfile'
@@ -42,6 +47,7 @@ import AdminAppointments from './pages/admin/AdminAppointments'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
 import AdminCategories from './pages/admin/AdminCategories'
+import AdminIssues from './pages/admin/AdminIssues'
 import AdminSettings from './pages/admin/AdminSettings'
 
 // Other Pages
@@ -58,6 +64,9 @@ import Orders from './pages/Orders'
 import OrderDetail from './pages/OrderDetail'
 import DoctorDashboard from './pages/DoctorDashboard'
 
+import ReportModal from './components/ReportModal'
+import MyReports from './pages/MyReports'
+
 const { Header, Content } = Layout
 const { Title } = Typography
 
@@ -65,6 +74,7 @@ function Navigation() {
   const { isAuthenticated, user, logout, role } = useAuth()
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [reportModalVisible, setReportModalVisible] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -75,119 +85,157 @@ function Navigation() {
   // ============ ADMIN NAVIGATION ============
   if (role === 'admin') {
     return (
-      <Header className="bg-white shadow-sm px-6 flex items-center justify-between border-b sticky top-0 z-50" style={{ height: 64 }}>
-        <div className="flex items-center gap-6">
-          <Link to="/admin" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">V</span>
-            </div>
-            <Title level={4} className="m-0 text-blue-700">
-              ViQure Admin
-            </Title>
-          </Link>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <NotificationBell />
-          <Dropdown
-            menu={{
-              items: [
-                { key: 'logout', label: 'Logout', icon: <LogoutOutlined />, onClick: handleLogout }
-              ]
-            }}
-            placement="bottomRight"
-          >
-            <Button type="text" className="flex items-center gap-2">
-              <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
-              <span className="hidden sm:inline">Admin</span>
+      <>
+        <Header className="bg-white shadow-sm px-6 flex items-center justify-between border-b sticky top-0 z-50" style={{ height: 64 }}>
+          <div className="flex items-center gap-6">
+            <Link to="/admin" className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-xl">V</span>
+              </div>
+              <Title level={4} className="m-0 text-blue-700">
+                ViQure 
+              </Title>
+            </Link>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <Button 
+              type="text" 
+              onClick={() => setReportModalVisible(true)}
+              className="text-gray-700 hover:text-red-500 font-medium"
+            >
+              Report Issue
             </Button>
-          </Dropdown>
-        </div>
-      </Header>
+            <Dropdown
+              menu={{
+                items: [
+                  { 
+                    key: 'dashboard', 
+                    label: 'Dashboard', 
+                    icon: <UserOutlined />, 
+                    onClick: () => {
+                      navigate('/admin')
+                      setDropdownOpen(false)
+                    }
+                  },
+                  { 
+                    key: 'documents', 
+                    label: 'Documents', 
+                    icon: <FileTextOutlined />, 
+                    onClick: () => {
+                      navigate('/documents')
+                      setDropdownOpen(false)
+                    }
+                  },
+                  { type: 'divider' },
+                  { key: 'logout', label: 'Logout', icon: <LogoutOutlined />, onClick: handleLogout }
+                ]
+              }}
+              placement="bottomRight"
+            >
+              <Button type="text" className="flex items-center gap-2">
+                <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
+                <span className="hidden sm:inline">Admin</span>
+              </Button>
+            </Dropdown>
+          </div>
+        </Header>
+        <ReportModal 
+          visible={reportModalVisible} 
+          onClose={() => setReportModalVisible(false)} 
+        />
+      </>
+      
     )
   }
 
   // ============ DOCTOR NAVIGATION ============
   if (role === 'doctor') {
     return (
-      <Header className="bg-white shadow-sm px-4 md:px-6 flex items-center justify-between border-b sticky top-0 z-50" style={{ height: 64 }}>
-        <Link to="/doctor/dashboard" className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-9 h-9 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">V</span>
+      <>
+        <Header className="bg-white shadow-sm px-4 md:px-6 flex items-center justify-between border-b sticky top-0 z-50" style={{ height: 64 }}>
+          <Link to="/doctor/dashboard" className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-9 h-9 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold text-lg">V</span>
+            </div>
+            <Title level={4} className="m-0 text-blue-700 hidden sm:block">
+              ViQure
+            </Title>
+          </Link>
+
+          <div className="hidden md:flex items-center gap-1">
+            <Link to="/doctor/dashboard">
+              <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
+                <DashboardOutlined />
+                <span>Dashboard</span>
+              </Button>
+            </Link>
+            <Link to="/appointments">
+              <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
+                <CalendarOutlined />
+                <span>Appointments</span>
+              </Button>
+            </Link>
+            <Link to="/doctor/earnings">
+              <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
+                <UserOutlined />
+                <span>Earnings</span>
+              </Button>
+            </Link>
+            <Link to="/doctor/settings">
+              <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
+                <SettingOutlined />
+                <span>Settings</span>
+              </Button>
+            </Link>
           </div>
-          <Title level={4} className="m-0 text-blue-700 hidden sm:block">
-            ViQure
-          </Title>
-        </Link>
 
-        <div className="hidden md:flex items-center gap-1">
-          <Link to="/doctor/dashboard">
-            <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
-              <DashboardOutlined />
-              <span>Dashboard</span>
+          <div className="flex items-center gap-2 md:gap-4">
+            <NotificationBell />
+            <Button 
+              type="text" 
+              onClick={() => setReportModalVisible(true)}
+              className="text-gray-700 hover:text-red-500 font-medium"
+            >
+              Report Issue
             </Button>
-          </Link>
-          <Link to="/appointments">
-            <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
-              <CalendarOutlined />
-              <span>Appointments</span>
-            </Button>
-          </Link>
-          <Link to="/doctor/profile">
-            <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
-              <UserOutlined />
-              <span>Profile</span>
-            </Button>
-          </Link>
-          <Link to="/doctor/settings">
-            <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
-              <SettingOutlined />
-              <span>Settings</span>
-            </Button>
-          </Link>
-        </div>
-
-        <div className="md:hidden">
-          <Dropdown
-            menu={{
-              items: [
-                { key: 'dashboard', label: <Link to="/doctor/dashboard">Dashboard</Link> },
-                { key: 'appointments', label: <Link to="/appointments">Appointments</Link> },
-                { key: 'profile', label: <Link to="/doctor/profile">Profile</Link> },
-                { key: 'settings', label: <Link to="/doctor/settings">Settings</Link> },
-              ]
-            }}
-            placement="bottomLeft"
-          >
-            <Button icon={<MenuOutlined />} type="text" />
-          </Dropdown>
-        </div>
-
-        <div className="flex items-center gap-2 md:gap-4">
-          <NotificationBell />
-          <Dropdown
-            menu={{
-              items: [
-                { key: 'profile', label: 'Profile', icon: <UserOutlined />, onClick: () => navigate('/doctor/profile') },
-                { key: 'earnings', label: 'Earnings', icon: <DollarOutlined />, onClick: () => navigate('/doctor/earnings') },
-                { key: 'settings', label: 'Settings', icon: <SettingOutlined />, onClick: () => navigate('/doctor/settings') },
-                { key: 'divider', type: 'divider' },
-                { key: 'logout', label: 'Logout', icon: <LogoutOutlined />, onClick: handleLogout, danger: true }
-              ]
-            }}
-            placement="bottomRight"
-            trigger={['click']}
-          >
-            <Button type="text" className="flex items-center gap-2 px-2">
-              <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
-              <span className="hidden sm:inline text-gray-700">
-                Dr. {user?.profile?.firstName || 'User'}
-              </span>
-              <DownOutlined className="text-xs text-gray-400" />
-            </Button>
-          </Dropdown>
-        </div>
-      </Header>
+            <Dropdown
+              menu={{
+                items: [
+                  { key: 'profile', label: 'Profile', icon: <UserOutlined />, onClick: () => navigate('/doctor/profile') },
+                  { key: 'documents', label: 'Documents', icon: <FileTextOutlined />, onClick: () => { 
+                    navigate('/documents')
+                    setDropdownOpen(false)
+                  }},
+                  { key: 'appointments', label: 'Appointments', icon: <CalendarOutlined />, onClick: () => {
+                    navigate('/appointments')
+                    setDropdownOpen(false)
+                  }},
+                  { key: 'earnings', label: 'Earnings', icon: <DollarOutlined />, onClick: () => navigate('/doctor/earnings') },
+                  { key: 'settings', label: 'Settings', icon: <SettingOutlined />, onClick: () => navigate('/doctor/settings') },
+                  { key: 'divider', type: 'divider' },
+                  { key: 'logout', label: 'Logout', icon: <LogoutOutlined />, onClick: handleLogout, danger: true }
+                ]
+              }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button type="text" className="flex items-center gap-2 px-2">
+                <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
+                <span className="hidden sm:inline text-gray-700">
+                  Dr. {user?.profile?.firstName || 'User'}
+                </span>
+                <DownOutlined className="text-xs text-gray-400" />
+              </Button>
+            </Dropdown>
+          </div>
+        </Header>
+        <ReportModal 
+          visible={reportModalVisible} 
+          onClose={() => setReportModalVisible(false)} 
+        />
+      </>
     )
   }
 
@@ -203,23 +251,6 @@ function Navigation() {
   ]
 
   const profileMenuItems = [
-    {
-      key: 'profile-header',
-      label: (
-        <div className="flex items-center gap-3 py-2 px-1">
-          <Avatar size={40} icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
-          <div>
-            <div className="font-medium text-gray-800">{user?.profile?.firstName || 'User'}</div>
-            <div className="text-xs text-gray-400">{user?.email || ''}</div>
-          </div>
-        </div>
-      ),
-      onClick: () => {
-        navigate('/patient/profile')
-        setDropdownOpen(false)
-      }
-    },
-    { type: 'divider' },
     { 
       key: 'profile', 
       label: 'My Profile', 
@@ -267,91 +298,104 @@ function Navigation() {
   ]
 
   return (
-    <Header className="bg-white shadow-sm px-4 md:px-6 flex items-center justify-between border-b sticky top-0 z-50" style={{ height: 64 }}>
-      <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-        <div className="w-9 h-9 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-          <span className="text-white font-bold text-lg">V</span>
-        </div>
-        <Title level={4} className="m-0 text-blue-700 hidden sm:block">
-          ViQure
-        </Title>
-      </Link>
+    <>
+      <Header className="bg-white shadow-sm px-4 md:px-6 flex items-center justify-between border-b sticky top-0 z-50" style={{ height: 64 }}>
+        <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+          <div className="w-9 h-9 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
+            <span className="text-white font-bold text-lg">V</span>
+          </div>
+          <Title level={4} className="m-0 text-blue-700 hidden sm:block">
+            ViQure
+          </Title>
+        </Link>
 
-      <div className="hidden md:flex items-center gap-1">
-        {navItems.map(item => (
-          <Link key={item.key} to={item.path}>
-            <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
-              {item.icon}
-              <span>{item.label}</span>
-            </Button>
-          </Link>
-        ))}
-        {isAuthenticated && authNavItems.map(item => (
-          <Link key={item.key} to={item.path}>
-            <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
-              {item.icon}
-              <span>{item.label}</span>
-            </Button>
-          </Link>
-        ))}
-      </div>
-
-      <div className="md:hidden">
-        <Dropdown
-          menu={{
-            items: [
-              ...navItems.map(item => ({
-                key: item.key,
-                label: <Link to={item.path} className="flex items-center gap-2">{item.icon} {item.label}</Link>
-              })),
-              ...(isAuthenticated ? authNavItems.map(item => ({
-                key: item.key,
-                label: <Link to={item.path} className="flex items-center gap-2">{item.icon} {item.label}</Link>
-              })) : [])
-            ]
-          }}
-          placement="bottomLeft"
-        >
-          <Button icon={<MenuOutlined />} type="text" />
-        </Dropdown>
-      </div>
-
-      <div className="flex items-center gap-2 md:gap-4">
-        {isAuthenticated ? (
-          <>
-            <NotificationBell />
-            <Dropdown
-              menu={{ items: profileMenuItems }}
-              placement="bottomRight"
-              trigger={['click']}
-              // REMOVED: open={dropdownOpen}
-              // REMOVED: onOpenChange={setDropdownOpen}
-            >
-              <Button 
-                type="text" 
-                className="flex items-center gap-2 px-3 py-1 h-auto"
-                // REMOVED: onClick={(e) => e.stopPropagation()}
-              >
-                <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" size="default" />
-                <span className="hidden sm:inline text-gray-700 font-medium">
-                  {user?.profile?.firstName || 'User'}
-                </span>
-                <DownOutlined className="text-xs text-gray-400" />
+        <div className="hidden md:flex items-center gap-1">
+          {navItems.map(item => (
+            <Link key={item.key} to={item.path}>
+              <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
+                {item.icon}
+                <span>{item.label}</span>
               </Button>
-            </Dropdown>
-          </>
-        ) : (
-          <Space size="small">
-            <Button type="link" icon={<LoginOutlined />} onClick={() => navigate('/login')}>
-              Sign In
-            </Button>
-            <Button type="primary" icon={<UserAddOutlined />} onClick={() => navigate('/register/patient')}>
-              Sign Up
-            </Button>
-          </Space>
-        )}
-      </div>
-    </Header>
+            </Link>
+          ))}
+          {isAuthenticated && authNavItems.map(item => (
+            <Link key={item.key} to={item.path}>
+              <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
+                {item.icon}
+                <span>{item.label}</span>
+              </Button>
+            </Link>
+          ))}
+        </div>
+
+        <div className="md:hidden">
+          <Dropdown
+            menu={{
+              items: [
+                ...navItems.map(item => ({
+                  key: item.key,
+                  label: <Link to={item.path} className="flex items-center gap-2">{item.icon} {item.label}</Link>
+                })),
+                ...(isAuthenticated ? authNavItems.map(item => ({
+                  key: item.key,
+                  label: <Link to={item.path} className="flex items-center gap-2">{item.icon} {item.label}</Link>
+                })) : [])
+              ]
+            }}
+            placement="bottomLeft"
+          >
+            <Button icon={<MenuOutlined />} type="text" />
+          </Dropdown>
+        </div>
+
+        <div className="flex items-center gap-2 md:gap-4">
+          {isAuthenticated ? (
+            <>
+              <NotificationBell />
+                <Button 
+                  type="text" 
+                  onClick={() => setReportModalVisible(true)}
+                  className="text-gray-700 hover:text-red-500 font-medium"
+                >
+                  Report Issue
+                </Button>
+              <Dropdown
+                menu={{ items: profileMenuItems }}
+                placement="bottomRight"
+                trigger={['click']}
+                // REMOVED: open={dropdownOpen}
+                // REMOVED: onOpenChange={setDropdownOpen}
+              >
+                <Button 
+                  type="text" 
+                  className="flex items-center gap-2 px-3 py-1 h-auto"
+                  // REMOVED: onClick={(e) => e.stopPropagation()}
+                >
+                  <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" size="default" />
+                  <span className="hidden sm:inline text-gray-700 font-medium">
+                    {user?.profile?.firstName || 'User'}
+                  </span>
+                  <DownOutlined className="text-xs text-gray-400" />
+                </Button>
+              </Dropdown>
+            </>
+          ) : (
+            <Space size="small">
+              <Button type="link" icon={<LoginOutlined />} onClick={() => navigate('/login')}>
+                Sign In
+              </Button>
+              <Button type="primary" icon={<UserAddOutlined />} onClick={() => navigate('/register/patient')}>
+                Sign Up
+              </Button>
+            </Space>
+          )}
+        </div>
+      </Header>
+      <ReportModal 
+        visible={reportModalVisible} 
+        onClose={() => setReportModalVisible(false)} 
+      />
+    </>
   )
 }
 
@@ -360,6 +404,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Homepage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/verify-otp" element={<VerifyOTP />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/register/patient" element={<PatientRegister />} />
       <Route path="/register/doctor" element={<DoctorRegister />} />
       <Route path="/doctors" element={<Homepage />} />
@@ -439,6 +486,7 @@ function AppRoutes() {
         <Route path="products" element={<AdminProducts />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="categories" element={<AdminCategories />} />
+        <Route path="issues" element={<AdminIssues />} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
       
@@ -453,6 +501,12 @@ function AppRoutes() {
           <Documents />
         </ProtectedRoute>
       } />
+      <Route path="/my-reports" element={
+        <ProtectedRoute allowedRoles={['patient', 'doctor']}>
+          <MyReports />
+        </ProtectedRoute>
+      } />
+
     </Routes>
   )
 }

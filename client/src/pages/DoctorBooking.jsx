@@ -4,49 +4,42 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
 import {
-  Layout,
   Row,
   Col,
   Card,
   Typography,
   Button,
-  Space,
   Steps,
-  DatePicker,
-  Select,
   Input,
   Modal,
   Alert,
   Spin,
   Tag,
   Divider,
-  Statistic,
   Form,
   Radio,
   message,
   Empty,
   Badge,
-  Timeline
+  Space
 } from 'antd'
 import {
   CalendarOutlined,
   ClockCircleOutlined,
-  UserOutlined,
   DollarOutlined,
   CheckCircleOutlined,
   ArrowLeftOutlined,
-  InfoCircleOutlined,
   SafetyCertificateOutlined,
   VideoCameraOutlined,
   MessageOutlined,
-  HomeOutlined
+  HomeOutlined,
+  WarningOutlined
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 
-const { Title, Text, Paragraph } = Typography
+const { Title, Text } = Typography
 const { Step } = Steps
 const { TextArea } = Input
-const { Option } = Select
 
 function DoctorBooking() {
   const { id } = useParams()
@@ -61,7 +54,6 @@ function DoctorBooking() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [bookingError, setBookingError] = useState('')
   const [bookingSuccess, setBookingSuccess] = useState(false)
-  const [availableRanges, setAvailableRanges] = useState([])
   const [costData, setCostData] = useState(null)
   const [fetchingCost, setFetchingCost] = useState(false)
   const [bookingDetails, setBookingDetails] = useState({
@@ -71,8 +63,14 @@ function DoctorBooking() {
   })
   const [durationOptions, setDurationOptions] = useState([])
   const [availableDates, setAvailableDates] = useState([])
-  const [fetchingSlots, setFetchingSlots] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+  const [bookingAppointmentId, setBookingAppointmentId] = useState('')
+  const [isDoctorAvailable, setIsDoctorAvailable] = useState(true)
+  const [bookedSlots, setBookedSlots] = useState([])
+  const [unavailableTimes, setUnavailableTimes] = useState([])
+  const [workingHours, setWorkingHours] = useState([])
+  const [settings, setSettings] = useState({})
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -83,16 +81,10 @@ function DoctorBooking() {
   }, [id, isAuthenticated])
 
   useEffect(() => {
-    if (selectedDate) {
-      fetchAvailableSlots()
-    }
-  }, [selectedDate])
-
-  useEffect(() => {
-    if (selectedDuration && availableRanges.length > 0) {
+    if (selectedDate && selectedDuration && doctor) {
       calculateAvailableStartTimes()
     }
-  }, [selectedDuration, availableRanges])
+  }, [selectedDate, selectedDuration, doctor, bookedSlots, unavailableTimes])
 
   const fetchDoctorDetails = async () => {
     try {
@@ -100,21 +92,43 @@ function DoctorBooking() {
       const data = response.data.data || response.data
       setDoctor(data)
       
-      const settings = data.availabilitySettings || {}
-      const min = settings.minAppointmentDuration || 10
-      const max = settings.maxAppointmentDuration || 180
-      const maxDays = settings.advanceBookingDays || 14
+      // ✅ Get professional details
+      const professional = data.detailsOfHealthCareProfessional || {}
       
+      // ✅ Get availability status (from detailsOfHealthCareProfessional)
+      const availability = professional.isAvailable !== false
+      setIsDoctorAvailable(availability)
+      
+      // ✅ Get booked slots (timeSlots from detailsOfHealthCareProfessional)
+      const slots = professional.timeSlots || []
+      setBookedSlots(slots)
+      
+      // ✅ Get settings (availabilitySettings from detailsOfHealthCareProfessional)
+      const settingsData = professional.availabilitySettings || {}
+      setSettings(settingsData)
+      
+      // ✅ Get unavailable times
+      const unavailable = settingsData.unavailableTimes || []
+      setUnavailableTimes(unavailable)
+      
+      // ✅ Get working hours
+      const working = settingsData.workingHours || []
+      setWorkingHours(working)
+      
+      // ✅ Generate duration options
+      const min = settingsData.minAppointmentDuration || 10
+      const max = settingsData.maxAppointmentDuration || 180
       const options = []
       for (let duration = min; duration <= max; duration += 10) {
         options.push(duration)
       }
       setDurationOptions(options)
       
+      // ✅ Generate available dates
+      const maxDays = settingsData.advanceBookingDays || 14
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       const dates = []
-      const actualSlots = data.actualAvailableSlots || []
       
       for (let i = 0; i <= maxDays; i++) {
         const date = new Date(today)
@@ -125,7 +139,7 @@ function DoctorBooking() {
         const day = String(date.getDate()).padStart(2, '0')
         const dateStr = `${year}-${month}-${day}`
         
-        const hasSlots = actualSlots.some(slot => slot.date === dateStr && slot.ranges?.length > 0)
+        const hasSlots = checkDateHasAvailableSlots(dateStr, working, slots, unavailable)
         
         dates.push({
           date: date,
@@ -140,73 +154,130 @@ function DoctorBooking() {
       
     } catch (error) {
       console.error('Error fetching doctor:', error)
+      message.error('Failed to load doctor details')
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchAvailableSlots = useCallback(async () => {
-    if (!selectedDate) return
-    setFetchingSlots(true)
-    setAvailableRanges([])
-    setAvailableStartTimes([])
-    setSelectedDuration(null)
-    setSelectedStartTime('')
+  // ✅ Check if a date has any available slots
+  const checkDateHasAvailableSlots = (dateStr, workingHours, bookedSlots, unavailableTimes) => {
+    const dayOfWeek = new Date(dateStr + 'T00:00:00').getDay()
+    const daySetting = workingHours.find(w => w.dayOfWeek === dayOfWeek)
     
-    try {
-      const response = await axiosInstance.get(`/doctors/${id}/available-slots`, {
-        params: { date: selectedDate }
-      })
+    if (!daySetting || !daySetting.isWorking) return false
+    
+    const bookedForDate = bookedSlots.filter(s => s.date === dateStr)
+    const unavailableForDate = unavailableTimes.find(u => u.date === dateStr)
+    
+    for (const slot of daySetting.slots) {
+      const slotStart = timeToMinutes(slot.start)
+      const slotEnd = timeToMinutes(slot.end)
       
-      const data = response.data
-      const ranges = data.ranges || []
-      const minDuration = data.minDuration || 10
-      const maxDuration = data.maxDuration || 180
-      
-      const options = []
-      for (let duration = minDuration; duration <= maxDuration; duration += 10) {
-        options.push(duration)
+      // Check if fully booked
+      let isFullyBooked = false
+      for (const booked of bookedForDate) {
+        const bookedStart = timeToMinutes(booked.startTime)
+        const bookedEnd = timeToMinutes(booked.endTime)
+        if (bookedStart <= slotStart && bookedEnd >= slotEnd) {
+          isFullyBooked = true
+          break
+        }
       }
-      setDurationOptions(options)
-      setAvailableRanges(ranges)
       
-    } catch (error) {
-      console.error('Error fetching slots:', error)
-      setAvailableRanges([])
-    } finally {
-      setFetchingSlots(false)
+      if (!isFullyBooked) {
+        // Check if within unavailable times
+        let isUnavailable = false
+        if (unavailableForDate) {
+          for (const range of unavailableForDate.ranges) {
+            const rangeStart = timeToMinutes(range.start)
+            const rangeEnd = timeToMinutes(range.end)
+            if (slotStart >= rangeStart && slotEnd <= rangeEnd) {
+              isUnavailable = true
+              break
+            }
+          }
+        }
+        
+        if (!isUnavailable) {
+          return true
+        }
+      }
     }
-  }, [id, selectedDate])
+    
+    return false
+  }
 
+  // ✅ Calculate available start times
   const calculateAvailableStartTimes = () => {
+    if (!selectedDate || !selectedDuration || !doctor) {
+      setAvailableStartTimes([])
+      return
+    }
+    
     const startTimes = []
     const now = new Date()
     const selectedDateObj = new Date(selectedDate)
     const isToday = selectedDateObj.toDateString() === now.toDateString()
+    const dayOfWeek = selectedDateObj.getDay()
     
-    for (const range of availableRanges) {
+    const daySetting = workingHours.find(w => w.dayOfWeek === dayOfWeek)
+    if (!daySetting || !daySetting.isWorking) {
+      setAvailableStartTimes([])
+      return
+    }
+    
+    const bookedForDate = bookedSlots.filter(s => s.date === selectedDate)
+    const unavailableForDate = unavailableTimes.find(u => u.date === selectedDate)
+    
+    for (const range of daySetting.slots) {
       let current = range.start
+      const rangeStart = timeToMinutes(range.start)
+      const rangeEnd = timeToMinutes(range.end)
       
       while (true) {
         const currentMinutes = timeToMinutes(current)
         const endMinutes = currentMinutes + selectedDuration
-        const endTime = minutesToTime(endMinutes)
         
-        if (endTime > range.end) break
+        if (endMinutes > rangeEnd) break
         
-        if (isToday) {
+        let isBooked = false
+        for (const booked of bookedForDate) {
+          const bookedStart = timeToMinutes(booked.startTime)
+          const bookedEnd = timeToMinutes(booked.endTime)
+          if (!(endMinutes <= bookedStart || currentMinutes >= bookedEnd)) {
+            isBooked = true
+            break
+          }
+        }
+        
+        let isUnavailable = false
+        if (unavailableForDate) {
+          for (const range of unavailableForDate.ranges) {
+            const unavailStart = timeToMinutes(range.start)
+            const unavailEnd = timeToMinutes(range.end)
+            if (!(endMinutes <= unavailStart || currentMinutes >= unavailEnd)) {
+              isUnavailable = true
+              break
+            }
+          }
+        }
+        
+        let isValidTime = true
+        if (isToday && !isBooked && !isUnavailable) {
           const slotDateTime = new Date(selectedDateObj)
           const [slotHours, slotMins] = current.split(':').map(Number)
           slotDateTime.setHours(slotHours, slotMins, 0, 0)
           const minutesFromNow = (slotDateTime - now) / 1000 / 60
-          
           if (minutesFromNow < 10) {
-            current = addMinutes(current, 10)
-            continue
+            isValidTime = false
           }
         }
         
-        startTimes.push(current)
+        if (!isBooked && !isUnavailable && isValidTime) {
+          startTimes.push(current)
+        }
+        
         current = addMinutes(current, 10)
       }
     }
@@ -214,15 +285,11 @@ function DoctorBooking() {
     setAvailableStartTimes(startTimes)
   }
 
+  // Helper functions
   function timeToMinutes(timeStr) {
+    if (!timeStr) return 0
     const [hours, mins] = timeStr.split(':').map(Number)
     return hours * 60 + mins
-  }
-
-  function minutesToTime(minutes) {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
   }
 
   function addMinutes(timeStr, minutes) {
@@ -234,12 +301,11 @@ function DoctorBooking() {
   }
 
   const handleDateSelect = (dateStr, isAvailable) => {
-    if (!isAvailable) return
+    if (!isAvailable || !isDoctorAvailable) return
     setSelectedDate(dateStr)
-    setAvailableRanges([])
-    setAvailableStartTimes([])
     setSelectedDuration(null)
     setSelectedStartTime('')
+    setAvailableStartTimes([])
     setCurrentStep(1)
   }
 
@@ -290,10 +356,11 @@ function DoctorBooking() {
   }
 
   const handleConfirmBooking = async () => {
+    setSubmitting(true)
     const endTime = getEndTime(selectedStartTime, selectedDuration)
     
     try {
-      await axiosInstance.post('/appointment-requests', {
+      const response = await axiosInstance.post('/appointments', {
         doctorId: id,
         patientId: user?._id,
         date: selectedDate,
@@ -302,15 +369,19 @@ function DoctorBooking() {
         duration: selectedDuration,
         reason: bookingDetails.reason,
         symptoms: bookingDetails.symptoms,
-        type: bookingDetails.type
+        consultationType: bookingDetails.type
       })
       
       setBookingSuccess(true)
+      const appointmentId = response.data.data?._id
+      setBookingAppointmentId(appointmentId)
       message.success('Booking request submitted successfully!')
       
     } catch (error) {
       setBookingError(error.response?.data?.message || 'Booking request failed')
       message.error(error.response?.data?.message || 'Booking request failed')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -328,7 +399,7 @@ function DoctorBooking() {
 
   if (!doctor) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Alert
           message="Doctor Not Found"
           description="The doctor you're looking for doesn't exist or has been removed."
@@ -343,8 +414,6 @@ function DoctorBooking() {
       </div>
     )
   }
-
-  const settings = doctor.availabilitySettings || {}
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4 md:px-8">
@@ -370,12 +439,29 @@ function DoctorBooking() {
               </Col>
               <Col xs={24} md={8} className="text-right">
                 <Tag color="blue" className="text-base py-1 px-3">
-                  <DollarOutlined /> ₹{doctor?.consultationFee || 0} consultation fee
+                  <DollarOutlined /> ₹{doctor?.detailsOfHealthCareProfessional?.consultationFee || 0} consultation fee
                 </Tag>
+                {!isDoctorAvailable && (
+                  <Tag color="red" className="text-base py-1 px-3 ml-2">
+                    <WarningOutlined /> Not Accepting Bookings
+                  </Tag>
+                )}
               </Col>
             </Row>
           </Card>
         </div>
+
+        {/* Doctor Not Available Warning */}
+        {!isDoctorAvailable && (
+          <Alert
+            message="Doctor Not Accepting Bookings"
+            description="This doctor is currently not accepting new appointments. Please check back later or try another doctor."
+            type="warning"
+            showIcon
+            className="mb-4"
+            icon={<ClockCircleOutlined />}
+          />
+        )}
 
         {/* Steps */}
         <Card className="mb-6 shadow-sm">
@@ -391,122 +477,143 @@ function DoctorBooking() {
           <Col xs={24} lg={16}>
             {/* Main Booking Form */}
             <Card className="shadow-sm">
-              {/* Step 1 - Select Date */}
-              <div className="mb-6">
-                <Title level={5}>Select Date</Title>
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2">
-                  {availableDates.map((dateInfo, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleDateSelect(dateInfo.dateStr, dateInfo.isAvailable)}
-                      disabled={!dateInfo.isAvailable}
-                      className={`p-3 rounded-lg text-center transition-all ${
-                        !dateInfo.isAvailable
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
-                          : selectedDate === dateInfo.dateStr
-                          ? 'bg-blue-600 text-white shadow-md scale-105'
-                          : 'bg-gray-50 text-gray-700 hover:bg-blue-50 hover:border-blue-300 border-2 border-transparent'
-                      }`}
-                    >
-                      <div className="text-xs uppercase">{dateInfo.month}</div>
-                      <div className="text-xl font-bold">{dateInfo.dayNum}</div>
-                      <div className="text-xs">{dateInfo.dayName}</div>
-                      {!dateInfo.isAvailable && (
-                        <div className="text-[10px] mt-1 text-gray-400">Unavailable</div>
-                      )}
-                    </button>
-                  ))}
+              {!isDoctorAvailable ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">🚫</div>
+                  <Title level={4}>Bookings Disabled</Title>
+                  <Text type="secondary">
+                    This doctor is currently not accepting new appointments.
+                  </Text>
+                  <br />
+                  <Button 
+                    type="primary" 
+                    className="mt-4"
+                    onClick={() => navigate('/doctors')}
+                  >
+                    Find Another Doctor
+                  </Button>
                 </div>
-              </div>
-
-              {selectedDate && (
+              ) : (
                 <>
-                  <Divider />
-
-                  {/* Step 2 - Select Duration */}
+                  {/* Step 1 - Select Date */}
                   <div className="mb-6">
-                    <Title level={5}>Select Duration</Title>
-                    <Text type="secondary" className="block mb-3 text-sm">
-                      Doctor allows {settings.minAppointmentDuration || 10} to {settings.maxAppointmentDuration || 180} minutes
-                    </Text>
-                    <div className="flex flex-wrap gap-2">
-                      {durationOptions.map((duration) => (
+                    <Title level={5}>Select Date</Title>
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2">
+                      {availableDates.map((dateInfo, index) => (
                         <button
-                          key={duration}
-                          onClick={() => handleDurationSelect(duration)}
-                          className={`px-4 py-2 rounded-lg transition-all ${
-                            selectedDuration === duration
-                              ? 'bg-blue-600 text-white shadow-md'
-                              : 'bg-gray-50 text-gray-700 hover:bg-blue-50 border border-gray-200'
+                          key={index}
+                          onClick={() => handleDateSelect(dateInfo.dateStr, dateInfo.isAvailable)}
+                          disabled={!dateInfo.isAvailable || !isDoctorAvailable}
+                          className={`p-3 rounded-lg text-center transition-all ${
+                            !dateInfo.isAvailable || !isDoctorAvailable
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                              : selectedDate === dateInfo.dateStr
+                              ? 'bg-blue-600 text-white shadow-md scale-105'
+                              : 'bg-gray-50 text-gray-700 hover:bg-blue-50 hover:border-blue-300 border-2 border-transparent'
                           }`}
                         >
-                          {duration} min
+                          <div className="text-xs uppercase">{dateInfo.month}</div>
+                          <div className="text-xl font-bold">{dateInfo.dayNum}</div>
+                          <div className="text-xs">{dateInfo.dayName}</div>
+                          {!dateInfo.isAvailable && (
+                            <div className="text-[10px] mt-1 text-gray-400">Unavailable</div>
+                          )}
                         </button>
                       ))}
                     </div>
-                  </div>
-                </>
-              )}
-
-              {selectedDate && selectedDuration && (
-                <>
-                  <Divider />
-
-                  {/* Step 3 - Select Time */}
-                  <div className="mb-6">
-                    <Title level={5}>Select Start Time</Title>
-                    {fetchingSlots ? (
-                      <div className="text-center py-8">
-                        <Spin tip="Loading available times..." />
-                      </div>
-                    ) : availableStartTimes.length > 0 ? (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto">
-                        {availableStartTimes.map((startTime, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleStartTimeSelect(startTime)}
-                            className={`p-3 rounded-lg text-center transition-all ${
-                              selectedStartTime === startTime
-                                ? 'bg-blue-600 text-white shadow-md scale-105'
-                                : 'bg-green-50 text-gray-700 hover:bg-green-100 border border-green-200'
-                            }`}
-                          >
-                            <div className="font-medium">{startTime}</div>
-                            <div className="text-xs opacity-75">
-                              → {getEndTime(startTime, selectedDuration)}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 rounded-lg p-8 text-center">
-                        <Empty
-                          description="No available start times"
-                          image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        >
-                          <Text type="secondary" className="text-sm">
-                            Try a different duration or date
-                          </Text>
-                        </Empty>
+                    {availableDates.every(d => !d.isAvailable) && (
+                      <div className="mt-4 text-center">
+                        <Text type="secondary">No available dates in the next {settings.advanceBookingDays || 14} days</Text>
                       </div>
                     )}
                   </div>
-                </>
-              )}
 
-              {selectedStartTime && (
-                <>
-                  <Divider />
-                  <Button
-                    type="primary"
-                    size="large"
-                    block
-                    onClick={handleProceedToBook}
-                    loading={fetchingCost}
-                    icon={<CalendarOutlined />}
-                  >
-                    Proceed to Booking Details
-                  </Button>
+                  {selectedDate && (
+                    <>
+                      <Divider />
+
+                      {/* Step 2 - Select Duration */}
+                      <div className="mb-6">
+                        <Title level={5}>Select Duration</Title>
+                        <Text type="secondary" className="block mb-3 text-sm">
+                          Doctor allows {settings.minAppointmentDuration || 10} to {settings.maxAppointmentDuration || 180} minutes
+                        </Text>
+                        <div className="flex flex-wrap gap-2">
+                          {durationOptions.map((duration) => (
+                            <button
+                              key={duration}
+                              onClick={() => handleDurationSelect(duration)}
+                              className={`px-4 py-2 rounded-lg transition-all ${
+                                selectedDuration === duration
+                                  ? 'bg-blue-600 text-white shadow-md'
+                                  : 'bg-gray-50 text-gray-700 hover:bg-blue-50 border border-gray-200'
+                              }`}
+                            >
+                              {duration} min
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {selectedDate && selectedDuration && (
+                    <>
+                      <Divider />
+
+                      {/* Step 3 - Select Time */}
+                      <div className="mb-6">
+                        <Title level={5}>Select Start Time</Title>
+                        {availableStartTimes.length > 0 ? (
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto">
+                            {availableStartTimes.map((startTime, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handleStartTimeSelect(startTime)}
+                                className={`p-3 rounded-lg text-center transition-all ${
+                                  selectedStartTime === startTime
+                                    ? 'bg-blue-600 text-white shadow-md scale-105'
+                                    : 'bg-green-50 text-gray-700 hover:bg-green-100 border border-green-200'
+                                }`}
+                              >
+                                <div className="font-medium">{startTime}</div>
+                                <div className="text-xs opacity-75">
+                                  → {getEndTime(startTime, selectedDuration)}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="bg-gray-50 rounded-lg p-8 text-center">
+                            <Empty
+                              description="No available start times"
+                              image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            >
+                              <Text type="secondary" className="text-sm">
+                                Try a different duration or date
+                              </Text>
+                            </Empty>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {selectedStartTime && (
+                    <>
+                      <Divider />
+                      <Button
+                        type="primary"
+                        size="large"
+                        block
+                        onClick={handleProceedToBook}
+                        loading={fetchingCost}
+                        icon={<CalendarOutlined />}
+                      >
+                        Proceed to Booking Details
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
             </Card>
@@ -521,10 +628,15 @@ function DoctorBooking() {
                 <Text type="secondary">{doctor?.specializations?.join(', ') || 'General Physician'}</Text>
                 <div className="mt-2">
                   <Badge 
-                    count={`${doctor?.stats?.rating || 0} ★`} 
+                    count={`${doctor?.detailsOfHealthCareProfessional?.stats?.rating || 0} ★`} 
                     style={{ backgroundColor: '#52c41a' }}
                   />
                 </div>
+                {!isDoctorAvailable && (
+                  <div className="mt-2">
+                    <Tag color="red" icon={<WarningOutlined />}>Not Available</Tag>
+                  </div>
+                )}
               </div>
               
               <Divider />
@@ -532,15 +644,21 @@ function DoctorBooking() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <Text type="secondary">Experience</Text>
-                  <Text strong>{doctor?.yearsOfExperience || 0} years</Text>
+                  <Text strong>{doctor?.detailsOfHealthCareProfessional?.yearsOfExperience || 0} years</Text>
                 </div>
                 <div className="flex justify-between">
                   <Text type="secondary">Fee</Text>
-                  <Text strong className="text-blue-600">₹{doctor?.consultationFee || 0}</Text>
+                  <Text strong className="text-blue-600">₹{doctor?.detailsOfHealthCareProfessional?.consultationFee || 0}</Text>
                 </div>
                 <div className="flex justify-between">
                   <Text type="secondary">Location</Text>
                   <Text strong>{doctor?.addresses?.[0]?.city || 'N/A'}</Text>
+                </div>
+                <div className="flex justify-between">
+                  <Text type="secondary">Status</Text>
+                  <Tag color={isDoctorAvailable ? 'green' : 'red'}>
+                    {isDoctorAvailable ? 'Accepting Bookings' : 'Not Accepting'}
+                  </Tag>
                 </div>
               </div>
             </Card>
@@ -599,18 +717,25 @@ function DoctorBooking() {
             <Text type="secondary">
               Your booking request has been submitted successfully. The doctor will review and respond.
             </Text>
-            <Button 
-              type="primary" 
-              className="mt-4"
-              block
-              onClick={() => {
-                setBookingSuccess(false)
-                setShowConfirmModal(false)
-                navigate(`/doctor/${id}`)
-              }}
-            >
-              Done
-            </Button>
+            <Space direction="vertical" className="w-full mt-4">
+              <Button 
+                type="primary"
+                block
+                onClick={() => navigate(`/appointments?highlight=${bookingAppointmentId}`)}
+              >
+                View My Appointments
+              </Button>
+              <Button 
+                block
+                onClick={() => {
+                  setBookingSuccess(false)
+                  setShowConfirmModal(false)
+                  navigate(`/doctor/${id}`)
+                }}
+              >
+                Back to Doctor Profile
+              </Button>
+            </Space>
           </div>
         ) : (
           <Form layout="vertical">
@@ -694,12 +819,13 @@ function DoctorBooking() {
               className="mb-4"
             />
 
-            <Space className="w-full">
+            <Space className="w-full" direction="vertical">
               <Button 
                 type="primary" 
                 block
                 size="large"
                 onClick={handleConfirmBooking}
+                loading={submitting}
               >
                 Submit Request
               </Button>

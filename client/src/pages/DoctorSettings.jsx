@@ -1,4 +1,4 @@
-// pages/DoctorSettings.jsx - Fixed with proper defaults for new doctors
+// pages/DoctorSettings.jsx - Updated with visibility toggle
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -19,7 +19,8 @@ import {
   Alert,
   Tag,
   Collapse,
-  Empty
+  Empty,
+  Modal
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -29,7 +30,9 @@ import {
   ClockCircleOutlined,
   CalendarOutlined,
   SettingOutlined,
-  PlusCircleOutlined
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  WarningOutlined
 } from '@ant-design/icons'
 
 const { Title, Text } = Typography
@@ -51,7 +54,7 @@ const DEFAULT_SETTINGS = {
   maxAppointmentDuration: 180,
   advanceBookingDays: 14,
   workingHours: DEFAULT_WORKING_HOURS,
-  leaveDates: []
+  unavailableTimes: []
 }
 
 function DoctorSettings() {
@@ -61,6 +64,10 @@ function DoctorSettings() {
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [originalSettings, setOriginalSettings] = useState(null)
+  const [isAvailable, setIsAvailable] = useState(true)
+  const [togglingAvailability, setTogglingAvailability] = useState(false)
+  const [showToggleConfirm, setShowToggleConfirm] = useState(false)
+  const [pendingAvailability, setPendingAvailability] = useState(null)
 
   useEffect(() => {
     fetchSettings()
@@ -71,24 +78,25 @@ function DoctorSettings() {
       const response = await axiosInstance.get(`/users/doctors/${user?._id}`)
       const doctor = response.data.data || response.data
       
+      // Get availability status
+      const availability = doctor.detailsOfHealthCareProfessional?.isAvailable !== false
+      setIsAvailable(availability)
+      
       if (doctor.availabilitySettings) {
-        // Merge with defaults to ensure all fields exist
         const mergedSettings = {
           ...DEFAULT_SETTINGS,
           ...doctor.availabilitySettings,
           workingHours: doctor.availabilitySettings.workingHours || DEFAULT_WORKING_HOURS,
-          leaveDates: doctor.availabilitySettings.leaveDates || []
+          unavailableTimes: doctor.availabilitySettings.unavailableTimes || []
         }
         setSettings(mergedSettings)
         setOriginalSettings(JSON.parse(JSON.stringify(mergedSettings)))
       } else {
-        // New doctor - use defaults
         setSettings(DEFAULT_SETTINGS)
         setOriginalSettings(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)))
       }
     } catch (error) {
       console.error('Error fetching settings:', error)
-      // Use defaults on error
       setSettings(DEFAULT_SETTINGS)
       setOriginalSettings(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)))
     } finally {
@@ -113,7 +121,7 @@ function DoctorSettings() {
         availabilitySettings: settings
       })
       
-      message.success('Settings saved  successfully')
+      message.success('Settings saved successfully')
       setOriginalSettings(JSON.parse(JSON.stringify(settings)))
       
     } catch (error) {
@@ -122,6 +130,40 @@ function DoctorSettings() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // ===== AVAILABILITY TOGGLE =====
+  const handleToggleAvailability = async (checked) => {
+    setPendingAvailability(checked)
+    setShowToggleConfirm(true)
+  }
+
+  const confirmToggleAvailability = async () => {
+    setTogglingAvailability(true)
+    try {
+      await axiosInstance.patch('/doctors/me/availability/toggle', {
+        isAvailable: pendingAvailability
+      })
+      
+      setIsAvailable(pendingAvailability)
+      message.success(pendingAvailability ? 'Now accepting bookings' : 'Bookings disabled')
+      setShowToggleConfirm(false)
+      setPendingAvailability(null)
+      
+      // Refresh doctor data to update any cached state
+      fetchSettings()
+      
+    } catch (error) {
+      console.error('Error toggling availability:', error)
+      message.error(error.response?.data?.message || 'Failed to update availability')
+    } finally {
+      setTogglingAvailability(false)
+    }
+  }
+
+  const cancelToggleAvailability = () => {
+    setShowToggleConfirm(false)
+    setPendingAvailability(null)
   }
 
   const toggleWorkingDay = (index) => {
@@ -155,22 +197,48 @@ function DoctorSettings() {
     setSettings({ ...settings, workingHours: updated })
   }
 
-  const addLeaveDate = () => {
+  // ===== UNAVAILABLE TIMES =====
+  const addUnavailableTime = () => {
     setSettings({
       ...settings,
-      leaveDates: [...settings.leaveDates, { date: '', reason: '' }]
+      unavailableTimes: [...settings.unavailableTimes, { 
+        date: '', 
+        ranges: [{ start: '09:00', end: '17:00' }],
+        reason: '' 
+      }]
     })
   }
 
-  const updateLeaveDate = (index, field, value) => {
-    const updated = [...settings.leaveDates]
-    updated[index][field] = value
-    setSettings({ ...settings, leaveDates: updated })
+  const addUnavailableTimeRange = (index) => {
+    const updated = [...settings.unavailableTimes]
+    updated[index].ranges.push({ start: '09:00', end: '17:00' })
+    setSettings({ ...settings, unavailableTimes: updated })
   }
 
-  const removeLeaveDate = (index) => {
-    const updated = settings.leaveDates.filter((_, i) => i !== index)
-    setSettings({ ...settings, leaveDates: updated })
+  const updateUnavailableTime = (index, field, value) => {
+    const updated = [...settings.unavailableTimes]
+    updated[index][field] = value
+    setSettings({ ...settings, unavailableTimes: updated })
+  }
+
+  const updateUnavailableTimeRange = (index, rangeIndex, field, value) => {
+    const updated = [...settings.unavailableTimes]
+    updated[index].ranges[rangeIndex][field] = value
+    setSettings({ ...settings, unavailableTimes: updated })
+  }
+
+  const removeUnavailableTimeRange = (index, rangeIndex) => {
+    const updated = [...settings.unavailableTimes]
+    updated[index].ranges.splice(rangeIndex, 1)
+    if (updated[index].ranges.length === 0) {
+      updated.splice(index, 1)
+    }
+    setSettings({ ...settings, unavailableTimes: updated })
+  }
+
+  const removeUnavailableTime = (index) => {
+    const updated = settings.unavailableTimes.filter((_, i) => i !== index)
+    setSettings({ ...settings, unavailableTimes: updated })
   }
 
   if (loading) {
@@ -214,6 +282,60 @@ function DoctorSettings() {
             </Button>
           </div>
         </div>
+
+        {/* ===== AVAILABILITY STATUS TOGGLE ===== */}
+        <Card className="shadow-lg rounded-2xl border-0 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isAvailable ? 'bg-green-100' : 'bg-red-100'}`}>
+                {isAvailable ? (
+                  <CheckCircleOutlined className="text-2xl text-green-600" />
+                ) : (
+                  <CloseCircleOutlined className="text-2xl text-red-600" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <Text strong className="text-lg">
+                    {isAvailable ? 'Accepting Bookings' : 'Not Accepting Bookings'}
+                  </Text>
+                  <Tag color={isAvailable ? 'green' : 'red'}>
+                    {isAvailable ? 'Available' : 'Unavailable'}
+                  </Tag>
+                </div>
+                <Text type="secondary" className="text-sm">
+                  {isAvailable 
+                    ? 'Patients can book appointments with you' 
+                    : 'Patients cannot book appointments right now'}
+                </Text>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Text strong className={isAvailable ? 'text-green-600' : 'text-red-600'}>
+                {isAvailable ? 'ON' : 'OFF'}
+              </Text>
+              <Switch
+                checked={isAvailable}
+                onChange={handleToggleAvailability}
+                loading={togglingAvailability}
+                className="scale-125"
+                checkedChildren="ON"
+                unCheckedChildren="OFF"
+              />
+            </div>
+          </div>
+          
+          {!isAvailable && (
+            <Alert
+              message="Bookings are currently disabled"
+              description="Patients will see a message that you're not accepting appointments. Toggle the switch above to enable bookings."
+              type="warning"
+              showIcon
+              icon={<WarningOutlined />}
+              className="mt-4"
+            />
+          )}
+        </Card>
 
         <Card className="shadow-lg rounded-2xl border-0">
           {/* General Settings */}
@@ -363,45 +485,85 @@ function DoctorSettings() {
 
           <Divider />
 
-          {/* Leave Dates */}
+          {/* Unavailable Times */}
           <div className="mb-8">
             <Title level={4} className="mb-2">
               <CalendarOutlined className="mr-2" />
-              Leave Dates
+              Unavailable Times
             </Title>
             <Text type="secondary" className="block mb-4">
-              Add dates when you will not be available for consultations.
+              Add specific dates or time ranges when you won't be available.
             </Text>
 
-            {settings.leaveDates.length === 0 ? (
+            {settings.unavailableTimes.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                 <CalendarOutlined className="text-2xl text-gray-300" />
-                <Text type="secondary" className="block mt-2">No leave dates added</Text>
+                <Text type="secondary" className="block mt-2">No unavailable times added</Text>
               </div>
             ) : (
-              <div className="space-y-3">
-                {settings.leaveDates.map((leave, index) => (
-                  <div key={index} className="flex items-center gap-3 flex-wrap bg-gray-50 p-3 rounded-xl">
-                    <Input
-                      type="date"
-                      size="large"
-                      value={leave.date}
-                      onChange={(e) => updateLeaveDate(index, 'date', e.target.value)}
-                      className="w-48 rounded-xl"
-                    />
-                    <Input
-                      size="large"
-                      placeholder="Reason (optional)"
-                      value={leave.reason}
-                      onChange={(e) => updateLeaveDate(index, 'reason', e.target.value)}
-                      className="flex-1 rounded-xl"
-                    />
-                    <Button
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => removeLeaveDate(index)}
-                    />
+              <div className="space-y-4">
+                {settings.unavailableTimes.map((item, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <div className="flex items-center gap-3 flex-wrap mb-3">
+                      <Input
+                        type="date"
+                        size="large"
+                        value={item.date}
+                        onChange={(e) => updateUnavailableTime(index, 'date', e.target.value)}
+                        className="w-48 rounded-xl"
+                      />
+                      <Input
+                        size="large"
+                        placeholder="Reason (optional)"
+                        value={item.reason}
+                        onChange={(e) => updateUnavailableTime(index, 'reason', e.target.value)}
+                        className="flex-1 rounded-xl"
+                      />
+                      <Button
+                        type="text"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => removeUnavailableTime(index)}
+                      />
+                    </div>
+                    
+                    <div className="pl-4 space-y-2">
+                      {item.ranges.map((range, rangeIndex) => (
+                        <div key={rangeIndex} className="flex items-center gap-3">
+                          <Text type="secondary" className="text-sm">Range:</Text>
+                          <Input
+                            type="time"
+                            size="middle"
+                            value={range.start}
+                            onChange={(e) => updateUnavailableTimeRange(index, rangeIndex, 'start', e.target.value)}
+                            className="w-32 rounded-xl"
+                          />
+                          <Text type="secondary">to</Text>
+                          <Input
+                            type="time"
+                            size="middle"
+                            value={range.end}
+                            onChange={(e) => updateUnavailableTimeRange(index, rangeIndex, 'end', e.target.value)}
+                            className="w-32 rounded-xl"
+                          />
+                          <Button
+                            type="text"
+                            danger
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            onClick={() => removeUnavailableTimeRange(index, rangeIndex)}
+                          />
+                        </div>
+                      ))}
+                      <Button
+                        type="dashed"
+                        size="small"
+                        icon={<PlusOutlined />}
+                        onClick={() => addUnavailableTimeRange(index)}
+                      >
+                        Add Time Range
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -410,10 +572,10 @@ function DoctorSettings() {
             <Button
               type="dashed"
               icon={<PlusOutlined />}
-              onClick={addLeaveDate}
+              onClick={addUnavailableTime}
               className="mt-4 rounded-xl"
             >
-              Add Leave Date
+              Add Unavailable Time
             </Button>
           </div>
 
@@ -424,11 +586,12 @@ function DoctorSettings() {
             message="How this works"
             description={
               <ul className="list-disc pl-4 mt-2 space-y-1 text-sm">
+                <li>Use the toggle at the top to temporarily stop accepting bookings</li>
                 <li>Patients can book appointments only within your working hours</li>
                 <li>Appointment duration can be chosen by patients between min and max limits</li>
-                <li>A 10 minute buffer is automatically added between appointments</li>
-                <li>Leave dates make you completely unavailable on those days</li>
-                <li>Click Save to update your settings and regenerate available slots</li>
+                <li>Unavailable times override working hours (specific dates/ranges when you're not available)</li>
+                <li>Booked appointments automatically block the time in your schedule</li>
+                <li>Click Save to update your settings</li>
               </ul>
             }
             type="info"
@@ -447,11 +610,66 @@ function DoctorSettings() {
               disabled={!hasSettingsChanged()}
               className="h-12 rounded-xl font-semibold"
             >
-              {saving ? 'Saving and Generating Slots...' : 'Save Settings'}
+              {saving ? 'Saving...' : 'Save Settings'}
             </Button>
           </div>
         </Card>
       </div>
+
+      {/* Confirmation Modal for Toggle */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            {pendingAvailability ? (
+              <CheckCircleOutlined className="text-green-500 text-xl" />
+            ) : (
+              <CloseCircleOutlined className="text-red-500 text-xl" />
+            )}
+            <span>{pendingAvailability ? 'Enable Bookings' : 'Disable Bookings'}</span>
+          </div>
+        }
+        open={showToggleConfirm}
+        onCancel={cancelToggleAvailability}
+        footer={[
+          <Button key="cancel" onClick={cancelToggleAvailability}>
+            Cancel
+          </Button>,
+          <Button
+            key="confirm"
+            type="primary"
+            danger={!pendingAvailability}
+            loading={togglingAvailability}
+            onClick={confirmToggleAvailability}
+            className={pendingAvailability ? 'bg-green-600 hover:bg-green-700' : ''}
+          >
+            {pendingAvailability ? 'Yes, Enable' : 'Yes, Disable'}
+          </Button>
+        ]}
+        width={450}
+      >
+        {pendingAvailability ? (
+          <div className="py-4">
+            <Alert
+              message="Enable Bookings"
+              description="Patients will be able to book appointments with you again."
+              type="info"
+              showIcon
+            />
+          </div>
+        ) : (
+          <div className="py-4">
+            <Alert
+              message="Disable Bookings"
+              description="Patients will not be able to book appointments with you until you turn this back on."
+              type="warning"
+              showIcon
+            />
+            <div className="mt-3 text-sm text-gray-500">
+              <strong>Note:</strong> Existing appointments will not be affected.
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
