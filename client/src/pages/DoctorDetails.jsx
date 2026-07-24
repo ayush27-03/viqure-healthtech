@@ -31,7 +31,6 @@ import {
   DollarOutlined,
   EnvironmentOutlined,
   StarOutlined,
-  StarFilled,
   CheckCircleOutlined,
   PhoneOutlined,
   MailOutlined,
@@ -78,12 +77,12 @@ function DoctorDetails() {
         stats: data.detailsOfHealthCareProfessional?.stats || { rating: 0, totalRatings: 0, totalAppointments: 0 },
         phone: data.phone || '',
         email: data.email || '',
-        availableSlots: data.actualAvailableSlots || [],
         availabilitySettings: data.availabilitySettings || {
           minAppointmentDuration: 10,
           maxAppointmentDuration: 180,
           advanceBookingDays: 14
-        }
+        },
+        timeSlots: data.detailsOfHealthCareProfessional?.timeSlots || []
       }
       
       setDoctor(mappedDoctor)
@@ -152,6 +151,23 @@ function DoctorDetails() {
     }
   ]
 
+  // Format booked slots for display
+  const getFormattedSlots = () => {
+    if (!doctor?.timeSlots || doctor.timeSlots.length === 0) return []
+    
+    // Group by date
+    const grouped = {}
+    doctor.timeSlots.forEach(slot => {
+      if (!grouped[slot.date]) grouped[slot.date] = []
+      grouped[slot.date].push(`${slot.startTime} - ${slot.endTime}`)
+    })
+    
+    return Object.keys(grouped).map(date => ({
+      date: date,
+      slots: grouped[date]
+    }))
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
@@ -180,6 +196,8 @@ function DoctorDetails() {
       </div>
     )
   }
+
+  const formattedSlots = getFormattedSlots()
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4 md:px-8">
@@ -287,7 +305,7 @@ function DoctorDetails() {
               </Row>
             </Card>
 
-            {/* Stats Cards - Using StatCard component */}
+            {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
               {stats.map((stat, index) => (
                 <StatCard
@@ -372,32 +390,29 @@ function DoctorDetails() {
                   )}
                 </TabPane>
 
-                <TabPane tab="Available Slots" key="slots">
-                  {doctor?.availableSlots?.length > 0 ? (
+                <TabPane tab="Booked Slots" key="slots">
+                  {formattedSlots.length === 0 ? (
+                    <Empty description="No booked slots yet" />
+                  ) : (
                     <div className="py-2">
-                      <Title level={5}>Available Time Slots</Title>
+                      <Title level={5}>Booked Time Slots</Title>
                       <Row gutter={[16, 16]}>
-                        {doctor.availableSlots.map((slot, index) => (
+                        {formattedSlots.map((item, index) => (
                           <Col xs={24} sm={12} key={index}>
-                            <Card size="small" className="slot-card bg-blue-50">
-                              <div className="flex justify-between items-center">
-                                <div>
-                                  <Text strong>{new Date(slot.date).toLocaleDateString()}</Text>
-                                  <div className="text-sm text-gray-600">
-                                    {slot.ranges?.map((range, i) => (
-                                      <div key={i}>{range.start} - {range.end}</div>
-                                    ))}
-                                  </div>
+                            <Card size="small" className="bg-gray-50">
+                              <div>
+                                <Text strong>{new Date(item.date).toLocaleDateString()}</Text>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  {item.slots.map((time, i) => (
+                                    <div key={i}>{time}</div>
+                                  ))}
                                 </div>
-                                <Badge status="success" text="Available" />
                               </div>
                             </Card>
                           </Col>
                         ))}
                       </Row>
                     </div>
-                  ) : (
-                    <Empty description="No available slots at the moment" />
                   )}
                 </TabPane>
               </Tabs>

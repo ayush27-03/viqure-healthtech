@@ -112,10 +112,14 @@ function Login() {
                 />
               </div>
 
+
               <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Password
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-gray-700 font-medium">Password</label>
+                  <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+                    Forgot Password?
+                  </Link>
+                </div>
                 <Input.Password
                   size="large"
                   placeholder="Enter your password"

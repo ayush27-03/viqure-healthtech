@@ -1,10 +1,10 @@
-// pages/Shop.jsx
-import React, { useState, useEffect } from 'react'
+// pages/Shop.jsx - Fixed version
+import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
+import Fuse from 'fuse.js'
 import {
-  Layout,
   Row,
   Col,
   Card,
@@ -23,25 +23,15 @@ import {
   Slider,
   Drawer,
   Grid,
-  Skeleton,
-  message,
-  Tooltip
+  message
 } from 'antd'
 import {
   SearchOutlined,
   ShoppingCartOutlined,
   FilterOutlined,
-  SortAscendingOutlined,
-  HeartOutlined,
-  HeartFilled,
-  StarOutlined,
-  StarFilled,
-  DollarOutlined,
-  TagOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined
+  CheckCircleOutlined
 } from '@ant-design/icons'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 const { Title, Text } = Typography
 const { Option } = Select
@@ -50,13 +40,11 @@ const { useBreakpoint } = Grid
 function Shop() {
   const { isAuthenticated } = useAuth()
   const [products, setProducts] = useState([])
+  const [allProducts, setAllProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
-  const [minPrice, setMinPrice] = useState(0)
-  const [maxPrice, setMaxPrice] = useState(10000)
   const [priceRange, setPriceRange] = useState([0, 10000])
   const [sortBy, setSortBy] = useState('')
   const [cartItemCount, setCartItemCount] = useState(0)
@@ -67,75 +55,35 @@ function Shop() {
   const screens = useBreakpoint()
   const [addingToCart, setAddingToCart] = useState({})
 
-  // Fetch categories on mount - ONLY ONCE
+  // ============ FUSE.JS INSTANCE ============
+  const fuse = useMemo(() => {
+    return new Fuse(allProducts, {
+      keys: [
+        { name: 'name', weight: 2 },
+        { name: 'brand', weight: 1.5 },
+        { name: 'category', weight: 1 },
+        { name: 'description', weight: 0.5 }
+      ],
+      threshold: 0.35,
+      includeScore: true,
+      minMatchCharLength: 2,
+      useExtendedSearch: true
+    })
+  }, [allProducts])
+
+  // ============ FETCH DATA ON MOUNT ============
   useEffect(() => {
     fetchCategories()
+    fetchProducts() // ← THIS WAS MISSING!
   }, [])
 
-  // Fetch categories from server
-  const fetchCategories = async () => {
-    try {
-      const response = await axiosInstance.get('/categories')
-      const data = response.data.data || response.data || []
-      const mappedCategories = data.map(cat => ({
-        _id: cat._id,
-        name: cat.name,
-        icon: cat.icon || '',
-        description: cat.description || ''
-      }))
-      setCategories(mappedCategories)
-    } catch (error) {
-      console.error('Error fetching categories:', error)
-      setCategories([])
-    } finally {
-      setCategoriesLoading(false)
+  // ============ APPLY FILTERS ON DEPENDENCY CHANGE ============
+  useEffect(() => {
+    // Only apply filters if products are loaded
+    if (allProducts.length > 0) {
+      applyFiltersAndSearch()
     }
-  }
-
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm)
-      setCurrentPage(1)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [searchTerm])
-
-  // Debounce min price
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedMinPrice(minPrice)
-      setCurrentPage(1)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [minPrice])
-
-  // Debounce max price
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedMaxPrice(maxPrice)
-      setCurrentPage(1)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [maxPrice])
-
-  // Reset page when category or sort changes
-  useEffect(() => {
-    if (selectedCategory) setCurrentPage(1)
-  }, [selectedCategory])
-
-  useEffect(() => {
-    if (sortBy) setCurrentPage(1)
-  }, [sortBy])
-
-  // Fetch products when filters change
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm)
-      setCurrentPage(1)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [searchTerm])
+  }, [searchTerm, selectedCategory, priceRange, sortBy])
 
   useEffect(() => {
     if (selectedCategory) setCurrentPage(1)
@@ -144,10 +92,6 @@ function Shop() {
   useEffect(() => {
     if (sortBy) setCurrentPage(1)
   }, [sortBy])
-
-  useEffect(() => {
-    fetchProducts()
-  }, [debouncedSearch, selectedCategory, priceRange, sortBy, currentPage])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -177,16 +121,7 @@ function Shop() {
   const fetchProducts = async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (debouncedSearch) params.append('q', debouncedSearch)
-      if (selectedCategory) params.append('categoryId', selectedCategory)
-      if (priceRange[0] > 0) params.append('minPrice', priceRange[0])
-      if (priceRange[1] < 10000) params.append('maxPrice', priceRange[1])
-      if (sortBy) params.append('sort', sortBy)
-      if (currentPage) params.append('page', currentPage)
-      params.append('limit', 20)
-
-      const response = await axiosInstance.get(`/products?${params.toString()}`)
+      const response = await axiosInstance.get('/products')
       const responseData = response.data.data || response.data
       const data = Array.isArray(responseData) ? responseData : []
       const paginationData = response.data.pagination || { total: data.length, page: 1, limit: 20, pages: 1 }
@@ -210,15 +145,60 @@ function Shop() {
         specifications: item.specifications || {}
       }))
       
+      setAllProducts(mappedProducts)
       setProducts(mappedProducts)
       setPagination(paginationData)
       
     } catch (error) {
       console.error('Error fetching products:', error)
       setProducts([])
+      setAllProducts([])
     } finally {
       setLoading(false)
     }
+  }
+
+  const applyFiltersAndSearch = () => {
+    let filtered = [...allProducts]
+
+    // 1. Apply fuzzy search with Fuse.js
+    if (searchTerm.trim()) {
+      const results = fuse.search(searchTerm)
+      filtered = results.map(result => result.item)
+    }
+
+    // 2. Filter by category
+    if (selectedCategory) {
+      filtered = filtered.filter(product => product.categoryId === selectedCategory)
+    }
+
+    // 3. Filter by price range
+    filtered = filtered.filter(product => 
+      (product.finalPrice || 0) >= priceRange[0] && 
+      (product.finalPrice || 0) <= priceRange[1]
+    )
+
+    // 4. Apply sorting
+    switch (sortBy) {
+      case 'price_asc':
+        filtered.sort((a, b) => (a.finalPrice || 0) - (b.finalPrice || 0))
+        break
+      case 'price_desc':
+        filtered.sort((a, b) => (b.finalPrice || 0) - (a.finalPrice || 0))
+        break
+      case 'name_asc':
+        filtered.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      default:
+        break
+    }
+
+    setProducts(filtered)
+    setPagination(prev => ({ 
+      ...prev, 
+      total: filtered.length, 
+      pages: Math.ceil(filtered.length / (prev.limit || 20)) 
+    }))
   }
 
   const fetchCartCount = async () => {
@@ -386,6 +366,11 @@ function Shop() {
           <div>
             <Title level={2} className="mb-0">Health Shop</Title>
             <Text type="secondary">Quality healthcare products at your fingertips</Text>
+            {searchTerm && (
+              <Tag color="blue" className="mt-2">
+                Search: "{searchTerm}" → {products.length} results
+              </Tag>
+            )}
           </div>
           {isAuthenticated && (
             <Link to="/cart">
@@ -458,7 +443,7 @@ function Shop() {
 
           <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap justify-between items-center gap-2">
             <Text type="secondary" className="text-sm">
-              Showing <Text strong>{products.length}</Text> of <Text strong>{pagination.total}</Text> products
+              Showing <Text strong>{products.length}</Text> of <Text strong>{allProducts.length}</Text> products
             </Text>
             {searchTerm && (
               <Tag closable onClose={() => setSearchTerm('')} color="blue">
@@ -582,10 +567,7 @@ function Shop() {
               type="primary" 
               block 
               size="large"
-              onClick={() => {
-                setFilterDrawerOpen(false)
-                fetchProducts()
-              }}
+              onClick={() => setFilterDrawerOpen(false)}
             >
               Apply Filters
             </Button>
