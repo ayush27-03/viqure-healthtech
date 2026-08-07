@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
+import { payViaRazorpay } from '../services/razorpay'
 import {
   Layout,
   Row,
@@ -52,12 +53,11 @@ import {
 } from '@ant-design/icons'
 
 const { Title, Text } = Typography
-const { Step } = Steps
 
 function OrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
@@ -128,6 +128,21 @@ function OrderDetail() {
         }
       }
     })
+  }
+
+  const handlePayNow = async () => {
+    setActionLoading(true)
+    await payViaRazorpay({
+      context: 'ORDER',
+      id: order._id,
+      user,
+      onSuccess: async () => {
+        message.success('Payment successful!')
+        await fetchOrder()
+      },
+      onFailure: (err) => message.warning(err?.message || 'Payment was not completed'),
+    })
+    setActionLoading(false)
   }
 
   const handleTrackOrder = async () => {
@@ -327,11 +342,8 @@ function OrderDetail() {
           <Steps
             current={getOrderSteps().filter(s => s.status === 'finish').length}
             status={status === 'cancelled' || status === 'returned' ? 'error' : 'process'}
-          >
-            {getOrderSteps().map((step, index) => (
-              <Step key={index} title={step.title} />
-            ))}
-          </Steps>
+            items={getOrderSteps().map((step) => ({ title: step.title }))}
+          />
         </Card>
 
         <Row gutter={[24, 24]}>
@@ -351,6 +363,20 @@ function OrderDetail() {
             {(isCancellable || isReturnable || true) && (
               <Card className="shadow-sm mt-6">
                 <Space size="middle" wrap>
+                  {order.paymentDetails?.method !== 'COD' &&
+                    order.paymentDetails?.status !== 'SUCCESS' &&
+                    status === 'pending' && (
+                      <Button
+                        type="primary"
+                        size="large"
+                        onClick={handlePayNow}
+                        loading={actionLoading}
+                        icon={<CreditCardOutlined />}
+                        className="bg-green-600 hover:bg-green-700 border-0"
+                      >
+                        Pay Now
+                      </Button>
+                    )}
                   {isCancellable && (
                     <Button
                       danger

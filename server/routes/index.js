@@ -10,6 +10,7 @@ router.use('/appointments', require('./appointment.routes'));
 router.use('/orders', require('./order.routes'));
 router.use('/reviews', require('./review.routes'));
 router.use('/medical-records', require('./medicalRecord.routes'));
+router.use('/payments', require('./payment.routes'));
 router.use('/admin', require('./admin.routes'));
 
 module.exports = router;

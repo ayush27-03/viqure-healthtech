@@ -13,7 +13,6 @@ router.patch('/:id/confirm', appointmentController.confirmAppointment);
 router.patch('/:id/reject', appointmentController.rejectAppointment);
 router.patch('/:id/cancel', appointmentController.cancelAppointment);
 router.patch('/:id/complete', appointmentController.completeAppointment);
-router.patch('/:id/payment', appointmentController.recordPayment);
 
 router.post('/:id/documents', appointmentController.shareDocument);
 router.post('/:id/feedback', appointmentController.leaveFeedback);

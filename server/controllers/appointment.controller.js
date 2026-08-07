@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { Appointment, User } = require('../models/index');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
@@ -138,6 +139,15 @@ const confirmAppointment = catchAsync(async (req, res) => {
 
   appointment.appointmentStatus = 'CONFIRMED';
   appointment.financials.refundableAmount = 0;
+
+  // For video consultations, generate a Jitsi room the moment the doctor confirms.
+  // The random suffix keeps the room URL unguessable on the public meet.jit.si server.
+  if (appointment.meeting?.consultationType === 'VIDEO' && !appointment.meeting.meetingId) {
+    const roomName = `ViQure-${appointment._id}-${crypto.randomBytes(4).toString('hex')}`;
+    appointment.meeting.meetingId = roomName;
+    appointment.meeting.meetingLink = `https://meet.jit.si/${roomName}`;
+  }
+
   await appointment.save();
 
   res.status(200).json({ success: true, data: appointment });
@@ -354,37 +364,6 @@ const resolveIssue = catchAsync(async (req, res) => {
   res.status(200).json({ success: true, data: appointment.reportedIssue });
 });
 
-/**
- * PATCH /api/appointments/:id/payment
- * Records payment success for a BOOKED appointment (called post payment-gateway callback).
- * body: { transactionId }
- */
-const recordPayment = catchAsync(async (req, res) => {
-  const { transactionId } = req.body;
-  if (!transactionId) throw new ApiError(400, 'transactionId is required');
-
-  const appointment = await Appointment.findById(req.params.id);
-  if (!appointment) throw new ApiError(404, 'Appointment not found');
-  if (appointment.patientId.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, 'You can only pay for your own appointments');
-  }
-
-  if (!['BOOKED','CONFIRMED'].includes(appointment.appointmentStatus)) throw new ApiError(400, `Cannot record payment for a ${appointment.appointmentStatus} appointment`);
-
-  if (appointment.paymentDetails.status === 'PAID') throw new ApiError(409, 'Appointment already paid');
-
-  appointment.paymentDetails = {
-    transactionId,
-    status: 'PAID',
-    currency: appointment.paymentDetails.currency,
-    paidAt: new Date(),
-  };
-  appointment.financials.refundableAmount = 0;
-  await appointment.save();
-
-  res.status(200).json({ success: true, data: appointment });
-});
-
 module.exports = {
   bookAppointment,
   listAppointments,
@@ -397,5 +376,8 @@ module.exports = {
   leaveFeedback,
   reportIssue,
   resolveIssue,
-  recordPayment,
 };
+
+// NOTE: The old PATCH /appointments/:id/payment (recordPayment) has been removed.
+// Appointment payments now go through Razorpay: POST /payments/order then
+// POST /payments/verify (server-side signature check). See payment.controller.js.

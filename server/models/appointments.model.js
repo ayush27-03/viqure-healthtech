@@ -31,6 +31,10 @@ const PaymentDetailsSchema = new Schema(
       unique: true,
       sparse: true
     },
+    gatewayOrderId: {
+      type: String,
+      trim: true,
+    },
     status: {
       type: String,
       enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'],

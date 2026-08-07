@@ -86,6 +86,7 @@ const orderSchema = new Schema(
     },
     paymentDetails: {
       transactionId: String,
+      gatewayOrderId: String, // Razorpay order id (order_...) — links our order to the gateway order
       method: String,
       status: { type: String, enum: ["PENDING", "SUCCESS", "FAILED"] },
       paymentDate: Date,

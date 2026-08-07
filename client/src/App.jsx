@@ -4,11 +4,11 @@ import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import { Layout, Menu, Dropdown, Avatar, Button, Badge, Space, Typography, ConfigProvider } from 'antd'
-import { 
-  UserOutlined, 
-  LogoutOutlined, 
-  ShopOutlined, 
-  CalendarOutlined, 
+import {
+  UserOutlined,
+  LogoutOutlined,
+  ShopOutlined,
+  CalendarOutlined,
   OrderedListOutlined,
   MenuOutlined,
   DashboardOutlined,
@@ -19,7 +19,7 @@ import {
   SettingOutlined,
   DollarOutlined,
   DownOutlined,
-  AlertOutlined 
+  AlertOutlined
 } from '@ant-design/icons'
 import RatingModalManager from './components/RatingModalManager'
 import NotificationBell from './components/NotificationBell'
@@ -55,6 +55,7 @@ import Homepage from './pages/Homepage'
 import DoctorDetails from './pages/DoctorDetails'
 import DoctorBooking from './pages/DoctorBooking'
 import Appointments from './pages/Appointments'
+import Consultation from './pages/Consultation'
 import Documents from './pages/Documents'
 import Shop from './pages/Shop'
 import ProductDetail from './pages/ProductDetail'
@@ -93,15 +94,15 @@ function Navigation() {
                 <span className="text-white font-bold text-xl">V</span>
               </div>
               <Title level={4} className="m-0 text-blue-700">
-                ViQure 
+                ViQure Admin
               </Title>
             </Link>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <NotificationBell />
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               onClick={() => setReportModalVisible(true)}
               className="text-gray-700 hover:text-red-500 font-medium"
             >
@@ -110,24 +111,8 @@ function Navigation() {
             <Dropdown
               menu={{
                 items: [
-                  { 
-                    key: 'dashboard', 
-                    label: 'Dashboard', 
-                    icon: <UserOutlined />, 
-                    onClick: () => {
-                      navigate('/admin')
-                      setDropdownOpen(false)
-                    }
-                  },
-                  { 
-                    key: 'documents', 
-                    label: 'Documents', 
-                    icon: <FileTextOutlined />, 
-                    onClick: () => {
-                      navigate('/documents')
-                      setDropdownOpen(false)
-                    }
-                  },
+                  { key: 'dashboard', label: 'Dashboard', icon: <DashboardOutlined />, onClick: () => { navigate('/admin'); setDropdownOpen(false) } },
+                  { key: 'documents', label: 'Documents', icon: <FileTextOutlined />, onClick: () => { navigate('/documents'); setDropdownOpen(false) } },
                   { type: 'divider' },
                   { key: 'logout', label: 'Logout', icon: <LogoutOutlined />, onClick: handleLogout }
                 ]
@@ -141,24 +126,14 @@ function Navigation() {
             </Dropdown>
           </div>
         </Header>
-        <ReportModal 
-          visible={reportModalVisible} 
-          onClose={() => setReportModalVisible(false)} 
+        <ReportModal
+          visible={reportModalVisible}
+          onClose={() => setReportModalVisible(false)}
         />
       </>
-      
     )
   }
 
-<<<<<<< HEAD
-  return (
-    <nav className="bg-blue-600 text-white p-4 shadow-lg">
-      <div className="flex justify-between items-center px-6">
-        {/* Left side - Logo and links */}
-        <div className="flex gap-6 items-center">
-          <Link to="/" className="font-bold text-xl hover:text-blue-200">
-            🏥 ViQure
-=======
   // ============ DOCTOR NAVIGATION ============
   if (role === 'doctor') {
     return (
@@ -188,7 +163,7 @@ function Navigation() {
             </Link>
             <Link to="/doctor/earnings">
               <Button type="text" className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600">
-                <UserOutlined />
+                <DollarOutlined />
                 <span>Earnings</span>
               </Button>
             </Link>
@@ -202,8 +177,8 @@ function Navigation() {
 
           <div className="flex items-center gap-2 md:gap-4">
             <NotificationBell />
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               onClick={() => setReportModalVisible(true)}
               className="text-gray-700 hover:text-red-500 font-medium"
             >
@@ -213,14 +188,8 @@ function Navigation() {
               menu={{
                 items: [
                   { key: 'profile', label: 'Profile', icon: <UserOutlined />, onClick: () => navigate('/doctor/profile') },
-                  { key: 'documents', label: 'Documents', icon: <FileTextOutlined />, onClick: () => { 
-                    navigate('/documents')
-                    setDropdownOpen(false)
-                  }},
-                  { key: 'appointments', label: 'Appointments', icon: <CalendarOutlined />, onClick: () => {
-                    navigate('/appointments')
-                    setDropdownOpen(false)
-                  }},
+                  { key: 'documents', label: 'Documents', icon: <FileTextOutlined />, onClick: () => { navigate('/documents'); setDropdownOpen(false) } },
+                  { key: 'appointments', label: 'Appointments', icon: <CalendarOutlined />, onClick: () => { navigate('/appointments'); setDropdownOpen(false) } },
                   { key: 'earnings', label: 'Earnings', icon: <DollarOutlined />, onClick: () => navigate('/doctor/earnings') },
                   { key: 'settings', label: 'Settings', icon: <SettingOutlined />, onClick: () => navigate('/doctor/settings') },
                   { key: 'divider', type: 'divider' },
@@ -240,9 +209,9 @@ function Navigation() {
             </Dropdown>
           </div>
         </Header>
-        <ReportModal 
-          visible={reportModalVisible} 
-          onClose={() => setReportModalVisible(false)} 
+        <ReportModal
+          visible={reportModalVisible}
+          onClose={() => setReportModalVisible(false)}
         />
       </>
     )
@@ -260,49 +229,49 @@ function Navigation() {
   ]
 
   const profileMenuItems = [
-    { 
-      key: 'profile', 
-      label: 'My Profile', 
-      icon: <UserOutlined />, 
+    {
+      key: 'profile',
+      label: 'My Profile',
+      icon: <UserOutlined />,
       onClick: () => {
         navigate('/patient/profile')
         setDropdownOpen(false)
       }
     },
-    { 
-      key: 'documents', 
-      label: 'Documents', 
-      icon: <FileTextOutlined />, 
+    {
+      key: 'documents',
+      label: 'Documents',
+      icon: <FileTextOutlined />,
       onClick: () => {
         navigate('/documents')
         setDropdownOpen(false)
       }
     },
-    { 
-      key: 'appointments', 
-      label: 'Appointments', 
-      icon: <CalendarOutlined />, 
+    {
+      key: 'appointments',
+      label: 'Appointments',
+      icon: <CalendarOutlined />,
       onClick: () => {
         navigate('/appointments')
         setDropdownOpen(false)
       }
     },
-    { 
-      key: 'orders', 
-      label: 'Orders', 
-      icon: <OrderedListOutlined />, 
+    {
+      key: 'orders',
+      label: 'Orders',
+      icon: <OrderedListOutlined />,
       onClick: () => {
         navigate('/orders')
         setDropdownOpen(false)
       }
     },
     { type: 'divider' },
-    { 
-      key: 'logout', 
-      label: 'Logout', 
-      icon: <LogoutOutlined />, 
-      onClick: handleLogout, 
-      danger: true 
+    {
+      key: 'logout',
+      label: 'Logout',
+      icon: <LogoutOutlined />,
+      onClick: handleLogout,
+      danger: true
     }
   ]
 
@@ -361,8 +330,8 @@ function Navigation() {
           {isAuthenticated ? (
             <>
               <NotificationBell />
-                <Button 
-                  type="text" 
+                <Button
+                  type="text"
                   onClick={() => setReportModalVisible(true)}
                   className="text-gray-700 hover:text-red-500 font-medium"
                 >
@@ -372,13 +341,10 @@ function Navigation() {
                 menu={{ items: profileMenuItems }}
                 placement="bottomRight"
                 trigger={['click']}
-                // REMOVED: open={dropdownOpen}
-                // REMOVED: onOpenChange={setDropdownOpen}
               >
-                <Button 
-                  type="text" 
+                <Button
+                  type="text"
                   className="flex items-center gap-2 px-3 py-1 h-auto"
-                  // REMOVED: onClick={(e) => e.stopPropagation()}
                 >
                   <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" size="default" />
                   <span className="hidden sm:inline text-gray-700 font-medium">
@@ -400,9 +366,9 @@ function Navigation() {
           )}
         </div>
       </Header>
-      <ReportModal 
-        visible={reportModalVisible} 
-        onClose={() => setReportModalVisible(false)} 
+      <ReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
       />
     </>
   )
@@ -422,13 +388,13 @@ function AppRoutes() {
       <Route path="/doctor/:id" element={<DoctorDetails />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/product/:id" element={<ProductDetail />} />
-      
+
       <Route path="/cart" element={
         <ProtectedRoute allowedRoles={['patient']}>
           <Cart />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/checkout" element={
         <ProtectedRoute allowedRoles={['patient']}>
           <Checkout />
@@ -446,7 +412,7 @@ function AppRoutes() {
           <OrderDetail />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/doctor/dashboard" element={
         <ProtectedRoute allowedRoles={['doctor']}>
           <DoctorDashboard />
@@ -465,16 +431,12 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
-<<<<<<< HEAD
-      {/* Protected Routes */}
-=======
->>>>>>> 822752b7f6ce15391a7c9e430cc1f6f92ff3e450
       <Route path="/patient/profile" element={
         <ProtectedRoute allowedRoles={['patient']}>
           <PatientProfile />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/doctor/profile" element={
         <ProtectedRoute allowedRoles={['doctor']}>
           <DoctorProfile />
@@ -486,7 +448,7 @@ function AppRoutes() {
           <DoctorBooking />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/admin" element={
         <ProtectedRoute allowedRoles={['admin']}>
           <AdminDashboard />
@@ -502,10 +464,16 @@ function AppRoutes() {
         <Route path="issues" element={<AdminIssues />} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
-      
+
       <Route path="/appointments" element={
         <ProtectedRoute allowedRoles={['patient', 'doctor']}>
           <Appointments />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/consultation/:id" element={
+        <ProtectedRoute allowedRoles={['patient', 'doctor']}>
+          <Consultation />
         </ProtectedRoute>
       } />
 

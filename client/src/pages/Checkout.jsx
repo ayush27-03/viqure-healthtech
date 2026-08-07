@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
+import { payViaRazorpay } from '../services/razorpay'
 import {
   Layout,
   Row,
@@ -41,12 +42,11 @@ import {
 } from '@ant-design/icons'
 
 const { Title, Text } = Typography
-const { Step } = Steps
 const { Option } = Select
 const { TextArea } = Input
 
 function Checkout() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const [cartItems, setCartItems] = useState([])
@@ -146,13 +146,40 @@ function Checkout() {
         },
         paymentMethod
       })
-      
-      if (response.data.success) {
-        setOrderId(response.data.data?._id || 'ORD-' + Date.now())
+
+      if (!response.data.success) return
+      const order = response.data.data
+      const newOrderId = order?._id
+
+      // Cash on Delivery: nothing to collect now — order is placed.
+      if (paymentMethod === 'COD') {
+        setOrderId(newOrderId)
         setOrderPlaced(true)
         setCurrentStep(2)
         message.success('Order placed successfully!')
+        return
       }
+
+      // Online payment: the order is saved as PENDING, now open Razorpay for it.
+      await payViaRazorpay({
+        context: 'ORDER',
+        id: newOrderId,
+        user,
+        onSuccess: () => {
+          setOrderId(newOrderId)
+          setOrderPlaced(true)
+          setCurrentStep(2)
+          message.success('Payment successful — order confirmed!')
+        },
+        onFailure: (err) => {
+          message.warning(
+            err?.message
+              ? `${err.message}. Your order is saved as pending — you can pay from My Orders.`
+              : 'Payment not completed. Your order is saved as pending — pay it from My Orders.'
+          )
+          navigate('/orders')
+        },
+      })
     } catch (error) {
       console.error('Error placing order:', error)
       message.error(error.response?.data?.message || 'Failed to place order')
@@ -277,11 +304,14 @@ function Checkout() {
 
         {/* Steps */}
         <Card className="mb-6 shadow-sm">
-          <Steps current={currentStep}>
-            <Step title="Address" icon={<HomeOutlined />} />
-            <Step title="Payment" icon={<CreditCardOutlined />} />
-            <Step title="Confirm" icon={<CheckCircleOutlined />} />
-          </Steps>
+          <Steps
+            current={currentStep}
+            items={[
+              { title: 'Address', icon: <HomeOutlined /> },
+              { title: 'Payment', icon: <CreditCardOutlined /> },
+              { title: 'Confirm', icon: <CheckCircleOutlined /> },
+            ]}
+          />
         </Card>
 
         <Row gutter={[24, 24]}>

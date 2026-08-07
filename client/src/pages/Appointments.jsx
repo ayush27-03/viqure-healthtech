@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosInstance from '../services/axiosConfig'
+import { payViaRazorpay } from '../services/razorpay'
 import {
   Card,
   Typography,
@@ -17,7 +18,6 @@ import {
   message,
   Descriptions,
   Divider,
-  Alert,
   Avatar
 } from 'antd'
 import {
@@ -26,9 +26,10 @@ import {
   VideoCameraOutlined,
   CloseCircleOutlined,
   EyeOutlined,
-  DollarOutlined,
   UserOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  CreditCardOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons'
 
 const { Title, Text } = Typography
@@ -51,15 +52,12 @@ function Appointments() {
   const fetchAllAppointments = async () => {
     setLoading(true)
     try {
-      const response = await axiosInstance.get(`/appointments`)
+      const response = await axiosInstance.get('/appointments')
       const appointmentsData = response.data.data || []
-      
-      // Filter out canceled and rejected appointments
-      const activeAppointments = appointmentsData.filter(a => 
-        a.appointmentStatus !== 'CANCELLED' && 
-        a.appointmentStatus !== 'REJECTED'
+      const active = appointmentsData.filter(
+        (a) => a.appointmentStatus !== 'CANCELLED' && a.appointmentStatus !== 'REJECTED'
       )
-      setAppointments(activeAppointments)
+      setAppointments(active)
     } catch (error) {
       console.error('Error fetching appointments:', error)
       setAppointments([])
@@ -70,33 +68,62 @@ function Appointments() {
 
   const refreshAll = async () => {
     await fetchAllAppointments()
-    message.success('Refreshed successfully')
+    message.success('Refreshed')
   }
+
+  // ── date helpers (schedule.* are full ISO datetimes) ──
+  const endOf = (a) =>
+    new Date(a.schedule?.endDateTime || a.schedule?.startDateTime || a.schedule?.scheduledAt)
 
   const getFilteredItems = () => {
     const now = new Date()
-    
-    if (activeTab === 'upcoming') {
-      return appointments.filter(a => {
-        const aptDateTime = new Date(`${a.schedule.scheduledAt}T${a.schedule.endDateTime}:00`)
-        return aptDateTime > now
-      })
-    } else if (activeTab === 'past') {
-      return appointments.filter(a => {
-        const aptDateTime = new Date(`${a.schedule.scheduledAt}T${a.schedule.endDateTime}:00`)
-        return aptDateTime < now
-      })
-    }
+    if (activeTab === 'upcoming') return appointments.filter((a) => endOf(a) >= now)
+    if (activeTab === 'past') return appointments.filter((a) => endOf(a) < now)
     return []
   }
 
-  const handleCancel = async (appointmentId) => {
+  const getUpcomingCount = () => appointments.filter((a) => endOf(a) >= new Date()).length
+  const getPastCount = () => appointments.filter((a) => endOf(a) < new Date()).length
+
+  const getPartyName = (record) => {
+    const party = role === 'patient' ? record.doctorId : record.patientId
+    if (party?.profile) {
+      const name = `${party.profile.firstName || ''} ${party.profile.lastName || ''}`.trim()
+      if (name) return role === 'patient' ? `Dr. ${name}` : name
+    }
+    return role === 'patient' ? 'Doctor' : 'Patient'
+  }
+
+  const getDoctorId = (record) => record.doctorId?._id || record.doctorId
+
+  // ── formatting ──
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A'
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return 'N/A'
+    return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const isPaid = (record) => record.paymentDetails?.status === 'PAID'
+
+  const statusMeta = (status) => {
+    const map = {
+      BOOKED: { color: 'blue', label: 'Booked' },
+      CONFIRMED: { color: 'purple', label: 'Confirmed' },
+      COMPLETED: { color: 'green', label: 'Completed' }
+    }
+    return map[status] || { color: 'default', label: status }
+  }
+
+  // ── actions ──
+  const handleCancel = (appointmentId) => {
     const isDoctor = role === 'doctor'
     Modal.confirm({
-      title: isDoctor ? 'Cancel Appointment' : 'Cancel Appointment',
-      content: isDoctor 
-        ? 'Are you sure you want to cancel this appointment?'
-        : 'Are you sure you want to cancel your appointment?',
+      title: 'Cancel Appointment',
+      content: 'Are you sure you want to cancel this appointment?',
       okText: 'Yes, Cancel',
       cancelText: 'No',
       okType: 'danger',
@@ -104,26 +131,76 @@ function Appointments() {
         setActionLoading(true)
         try {
           if (isDoctor) {
-            await axiosInstance.patch(`/appointments/${appointmentId}/reject`, {
-              reason: 'Cancelled by doctor'
-            })
+            await axiosInstance.patch(`/appointments/${appointmentId}/reject`, { reason: 'Cancelled by doctor' })
           } else {
-            await axiosInstance.patch(`/appointments/${appointmentId}/cancel`, {
-              reason: 'Cancelled by patient'
-            })
+            await axiosInstance.patch(`/appointments/${appointmentId}/cancel`, { cancelReason: 'Cancelled by patient' })
           }
           await fetchAllAppointments()
-          setDetailModalVisible(false)
-          setSelectedItem(null)
-          message.success('Appointment cancelled successfully')
+          closeDetailModal()
+          message.success('Appointment cancelled')
         } catch (error) {
-          message.error(error.response?.data?.message || 'Failed to cancel appointment')
+          message.error(error.response?.data?.message || 'Failed to cancel')
         } finally {
           setActionLoading(false)
         }
       }
     })
   }
+
+  const handleConfirm = async (appointmentId) => {
+    setActionLoading(true)
+    try {
+      await axiosInstance.patch(`/appointments/${appointmentId}/confirm`, {})
+      await fetchAllAppointments()
+      closeDetailModal()
+      message.success('Appointment confirmed — video link generated')
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Failed to confirm')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleComplete = async (appointmentId) => {
+    setActionLoading(true)
+    try {
+      await axiosInstance.patch(`/appointments/${appointmentId}/complete`, {
+        doctorRemarks: { text: 'Consultation completed', mode: 'Text' }
+      })
+      await fetchAllAppointments()
+      closeDetailModal()
+      message.success('Appointment marked complete')
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Failed to complete')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handlePayNow = async (appointment) => {
+    setActionLoading(true)
+    await payViaRazorpay({
+      context: 'APPOINTMENT',
+      id: appointment._id,
+      user,
+      onSuccess: async () => {
+        message.success('Payment successful!')
+        await fetchAllAppointments()
+      },
+      onFailure: (err) => message.warning(err?.message || 'Payment was not completed')
+    })
+    setActionLoading(false)
+  }
+
+  const joinConsultation = (record) => {
+    closeDetailModal()
+    navigate(`/consultation/${record._id}`)
+  }
+
+  const canJoin = (record) =>
+    record.appointmentStatus === 'CONFIRMED' &&
+    record.meeting?.consultationType === 'VIDEO' &&
+    !!record.meeting?.meetingLink
 
   const openDetailModal = (item) => {
     setSelectedItem(item)
@@ -135,36 +212,6 @@ function Appointments() {
     setSelectedItem(null)
   }
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A'
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
-
-  const formatTime = (timeStr) => {
-    if (!timeStr) return 'N/A'
-    const [hours, minutes] = timeStr.split(':')
-    const date = new Date()
-    date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-  }
-
-  const getStatusColor = (status) => {
-    const colors = {
-      BOOKED: 'blue',
-      COMPLETED: 'green'
-    }
-    return colors[status] || 'default'
-  }
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      BOOKED: 'Upcoming',
-      COMPLETED: 'Completed'
-    }
-    return labels[status] || status
-  }
-
   const columns = [
     {
       title: role === 'patient' ? 'Doctor' : 'Patient',
@@ -173,14 +220,8 @@ function Appointments() {
         <Space>
           <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
           <div>
-            <Text strong>
-              {role === 'patient' 
-                ? record.doctorName || 'Doctor'
-                : record.patientName || 'Patient'}
-            </Text>
-            <div className="text-xs text-gray-400">
-              {role === 'patient' ? 'Doctor' : 'Patient'}
-            </div>
+            <Text strong>{getPartyName(record)}</Text>
+            <div className="text-xs text-gray-400">{role === 'patient' ? 'Doctor' : 'Patient'}</div>
           </div>
         </Space>
       )
@@ -190,9 +231,10 @@ function Appointments() {
       key: 'datetime',
       render: (_, record) => (
         <div>
-          <div><CalendarOutlined className="mr-1" /> {formatDate(record.schedule.scheduledAt)}</div>
+          <div><CalendarOutlined className="mr-1" /> {formatDate(record.schedule?.startDateTime || record.schedule?.scheduledAt)}</div>
           <div className="text-sm text-gray-500">
-            <ClockCircleOutlined className="mr-1" /> {formatTime(record.schedule.startDateTime)} - {formatTime(record.schedule.endDateTime)}
+            <ClockCircleOutlined className="mr-1" />
+            {formatTime(record.schedule?.startDateTime)} - {formatTime(record.schedule?.endDateTime)}
           </div>
         </div>
       )
@@ -202,43 +244,70 @@ function Appointments() {
       key: 'type',
       render: (_, record) => (
         <Tag color={record.meeting?.consultationType === 'VIDEO' ? 'blue' : 'green'}>
-          {record.meeting?.consultationType === 'VIDEO' ? '🎥 Video' : '🏥 In-Clinic'}
+          {record.meeting?.consultationType === 'VIDEO' ? '🎥 Video' : '🏥 In-Person'}
         </Tag>
       )
     },
     {
-      title: 'Fee',
+      title: 'Fee / Payment',
       key: 'fee',
       render: (_, record) => (
-        <Text strong className="text-blue-600">₹{record.financials?.consultationFee || 0}</Text>
+        <div>
+          <Text strong className="text-blue-600">₹{record.financials?.totalAmount || record.financials?.consultationFee || 0}</Text>
+          <div>
+            <Tag color={isPaid(record) ? 'green' : 'orange'} className="mt-1">
+              {isPaid(record) ? 'Paid' : 'Unpaid'}
+            </Tag>
+          </div>
+        </div>
       )
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => {
+        const meta = statusMeta(record.appointmentStatus)
+        return <Tag color={meta.color}>{meta.label}</Tag>
+      }
     },
     {
       title: 'Action',
       key: 'action',
       render: (_, record) => {
-        const isUpcoming = new Date(`${record.schedule.scheduledAt}T${record.schedule.endDateTime}:00`) > new Date()
-        const isActive = record.appointmentStatus === 'BOOKED' && isUpcoming
-        
+        const upcoming = endOf(record) >= new Date()
         return (
-          <Space>
-            <Button
-              type="primary"
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => openDetailModal(record)}
-            >
+          <Space wrap>
+            <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => openDetailModal(record)}>
               View
             </Button>
-            
-            {isActive && (
-              <Button
-                danger
-                size="small"
-                icon={<CloseCircleOutlined />}
-                onClick={() => handleCancel(record._id)}
-                loading={actionLoading}
-              >
+
+            {/* Patient: pay for an unpaid booking */}
+            {role === 'patient' && record.appointmentStatus === 'BOOKED' && !isPaid(record) && (
+              <Button size="small" type="primary" ghost icon={<CreditCardOutlined />}
+                onClick={() => handlePayNow(record)} loading={actionLoading}>
+                Pay
+              </Button>
+            )}
+
+            {/* Doctor: confirm a booking (generates the video room) */}
+            {role === 'doctor' && record.appointmentStatus === 'BOOKED' && (
+              <Button size="small" icon={<CheckCircleOutlined />}
+                onClick={() => handleConfirm(record._id)} loading={actionLoading}>
+                Confirm
+              </Button>
+            )}
+
+            {/* Either party: join a confirmed video consult */}
+            {canJoin(record) && (
+              <Button size="small" className="bg-green-600 text-white border-0"
+                icon={<VideoCameraOutlined />} onClick={() => joinConsultation(record)}>
+                Join
+              </Button>
+            )}
+
+            {['BOOKED', 'CONFIRMED'].includes(record.appointmentStatus) && upcoming && (
+              <Button danger size="small" icon={<CloseCircleOutlined />}
+                onClick={() => handleCancel(record._id)} loading={actionLoading}>
                 Cancel
               </Button>
             )}
@@ -249,22 +318,6 @@ function Appointments() {
   ]
 
   const filteredItems = getFilteredItems()
-
-  const getUpcomingCount = () => {
-    const now = new Date()
-    return appointments.filter(a => {
-      const aptDateTime = new Date(`${a.schedule.scheduledAt}T${a.schedule.endDateTime}:00`)
-      return aptDateTime > now
-    }).length
-  }
-
-  const getPastCount = () => {
-    const now = new Date()
-    return appointments.filter(a => {
-      const aptDateTime = new Date(`${a.schedule.scheduledAt}T${a.schedule.endDateTime}:00`)
-      return aptDateTime < now
-    }).length
-  }
 
   if (loading) {
     return (
@@ -282,13 +335,7 @@ function Appointments() {
             <Title level={2} className="mb-1">Appointments</Title>
             <Text type="secondary">View and manage your appointments</Text>
           </div>
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={refreshAll}
-          >
-            Refresh
-          </Button>
+          <Button type="primary" icon={<ReloadOutlined />} onClick={refreshAll}>Refresh</Button>
         </div>
 
         <Card className="shadow-lg rounded-2xl border-0">
@@ -301,50 +348,27 @@ function Appointments() {
             columns={columns}
             dataSource={filteredItems}
             rowKey="_id"
-            pagination={{
-              pageSize: 10,
-              showTotal: (total) => `Total ${total} items`
-            }}
+            scroll={{ x: 800 }}
+            pagination={{ pageSize: 10, showTotal: (total) => `Total ${total} items` }}
             locale={{
-              emptyText: (
-                <Empty
-                  description={`No ${activeTab} appointments`}
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              )
+              emptyText: <Empty description={`No ${activeTab} appointments`} image={Empty.PRESENTED_IMAGE_SIMPLE} />
             }}
           />
         </Card>
       </div>
 
       {/* Detail Modal */}
-      <Modal
-        title="Appointment Details"
-        open={detailModalVisible}
-        onCancel={closeDetailModal}
-        footer={null}
-        width={600}
-      >
+      <Modal title="Appointment Details" open={detailModalVisible} onCancel={closeDetailModal} footer={null} width={600}>
         {selectedItem && (
           <div className="space-y-4">
             <Card size="small" className="bg-gray-50">
-              <Title level={5} className="mb-2">
-                {role === 'patient' ? 'Doctor Information' : 'Patient Information'}
-              </Title>
+              <Title level={5} className="mb-2">{role === 'patient' ? 'Doctor' : 'Patient'} Information</Title>
               <Descriptions column={1} size="small">
-                <Descriptions.Item label="Name">
-                  {role === 'patient' ? (selectedItem.doctorName || 'Doctor') : (selectedItem.patientName || 'Patient')}
-                </Descriptions.Item>
+                <Descriptions.Item label="Name">{getPartyName(selectedItem)}</Descriptions.Item>
                 {role === 'patient' && (
-                  <Descriptions.Item label="View Profile">
-                    <Button
-                      type="link"
-                      onClick={() => {
-                        closeDetailModal()
-                        navigate(`/doctor/${selectedItem.doctorId}`)
-                      }}
-                      className="p-0"
-                    >
+                  <Descriptions.Item label="Profile">
+                    <Button type="link" className="p-0"
+                      onClick={() => { closeDetailModal(); navigate(`/doctor/${getDoctorId(selectedItem)}`) }}>
                       View Full Doctor Profile →
                     </Button>
                   </Descriptions.Item>
@@ -355,77 +379,75 @@ function Appointments() {
             <Card size="small" className="bg-gray-50">
               <Title level={5} className="mb-2">Appointment Details</Title>
               <Descriptions column={1} size="small">
-                <Descriptions.Item label="Date">
-                  {formatDate(selectedItem.schedule.scheduledAt)}
-                </Descriptions.Item>
+                <Descriptions.Item label="Date">{formatDate(selectedItem.schedule?.startDateTime || selectedItem.schedule?.scheduledAt)}</Descriptions.Item>
                 <Descriptions.Item label="Time">
-                  {formatTime(selectedItem.schedule.startDateTime)} - {formatTime(selectedItem.schedule.endDateTime)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Duration">
-                  {selectedItem.duration || 
-                    Math.round((new Date(`${selectedItem.schedule.scheduledAt}T${selectedItem.schedule.endDateTime}`) - 
-                      new Date(`${selectedItem.schedule.scheduledAt}T${selectedItem.schedule.startDateTime}`)) / 60000)} minutes
+                  {formatTime(selectedItem.schedule?.startDateTime)} - {formatTime(selectedItem.schedule?.endDateTime)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Type">
-                  {selectedItem.meeting?.consultationType === 'VIDEO' ? 'Video Consultation' : 'In-Clinic Visit'}
+                  {selectedItem.meeting?.consultationType === 'VIDEO' ? 'Video Consultation' : 'In-Person Visit'}
                 </Descriptions.Item>
-                <Descriptions.Item label="Fee">₹{selectedItem.financials?.consultationFee || 0}</Descriptions.Item>
+                <Descriptions.Item label="Fee">₹{selectedItem.financials?.totalAmount || selectedItem.financials?.consultationFee || 0}</Descriptions.Item>
+                <Descriptions.Item label="Payment">
+                  <Tag color={isPaid(selectedItem) ? 'green' : 'orange'}>
+                    {isPaid(selectedItem) ? 'Paid' : 'Unpaid'}
+                  </Tag>
+                </Descriptions.Item>
                 <Descriptions.Item label="Status">
-                  <Tag color={getStatusColor(selectedItem.appointmentStatus)}>
-                    {getStatusLabel(selectedItem.appointmentStatus)}
+                  <Tag color={statusMeta(selectedItem.appointmentStatus).color}>
+                    {statusMeta(selectedItem.appointmentStatus).label}
                   </Tag>
                 </Descriptions.Item>
               </Descriptions>
             </Card>
 
-            {(selectedItem.reason || selectedItem.symptoms) && (
+            {selectedItem.reason && (
               <Card size="small" className="bg-gray-50">
-                <Title level={5} className="mb-2">Visit Details</Title>
-                <Descriptions column={1} size="small">
-                  {selectedItem.reason && (
-                    <Descriptions.Item label="Reason">{selectedItem.reason}</Descriptions.Item>
-                  )}
-                  {selectedItem.symptoms && (
-                    <Descriptions.Item label="Symptoms">{selectedItem.symptoms}</Descriptions.Item>
-                  )}
-                </Descriptions>
+                <Title level={5} className="mb-2">Reason</Title>
+                <Text>{selectedItem.reason}</Text>
               </Card>
             )}
 
-            {selectedItem.meeting?.consultationType === 'VIDEO' && 
-             selectedItem.appointmentStatus === 'BOOKED' &&
-             new Date(`${selectedItem.schedule.scheduledAt}T${selectedItem.schedule.startDateTime}`) <= new Date() &&
-             new Date(`${selectedItem.schedule.scheduledAt}T${selectedItem.schedule.endDateTime}`) >= new Date() && (
-              <Button
-                type="primary"
-                size="large"
-                block
-                icon={<VideoCameraOutlined />}
-                href={selectedItem.meeting?.meetingLink || `https://meet.viqure.com/${selectedItem._id}`}
-                target="_blank"
-                className="bg-green-600 hover:bg-green-700 border-0"
-              >
-                Join Meeting
+            {/* Join video consultation */}
+            {canJoin(selectedItem) && (
+              <Button type="primary" size="large" block icon={<VideoCameraOutlined />}
+                onClick={() => joinConsultation(selectedItem)}
+                className="bg-green-600 hover:bg-green-700 border-0">
+                Join Video Consultation
               </Button>
             )}
 
             <Divider />
-            <div className="flex gap-3">
-              <Button onClick={closeDetailModal} className="flex-1">
-                Close
-              </Button>
-              {selectedItem.appointmentStatus === 'BOOKED' && 
-               new Date(`${selectedItem.schedule.scheduledAt}T${selectedItem.schedule.endDateTime}:00`) > new Date() && (
-                <Button
-                  danger
-                  icon={<CloseCircleOutlined />}
-                  onClick={() => handleCancel(selectedItem._id)}
-                  loading={actionLoading}
-                  className="flex-1"
-                >
-                  Cancel Appointment
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={closeDetailModal} className="flex-1">Close</Button>
+
+              {role === 'patient' && selectedItem.appointmentStatus === 'BOOKED' && !isPaid(selectedItem) && (
+                <Button type="primary" icon={<CreditCardOutlined />} className="flex-1"
+                  onClick={() => handlePayNow(selectedItem)} loading={actionLoading}>
+                  Pay Now
                 </Button>
               )}
+
+              {role === 'doctor' && selectedItem.appointmentStatus === 'BOOKED' && (
+                <Button type="primary" icon={<CheckCircleOutlined />} className="flex-1"
+                  onClick={() => handleConfirm(selectedItem._id)} loading={actionLoading}>
+                  Confirm
+                </Button>
+              )}
+
+              {role === 'doctor' && selectedItem.appointmentStatus === 'CONFIRMED' && (
+                <Button icon={<CheckCircleOutlined />} className="flex-1"
+                  onClick={() => handleComplete(selectedItem._id)} loading={actionLoading}>
+                  Mark Complete
+                </Button>
+              )}
+
+              {['BOOKED', 'CONFIRMED'].includes(selectedItem.appointmentStatus) &&
+                endOf(selectedItem) >= new Date() && (
+                  <Button danger icon={<CloseCircleOutlined />} className="flex-1"
+                    onClick={() => handleCancel(selectedItem._id)} loading={actionLoading}>
+                    Cancel
+                  </Button>
+                )}
             </div>
           </div>
         )}

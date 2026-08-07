@@ -18,6 +18,9 @@ const checkout = catchAsync(async (req, res) => {
   if (!deliveryAddress || !deliveryAddress.addressLine || !deliveryAddress.city || !deliveryAddress.pincode) {
     throw new ApiError(400, 'A complete deliveryAddress is required');
   }
+  if (!['COD', 'UPI', 'CARD'].includes(paymentMethod)) {
+    throw new ApiError(400, 'paymentMethod must be one of COD, UPI, CARD');
+  }
 
   const user = await User.findById(req.user._id).populate('cart.productId');
   if (!user.cart || user.cart.length === 0) throw new ApiError(400, 'Your cart is empty');
@@ -73,7 +76,9 @@ const checkout = catchAsync(async (req, res) => {
     status: 'pending',
     paymentDetails: {
       method: paymentMethod,
-      status: paymentMethod === 'COD' ? 'PENDING' : 'PENDING',
+      // Always starts PENDING. COD flips to SUCCESS on delivery; online payment
+      // flips to SUCCESS only after Razorpay signature verification (/payments/verify).
+      status: 'PENDING',
     },
     shipmentDetails: {
       status: 'PENDING',
@@ -144,11 +149,13 @@ const confirmOrder = catchAsync(async (req, res) => {
   if (!order) throw new ApiError(404, 'Order not found');
   if (order.status !== 'pending') throw new ApiError(400, `Cannot confirm an order in ${order.status} status`);
 
-  order.status = 'confirmed';
-  if (order.paymentDetails.method !== 'COD') {
-    order.paymentDetails.status = 'SUCCESS';
-    order.paymentDetails.paymentDate = new Date();
+  // Online orders must be genuinely paid (verified via Razorpay) before an admin
+  // can confirm them. COD orders are confirmed now and collected on delivery.
+  if (order.paymentDetails.method !== 'COD' && order.paymentDetails.status !== 'SUCCESS') {
+    throw new ApiError(400, 'Cannot confirm an unpaid online order — payment must be completed first');
   }
+
+  order.status = 'confirmed';
   await order.save();
 
   res.status(200).json({ success: true, data: order });

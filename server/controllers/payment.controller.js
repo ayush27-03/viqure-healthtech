@@ -4,12 +4,26 @@ const { Order, Appointment } = require('../models/index');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
 
-const rzp = () =>
-  new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET });
+/**
+ * Lazily construct the Razorpay client so a missing/blank key only fails the
+ * payment endpoints — not the whole server boot. The keys are read at call
+ * time, which also plays nicely with dotenv load order.
+ */
+const rzp = () => {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    throw new ApiError(500, 'Payment gateway is not configured (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET missing)');
+  }
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+};
 
 /**
  * POST /api/payments/order   body: { context: 'ORDER'|'APPOINTMENT', id }
- * Amount is ALWAYS taken from the DB — never from the client.
+ * Creates a Razorpay order for an existing ViQure order or appointment.
+ * The amount is ALWAYS taken from the DB — never from the client — so a
+ * tampered request can't change what is charged.
  */
 const createGatewayOrder = catchAsync(async (req, res) => {
   const { context, id } = req.body;
@@ -38,7 +52,7 @@ const createGatewayOrder = catchAsync(async (req, res) => {
   if (!amount || amount <= 0) throw new ApiError(400, 'Nothing to pay');
 
   const gatewayOrder = await rzp().orders.create({
-    amount: Math.round(amount * 100),       // paise
+    amount: Math.round(amount * 100), // Razorpay works in the smallest currency unit (paise)
     currency: 'INR',
     receipt: `${context}_${id}`.slice(0, 40),
   });
@@ -48,18 +62,29 @@ const createGatewayOrder = catchAsync(async (req, res) => {
 
   res.status(201).json({
     success: true,
-    data: { keyId: process.env.RAZORPAY_KEY_ID, gatewayOrderId: gatewayOrder.id, amount: gatewayOrder.amount, currency: 'INR' },
+    data: {
+      keyId: process.env.RAZORPAY_KEY_ID,
+      gatewayOrderId: gatewayOrder.id,
+      amount: gatewayOrder.amount,
+      currency: 'INR',
+    },
   });
 });
 
 /**
  * POST /api/payments/verify
  * body: { context, id, razorpay_order_id, razorpay_payment_id, razorpay_signature }
+ * Recomputes the HMAC signature server-side and compares it in constant time.
+ * Only a signature Razorpay itself produced (with our secret) can pass — the
+ * browser cannot forge a "paid" state.
  */
 const verifyPayment = catchAsync(async (req, res) => {
   const { context, id, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
   if (!context || !id || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     throw new ApiError(400, 'context, id and all razorpay_* fields are required');
+  }
+  if (!process.env.RAZORPAY_KEY_SECRET) {
+    throw new ApiError(500, 'Payment gateway is not configured (RAZORPAY_KEY_SECRET missing)');
   }
 
   const expected = crypto
